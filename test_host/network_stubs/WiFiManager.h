@@ -76,6 +76,7 @@ public:
   void setMenu(std::vector<const char*>&) {}
   void setCustomMenuHTML(const char*) {}
   void setShowInfoErase(bool) {}
+  void setCustomHeadElement(const char*) {}
   void setHostname(const char*) {}
   void setWebServerCallback(std::function<void()> cb) { serverCallback = cb; }
   void setAPCallback(std::function<void(WiFiManager*)> cb) { apCallback = cb; }

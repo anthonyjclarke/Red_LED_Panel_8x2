@@ -14,6 +14,11 @@
 #else
 #include "secrets.example.h" // Shared default setup password; no page login.
 #endif
+#ifdef OTA_UPLOAD_BUILD
+// An OTA upload without a password would install firmware that refuses further OTA uploads.
+static_assert(sizeof(SECRET_OTA_PASSWORD) > 1,
+              "esp32dev_ota needs SECRET_OTA_PASSWORD in include/secrets.h (same as the panel's)");
+#endif
 
 namespace {
 std::atomic<bool> syncPending{false};
@@ -37,6 +42,24 @@ String jsonString(const char* text) {
   }
   return result + '"';
 }
+
+// Restyles WiFiManager's own pages (/wifi, /info, ...) to match the panel UI and
+// adds a navigation bar back to it. Injected into each page's <head>.
+const char WIFI_PAGE_HEAD[] PROGMEM =
+    "<style>body{margin:0;background:#fcfbf8;color:#1d2933;text-align:left;"
+    "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}"
+    ".wrap{display:block;max-width:560px;margin:24px auto;padding:0 16px}"
+    "h1,h2,h3{color:#14232d}a{color:#a51f30}input,select{border:1px solid #b9c7cd;"
+    "border-radius:6px;padding:10px}button,input[type=submit]{background:#b92535;"
+    "border-radius:6px;font-size:1rem;line-height:2.6rem}"
+    ".rp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:12px 16px;"
+    "background:#14232d}.rp-bar b{color:#fff;font-size:18px;margin-right:6px}"
+    ".rp-bar a{color:#d1dde4;font-size:14px;font-weight:600}</style>"
+    "<script>document.addEventListener('DOMContentLoaded',function(){"
+    "var n=document.createElement('nav');n.className='rp-bar';"
+    "n.innerHTML=\"<b>RED / 8x2</b><a href='/'>Panel settings</a>"
+    "<a href='/wifi'>Wi-Fi network</a><a href='/info'>System info</a>\";"
+    "document.body.insertBefore(n,document.body.firstChild);});</script>";
 
 void reply(WebServer& server, int code, const char* message) {
   server.sendHeader("Cache-Control", "no-store");
@@ -79,6 +102,7 @@ void PanelNetwork::begin() {
   manager_.setCustomMenuHTML(
       "<form action='/panel' method='get'><button>Panel settings</button></form>");
   manager_.setShowInfoErase(false);
+  manager_.setCustomHeadElement(WIFI_PAGE_HEAD);
   manager_.setHostname(hostname_);
   manager_.setWebServerCallback([this]() { registerRoutes(); });
   manager_.setAPCallback([this](WiFiManager*) {
@@ -270,11 +294,15 @@ void PanelNetwork::loop() {
 
 void PanelNetwork::registerRoutes() {
   auto& server = *manager_.server;
-  server.on("/panel", HTTP_GET, [this]() {
+  // Registered before WiFiManager's own routes, so "/" opens the panel UI on the
+  // LAN and in the setup hotspot; its Wi-Fi pages stay linked from the sidebar.
+  const auto page = [this]() {
     if (!authorised()) return;
     manager_.server->sendHeader("Cache-Control", "no-store");
     manager_.server->send_P(200, "text/html; charset=utf-8", CONFIG_PAGE);
-  });
+  };
+  server.on("/", HTTP_GET, page);
+  server.on("/panel", HTTP_GET, page);
   server.on("/api/status", HTTP_GET, [this]() {
     if (authorised()) sendStatus();
   });
@@ -360,6 +388,9 @@ void PanelNetwork::sendStatus() {
   json += ",\"rssi\":" + String(connected() ? WiFi.RSSI() : 0);
   json += ",\"url\":" + jsonString(("http://" + address() + "/panel").c_str());
   json += ",\"uptime\":" + String(millis() / 1000);
+  json += ",\"ota\":" + jsonString(otaStarted_            ? "ready"
+                                   : *SECRET_OTA_PASSWORD ? "pending"
+                                                          : "disabled");
   json += ",\"ntpServers\":[" + jsonString(NTP_SERVER_1) + ',' + jsonString(NTP_SERVER_2) + ']';
   tm local = {};
   char clock[12] = "";

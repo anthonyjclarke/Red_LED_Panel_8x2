@@ -24,7 +24,7 @@
 ## Network and storage
 
 - NVS namespace `redpanel`, key `clock`: one `ClockSettings` record (schema 1). Validate before use; a failed write must not change active settings. NVS writes can stall the scan task briefly.
-- Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches. POSTs need the boot-local token.
+- Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches; it runs before WiFiManager adds its own, so our `/` wins. WiFiManager pages get CSS and a nav bar through `setCustomHeadElement`. POSTs need the boot-local token.
 - `secrets.h` (gitignored) supplies `SECRET_AP_PASSWORD`, optional `SECRET_PANEL_PASSWORD` and `SECRET_OTA_PASSWORD` (empty = OTA off); `secrets.example.h` is the fallback. Never log credentials.
 - ArduinoOTA starts on first Wi-Fi connect with its own mDNS disabled; `loop()` owns mDNS and re-adds the `arduino` service on reconnect. `ArduinoOTA.handle()` blocks during an upload, so progress drawing runs from its callbacks. `default_envs = esp32dev` keeps plain uploads on USB.
 - `include/ConfigPage.h` is generated from `web/index.html` by `tools/embed_web.py` (pre-build hook). Edit the HTML, not the header.

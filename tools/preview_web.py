@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 ZONES = re.findall(r'\{"([A-Za-z_/]+)",', (ROOT / 'include/ClockSettings.h').read_text())
 STATE = {
-    'version': '1.1.0', 'token': 'preview-only-token', 'location': 'Sydney',
+    'version': '1.3.0', 'ota': 'ready', 'token': 'preview-only-token', 'location': 'Sydney',
     'zone': 'Australia/Sydney', 'brightness': 90, 'startClock': False,
     'connected': True, 'timeValid': True, 'ssid': 'Panel-Test-2G', 'rssi': -52,
     'url': 'http://192.168.1.80/panel', 'uptime': 120, 'time': '23:59:58',

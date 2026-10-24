@@ -45,7 +45,7 @@ Pong plays automatically; no controllers are required. **`c` holds the live cloc
 
 If a saved network is unavailable after 10 seconds, join **`RedPanel-XXXXXX`** using **`PanelSetup32`** (change it in a gitignored `include/secrets.h`, copied from `include/secrets.example.h`), then open **`http://192.168.4.1/`**. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.
 
-After connection, open **`http://<panel-IP>/panel`** using the address printed by serial. Set the location, time zone, startup brightness and startup view. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, and **Clock + demos**. Daylight saving follows the selected zone automatically. An optional `SECRET_PANEL_PASSWORD` adds a login to the settings page.
+After connection, open **`http://<panel-IP>/`** using the address printed by serial; a sidebar moves between the clock, settings, connection and device sections and the Wi-Fi pages. Set the location, time zone, startup brightness and startup view. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, and **Clock + demos**. Daylight saving follows the selected zone automatically. An optional `SECRET_PANEL_PASSWORD` adds a login to the settings page.
 
 The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled **HLD**, for up to 24 hours. Send **`w`** to reopen setup, **`i`** for status, and **`d`** to cycle debug levels.
 

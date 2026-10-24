@@ -83,13 +83,13 @@ After one USB upload of v1.3.0 or later, new firmware can be sent over the local
 
 1. Copy `include/secrets.example.h` to `include/secrets.h` (gitignored) and set `SECRET_OTA_PASSWORD`. An empty password disables network uploads.
 2. Upload once over USB with `pio run --target upload`. Serial then prints `[ota] Ready: red-panel-xxxxxx.local port 3232` after Wi-Fi connects.
-3. On the other computer, use the same `include/secrets.h` (it is not in git) and run:
+3. On any computer on the same network, use the same `include/secrets.h` (it is not in git) and run:
 
 ```sh
 PANEL_OTA_PASSWORD='your-ota-password' pio run -e esp32dev_ota --target upload
 ```
 
-The `esp32dev_ota` environment in `platformio.ini` targets this panel's mDNS name, `red-panel-a4ae30.local`. For another panel, change `upload_port` or add `--upload-port <IP>`. The default `esp32dev` partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.
+The `esp32dev_ota` environment refuses to build without `SECRET_OTA_PASSWORD`, because that firmware would switch OTA off and need USB again. It targets this panel's mDNS name, `red-panel-a4ae30.local`. For another panel, change `upload_port` or add `--upload-port <IP>`. The default `esp32dev` partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.
 
 The panel shows **OTA** with a percentage and progress bar, then restarts on success. If an upload fails, the current firmware keeps running and the scene returns. Flash writes pause row scanning briefly, so the progress display can flicker. The upload needs the computer and panel on the same network; macOS may ask to allow incoming connections for Python, which espota uses for the transfer. From outside your home network, use a VPN into it rather than exposing port 3232.
 
@@ -97,7 +97,7 @@ The panel shows **OTA** with a percentage and progress bar, then restarts on suc
 
 The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32** (the default from `include/secrets.example.h`; set your own in a gitignored `include/secrets.h`). Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
 
-Once connected, open the serial-reported **http://<panel-IP>/panel**. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
+Once connected, open **http://red-panel-xxxxxx.local/** or the serial-reported IP address (`/panel` also works). A sidebar, like this documentation's, moves between **Clock**, **Settings**, **Connection** and **Device**, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
 
 Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.
 

@@ -264,7 +264,7 @@ pio device monitor --baud 115200
 <p>Pong plays automatically; no controllers are required. <strong><code>c</code> holds the live clock</strong> on screen; <code>n</code> leaves it and <code>p</code> resumes the playlist timer. Time continues while the playlist is paused.</p>
 <h3 id="overview--connect-wi-fi-and-set-your-location">Connect Wi-Fi and set your location</h3>
 <p>If a saved network is unavailable after 10 seconds, join <strong><code>RedPanel-XXXXXX</code></strong> using <strong><code>PanelSetup32</code></strong> (change it in a gitignored <code>include/secrets.h</code>, copied from <code>include/secrets.example.h</code>), then open <strong><code>http://192.168.4.1/</code></strong>. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.</p>
-<p>After connection, open <strong><code>http://&lt;panel-IP&gt;/panel</code></strong> using the address printed by serial. Set the location, time zone, startup brightness and startup view. Defaults are <strong>Sydney</strong>, <strong>Australia/Sydney</strong>, <strong>90/255</strong>, and <strong>Clock + demos</strong>. Daylight saving follows the selected zone automatically. An optional <code>SECRET_PANEL_PASSWORD</code> adds a login to the settings page.</p>
+<p>After connection, open <strong><code>http://&lt;panel-IP&gt;/</code></strong> using the address printed by serial; a sidebar moves between the clock, settings, connection and device sections and the Wi-Fi pages. Set the location, time zone, startup brightness and startup view. Defaults are <strong>Sydney</strong>, <strong>Australia/Sydney</strong>, <strong>90/255</strong>, and <strong>Clock + demos</strong>. Daylight saving follows the selected zone automatically. An optional <code>SECRET_PANEL_PASSWORD</code> adds a login to the settings page.</p>
 <p>The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled <strong>HLD</strong>, for up to 24 hours. Send <strong><code>w</code></strong> to reopen setup, <strong><code>i</code></strong> for status, and <strong><code>d</code></strong> to cycle debug levels.</p>
 <p>Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. From v1.2.0 the next row is shifted over hardware SPI while the current row is lit, so the full brightness range is usable. The reference panel ran v1.2.0 with zero missed or late rows. Send <code>i</code> for refresh timing counters; see the <a href="#esp32-test-setup--check-display-flicker">flicker check</a> after uploading. Clock colons blink and hearts pulse deliberately.</p>
 <p>The reference ESP32/panel checks on <strong>25 October 2026</strong> (v1.1.0, then v1.2.0) confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.</p>
@@ -286,13 +286,13 @@ pio device monitor --baud 115200
 </section>
 <section class="doc-section" aria-labelledby="release-log">
 <h2 id="release-log" class="doc-title">Release and version log</h2>
-<p class="doc-meta"><span class="eyebrow">Releases</span> · Generated from CHANGELOG.md and git · built 25-10-2026 from source commit <code>afd0821</code> plus uncommitted changes</p>
+<p class="doc-meta"><span class="eyebrow">Releases</span> · Generated from CHANGELOG.md and git · built 25-10-2026 from source commit <code>5f65d7f</code> plus uncommitted changes</p>
 <p>Firmware in this source tree reports <strong>v1.3.0</strong> (<code>FIRMWARE_VERSION</code> in <code>include/config.h</code>). Tagged versions are the releases flashed to the reference panel; details of each change are in the <a href="#changelog">changelog</a>.</p>
 <h3 id="release-log--releases">Releases</h3>
 <div class="table-wrap"><table><thead><tr><th>Version</th><th>Date</th><th>Status</th><th>Change groups</th></tr></thead>
-<tbody><tr><td><strong>1.3.0</strong></td><td>25-10-2026</td><td><span class="tag">Current source, untagged</span></td><td>Added, Fixed</td></tr><tr><td><strong>1.2.0</strong></td><td>25-10-2026</td><td><span class="tag resolved">Tagged v1.2.0-flashed</span> <code>29cfc1f</code></td><td>Changed, Added, Fixed</td></tr><tr><td><strong>1.1.0</strong></td><td>25-10-2026</td><td><span class="tag resolved">Tagged v1.1.0</span> <code>4841600</code></td><td>Reference-panel check — 25 October 2026, Blank-display startup fix, Clock-led cycle and refresh timing, Wi-Fi, real time and configuration</td></tr><tr><td><strong>1.0.0</strong></td><td>24-10-2026</td><td><span class="tag resolved">Tagged v1.0.0</span> <code>3383a37</code></td><td>Pong and clock demos, Showcase and everyday use, Confirmed hardware outcome — 24 October 2026, Documentation, Fixed, Added</td></tr><tr><td><strong>0.1.0</strong></td><td>23-10-2026</td><td>Pre-release</td><td>Added</td></tr></tbody></table></div>
+<tbody><tr><td><strong>1.3.0</strong></td><td>25-10-2026</td><td><span class="tag">Current source, untagged</span></td><td>Added, Changed, Fixed</td></tr><tr><td><strong>1.2.0</strong></td><td>25-10-2026</td><td><span class="tag resolved">Tagged v1.2.0-flashed</span> <code>29cfc1f</code></td><td>Changed, Added, Fixed</td></tr><tr><td><strong>1.1.0</strong></td><td>25-10-2026</td><td><span class="tag resolved">Tagged v1.1.0</span> <code>4841600</code></td><td>Reference-panel check — 25 October 2026, Blank-display startup fix, Clock-led cycle and refresh timing, Wi-Fi, real time and configuration</td></tr><tr><td><strong>1.0.0</strong></td><td>24-10-2026</td><td><span class="tag resolved">Tagged v1.0.0</span> <code>3383a37</code></td><td>Pong and clock demos, Showcase and everyday use, Confirmed hardware outcome — 24 October 2026, Documentation, Fixed, Added</td></tr><tr><td><strong>0.1.0</strong></td><td>23-10-2026</td><td>Pre-release</td><td>Added</td></tr></tbody></table></div>
 <h3 id="release-log--commit-history">Commit history</h3>
-<div class="table-wrap"><table><thead><tr><th>Commit</th><th>Date</th><th>Change</th></tr></thead><tbody><tr><td><code>afd0821</code></td><td>2026-10-25</td><td>docs(html): rebuild release log with v1.2.0-flashed tag </td></tr><tr><td><code>29cfc1f</code></td><td>2026-10-25</td><td>docs(release): record v1.2.0 reference-panel result <span class="tag">v1.2.0-flashed</span></td></tr><tr><td><code>954237e</code></td><td>2026-10-25</td><td>feat(refresh): overlap SPI column shift with lit row; v1.2.0 fixes and release log </td></tr><tr><td><code>1eb5f1d</code></td><td>2026-10-25</td><td>docs(html): combine documentation into single index.html </td></tr><tr><td><code>4841600</code></td><td>2026-10-25</td><td>Finalize v1.1.0 Wi-Fi clock and stable panel refresh <span class="tag">v1.1.0</span></td></tr><tr><td><code>3383a37</code></td><td>2026-10-24</td><td>Finalize working HUB08 panel and eleven-scene showcase <span class="tag">v1.0.0</span></td></tr><tr><td><code>801dc01</code></td><td>2026-10-24</td><td>Initial Commit </td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Commit</th><th>Date</th><th>Change</th></tr></thead><tbody><tr><td><code>5f65d7f</code></td><td>2026-10-25</td><td>feat(ota): add password-protected Wi-Fi firmware upload; fix double NTP request </td></tr><tr><td><code>afd0821</code></td><td>2026-10-25</td><td>docs(html): rebuild release log with v1.2.0-flashed tag </td></tr><tr><td><code>29cfc1f</code></td><td>2026-10-25</td><td>docs(release): record v1.2.0 reference-panel result <span class="tag">v1.2.0-flashed</span></td></tr><tr><td><code>954237e</code></td><td>2026-10-25</td><td>feat(refresh): overlap SPI column shift with lit row; v1.2.0 fixes and release log </td></tr><tr><td><code>1eb5f1d</code></td><td>2026-10-25</td><td>docs(html): combine documentation into single index.html </td></tr><tr><td><code>4841600</code></td><td>2026-10-25</td><td>Finalize v1.1.0 Wi-Fi clock and stable panel refresh <span class="tag">v1.1.0</span></td></tr><tr><td><code>3383a37</code></td><td>2026-10-24</td><td>Finalize working HUB08 panel and eleven-scene showcase <span class="tag">v1.0.0</span></td></tr><tr><td><code>801dc01</code></td><td>2026-10-24</td><td>Initial Commit </td></tr></tbody></table></div>
 </section>
 <section class="doc-section" aria-labelledby="panel-guide">
 <h2 id="panel-guide" class="doc-title">Panel hardware and usage guide</h2>
@@ -406,15 +406,15 @@ pio device monitor --baud 115200
 <ol>
 <li>Copy <code>include/secrets.example.h</code> to <code>include/secrets.h</code> (gitignored) and set <code>SECRET_OTA_PASSWORD</code>. An empty password disables network uploads.</li>
 <li>Upload once over USB with <code>pio run --target upload</code>. Serial then prints <code>[ota] Ready: red-panel-xxxxxx.local port 3232</code> after Wi-Fi connects.</li>
-<li>On the other computer, use the same <code>include/secrets.h</code> (it is not in git) and run:</li>
+<li>On any computer on the same network, use the same <code>include/secrets.h</code> (it is not in git) and run:</li>
 </ol>
 <pre><code class="language-sh">PANEL_OTA_PASSWORD='your-ota-password' pio run -e esp32dev_ota --target upload
 </code></pre>
-<p>The <code>esp32dev_ota</code> environment in <code>platformio.ini</code> targets this panel's mDNS name, <code>red-panel-a4ae30.local</code>. For another panel, change <code>upload_port</code> or add <code>--upload-port &lt;IP&gt;</code>. The default <code>esp32dev</code> partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.</p>
+<p>The <code>esp32dev_ota</code> environment refuses to build without <code>SECRET_OTA_PASSWORD</code>, because that firmware would switch OTA off and need USB again. It targets this panel's mDNS name, <code>red-panel-a4ae30.local</code>. For another panel, change <code>upload_port</code> or add <code>--upload-port &lt;IP&gt;</code>. The default <code>esp32dev</code> partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.</p>
 <p>The panel shows <strong>OTA</strong> with a percentage and progress bar, then restarts on success. If an upload fails, the current firmware keeps running and the scene returns. Flash writes pause row scanning briefly, so the progress display can flicker. The upload needs the computer and panel on the same network; macOS may ask to allow incoming connections for Python, which espota uses for the transfer. From outside your home network, use a VPN into it rather than exposing port 3232.</p>
 <h3 id="panel-guide--wi-fi-location-and-startup-status">Wi-Fi, location and startup status</h3>
 <p>The firmware includes <strong>WiFiManager 2.0.17</strong>, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens <strong>RedPanel-XXXXXX</strong> with setup password <strong>PanelSetup32</strong> (the default from <code>include/secrets.example.h</code>; set your own in a gitignored <code>include/secrets.h</code>). Join it and open <strong>http://192.168.4.1/</strong> to select a 2.4 GHz network.</p>
-<p>Once connected, open the serial-reported <strong>http://&lt;panel-IP&gt;/panel</strong>. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set <code>SECRET_PANEL_PASSWORD</code> in <code>include/secrets.h</code> to require a login (user <code>admin</code>) for <code>/panel</code> and its API. <strong><code>w</code></strong> reopens setup and <strong><code>i</code></strong> prints status.</p>
+<p>Once connected, open <strong>http://red-panel-xxxxxx.local/</strong> or the serial-reported IP address (<code>/panel</code> also works). A sidebar, like this documentation's, moves between <strong>Clock</strong>, <strong>Settings</strong>, <strong>Connection</strong> and <strong>Device</strong>, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set <code>SECRET_PANEL_PASSWORD</code> in <code>include/secrets.h</code> to require a login (user <code>admin</code>) for <code>/panel</code> and its API. <strong><code>w</code></strong> reopens setup and <strong><code>i</code></strong> prints status.</p>
 <p>Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.</p>
 <p>Use the <a href="#esp32-test-setup">complete ESP32 test configuration</a> for exact buffer/header connections, provisioning, network services, persistence and acceptance checks. <a href="#screen-examples">Generated examples</a> show the expected output for all scenes and status states.</p>
 <h3 id="panel-guide--the-showcase-playlist">The showcase playlist</h3>
@@ -1083,7 +1083,7 @@ pio device monitor --baud 115200
 </tr>
 <tr>
 <td style="text-align:left">Panel settings on the hotspot</td>
-<td style="text-align:left"><strong><code>http://192.168.4.1/panel</code></strong></td>
+<td style="text-align:left"><strong><code>http://192.168.4.1/</code></strong> (also <code>/panel</code>); Wi-Fi network is in the sidebar</td>
 </tr>
 <tr>
 <td style="text-align:left">Example router SSID</td>
@@ -1097,8 +1097,8 @@ pio device monitor --baud 115200
 </table></div>
 <p>If a phone does not open the captive portal, stay connected to the hotspot and enter the HTTP address manually. Select your 2.4 GHz network and enter its password. WiFiManager saves the credentials on the ESP32. Normal firmware uploads retain NVS; a full flash erase removes the saved credentials and panel settings. Its save/connect operation can briefly pause animation for roughly the two-second portal-close delay plus an eight-second association window; <strong>panel scanning continues</strong>.</p>
 <p>After joining the router, the setup hotspot closes and serial reports the assigned IP and settings URL. Rejoin your normal Wi-Fi network and open:</p>
-<pre><code class="language-text">http://192.168.1.80/panel          Example DHCP address only: use the actual serial-reported IP.
-http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suffix.
+<pre><code class="language-text">http://192.168.1.80/          Example DHCP address only: use the actual serial-reported IP.
+http://red-panel-abcdef.local/  Example mDNS name: use your actual chip suffix.
 </code></pre>
 <p>mDNS depends on the client/network; the printed IP works without it. The router's DHCP address is not hard-coded. A router reservation can keep it stable. Use a trusted local network for this plain HTTP configuration page. To require a login, copy <code>include/secrets.example.h</code> to <code>include/secrets.h</code> and set <code>SECRET_PANEL_PASSWORD</code>; <code>/panel</code> and <code>/api/*</code> then ask for user <strong><code>admin</code></strong> and that password (HTTP Basic, not encrypted). WiFiManager's own <code>/wifi</code> pages are not covered by this login.</p>
 <h4 id="esp32-test-setup--network-services">Network services</h4>
@@ -1140,7 +1140,7 @@ http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suf
 <h3 id="esp32-test-setup--web-settings-and-status">Web settings and status</h3>
 <p><a class="image-link" href="images/demos/web-config-preview.png" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/web-config-preview.png" alt="Embedded settings page with example Sydney test-network status" loading="lazy" decoding="async" /></a></p>
 <p><em>Browser preview using mock test-network data. The live page reads its status from your ESP32.</em></p>
-<p>At <strong><code>/panel</code></strong>, set:</p>
+<p>The page opens at <strong><code>/</code></strong> (or <code>/panel</code>). Its sidebar jumps between <strong>Clock</strong>, <strong>Settings</strong>, <strong>Connection</strong> and <strong>Device</strong>, and links to WiFiManager's <strong>Wi-Fi network</strong> and <strong>System info</strong> pages, which show a matching bar back to the settings. In the setup hotspot a <strong>Close setup hotspot</strong> link also appears. Under <strong>Settings</strong>, set:</p>
 <ol>
 <li><strong>Location name:</strong> 1–32 UTF-8 bytes; defaults to Sydney.</li>
 <li><strong>Time zone:</strong> choose a listed region. Australian zones, Auckland, UTC and several international zones are included.</li>
@@ -1148,7 +1148,7 @@ http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suf
 <li><strong>Startup view:</strong> Clock + demos or Real-time clock. Clock + demos starts with 10 seconds of clock, runs one demo, returns to the clock for 10 seconds, then runs the following demo.</li>
 </ol>
 <p>Choose <strong>Save and apply</strong>. The ESP32 validates the complete form, saves one record, and changes the local time zone and brightness at once. The display restarts only when the startup view changed. Settings survive reset. A failed flash write leaves the previous settings active. Serial <code>+</code>/<code>-</code> changes are saved as the startup brightness once, five seconds after the last key press.</p>
-<p>The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age and hardware settings. Its clock is read from the <strong>panel</strong>, not from the browser. <strong>Sync time</strong> requests another NTP update. <strong>Wi-Fi network</strong> opens WiFiManager's network form. <strong>Open setup hotspot</strong>, or serial <strong><code>w</code></strong>, opens provisioning again without erasing saved settings.</p>
+<p>The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age, firmware version, Wi-Fi upload (OTA) state and hardware settings. Its clock is read from the <strong>panel</strong>, not from the browser. <strong>Sync time</strong> requests another NTP update. <strong>Wi-Fi network</strong> opens WiFiManager's network form. <strong>Open setup hotspot</strong>, or serial <strong><code>w</code></strong>, opens provisioning again without erasing saved settings.</p>
 <p>Status requests are read-only. Panel settings/sync/setup API mutations carry a boot-local token to prevent unrelated cross-origin pages from submitting changes. The page and APIs contain no Wi-Fi passwords; WiFiManager's internal debug output is disabled.</p>
 <h3 id="esp32-test-setup--live-clock-behaviour">Live clock behaviour</h3>
 <p>Send <strong><code>c</code></strong> to keep the live clock on screen. <strong><code>p</code></strong> resumes the playlist's clock-scene timer; <strong><code>n</code></strong> moves to the next demo (letters immediately after a fresh boot/restart). With clock selected as the startup view, it remains visible after boot.</p>
@@ -1250,6 +1250,10 @@ http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suf
 <tr>
 <td style="text-align:left">OTA upload with a wrong password</td>
 <td style="text-align:left">Upload refused; current firmware keeps running</td>
+</tr>
+<tr>
+<td style="text-align:left">Open <code>http://&lt;panel&gt;/</code> and use the sidebar</td>
+<td style="text-align:left">Each section scrolls into view; Wi-Fi network and System info show the bar back</td>
 </tr>
 </tbody>
 </table></div>
@@ -1466,8 +1470,15 @@ python3 tools/build_docs.py
 <li>Firmware upload over Wi-Fi with ArduinoOTA. It is enabled only when <code>SECRET_OTA_PASSWORD</code> is set in <code>include/secrets.h</code>, starts on the first Wi-Fi connection on port 3232 (<code>OTA_PORT</code>), and advertises itself over mDNS.</li>
 <li><code>esp32dev_ota</code> PlatformIO environment: <code>PANEL_OTA_PASSWORD=… pio run -e esp32dev_ota -t upload</code>. The password comes from an environment variable, so it never enters <code>platformio.ini</code>.</li>
 <li>Panel shows <strong>OTA</strong> with a percentage and progress bar during an upload. A failed upload returns to the current scene; success restarts.</li>
-<li><code>[ota]</code> status in boot and <code>i</code> reports, and a help line for network uploads.</li>
-<li>Host regressions: OTA disabled without a password, configured once with one, progress and error callbacks, a second network test build with page and OTA passwords set, and the progress display in the app test.</li>
+<li><code>[ota]</code> status in boot and <code>i</code> reports, <code>ota</code> in <code>/api/status</code>, and a help line for network uploads.</li>
+<li>The <code>esp32dev_ota</code> build fails with a clear message when <code>SECRET_OTA_PASSWORD</code> is empty, because that firmware would disable OTA and need USB again.</li>
+</ul>
+<h4 id="changelog--changed">Changed</h4>
+<ul>
+<li>Redesigned the settings page in the documentation's style: a sidebar (a sticky top bar on phones) with <strong>Clock</strong>, <strong>Settings</strong>, <strong>Connection</strong> and <strong>Device</strong> sections that highlight as you scroll, plus links to the Wi-Fi network and system-info pages. The Device section shows firmware, OTA state, timing, polarity and a GPIO table instead of raw JSON.</li>
+<li>The settings page now opens at <code>/</code> on the LAN and in the setup hotspot (<code>/panel</code> still works). WiFiManager's own pages are restyled to match and gain a navigation bar back to the settings.</li>
+<li>Updated the settings-page screenshot and the preview server's mock status.</li>
+<li>Host regressions: <code>/</code> serves the panel UI, <code>ota</code> status, OTA disabled without a password, configured once with one, progress and error callbacks, a second network test build with page and OTA passwords set, and the progress display in the app test.</li>
 </ul>
 <h4 id="changelog--fixed">Fixed</h4>
 <ul>
@@ -1476,7 +1487,7 @@ python3 tools/build_docs.py
 </ul>
 <h3 id="changelog--1-2-0-25-10-2026">[1.2.0] 25-10-2026</h3>
 <p>Flashed and checked on the reference panel on 25 October 2026: normal display through 255/255, zero missed ticks and late rows over more than 500,000 rows, peak wake 237 µs (v1.1.0: 491 µs), and serial brightness saved and restored after reset. Tagged <code>v1.2.0-flashed</code>.</p>
-<h4 id="changelog--changed">Changed</h4>
+<h4 id="changelog--changed-2">Changed</h4>
 <ul>
 <li>Refresh driver shifts the next row while the current row is lit, so only the address/latch step and the 50 µs guard are dark. Full brightness now lights each row for about 445 µs of 500 µs (about 250 µs before), so the whole 0–255 range is usable. Peak panel current at 255/255 rises by roughly 1.8 times.</li>
 <li>Column data now goes out over the VSPI hardware SPI peripheral at <code>SHIFT_CLOCK_HZ</code> (500 kHz, matching the former 1 µs clock and setup timing) instead of bit-banged GPIO with busy-wait delays. Shifting takes about 128 µs per row instead of at least 195 µs, which frees time on core 1. Blank data is preloaded into the 74HC595s at start-up.</li>
@@ -1618,7 +1629,7 @@ python3 tools/build_docs.py
 <h3 id="maintainer-notes--network-and-storage">Network and storage</h3>
 <ul>
 <li>NVS namespace <code>redpanel</code>, key <code>clock</code>: one <code>ClockSettings</code> record (schema 1). Validate before use; a failed write must not change active settings. NVS writes can stall the scan task briefly.</li>
-<li>Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches. POSTs need the boot-local token.</li>
+<li>Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches; it runs before WiFiManager adds its own, so our <code>/</code> wins. WiFiManager pages get CSS and a nav bar through <code>setCustomHeadElement</code>. POSTs need the boot-local token.</li>
 <li><code>secrets.h</code> (gitignored) supplies <code>SECRET_AP_PASSWORD</code>, optional <code>SECRET_PANEL_PASSWORD</code> and <code>SECRET_OTA_PASSWORD</code> (empty = OTA off); <code>secrets.example.h</code> is the fallback. Never log credentials.</li>
 <li>ArduinoOTA starts on first Wi-Fi connect with its own mDNS disabled; <code>loop()</code> owns mDNS and re-adds the <code>arduino</code> service on reconnect. <code>ArduinoOTA.handle()</code> blocks during an upload, so progress drawing runs from its callbacks. <code>default_envs = esp32dev</code> keeps plain uploads on USB.</li>
 <li><code>include/ConfigPage.h</code> is generated from <code>web/index.html</code> by <code>tools/embed_web.py</code> (pre-build hook). Edit the HTML, not the header.</li>

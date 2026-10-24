@@ -35,9 +35,11 @@ int main(int argc, char** argv) {
   ++fakeMillis;
   network.loop();
   assert(network.portalActive() && activeServer);
-  activeServer->dispatch("/panel");
-  assert(activeServer->code == 200 &&
-         activeServer->body.find("Panel settings") != std::string::npos);
+  for (const char* path : {"/", "/panel"}) {
+    activeServer->dispatch(path); // The panel UI owns "/" ahead of WiFiManager's menu.
+    assert(activeServer->code == 200 &&
+           activeServer->body.find("Panel settings") != std::string::npos);
+  }
   const auto csrf = token();
   assert(csrf.size() == 16);
   activeServer->args = {
@@ -100,6 +102,9 @@ int main(int argc, char** argv) {
   }
   activeServer->dispatch("/api/status");
   std::ofstream(argv[1]) << activeServer->body;
+  assert(activeServer->body.find(*SECRET_OTA_PASSWORD
+                                     ? "\"ota\":\"ready\""
+                                     : "\"ota\":\"disabled\"") != std::string::npos);
   assert(activeServer->body.find("Workshop") != std::string::npos &&
          activeServer->body.find("Panel-Test-2G") != std::string::npos);
   // Opening setup from the LAN recreates one server, keeping all custom routes.

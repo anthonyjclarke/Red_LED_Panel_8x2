@@ -95,7 +95,7 @@ With no usable saved network, wait about 10 seconds, then join:
 | Setup SSID | **`RedPanel-ABCDEF`** — ABCDEF is an example; use the suffix printed by your ESP32 |
 | Setup password | **`PanelSetup32`** — default `SECRET_AP_PASSWORD`; override in gitignored `include/secrets.h` |
 | Captive portal / Wi-Fi selection | **`http://192.168.4.1/`** |
-| Panel settings on the hotspot | **`http://192.168.4.1/panel`** |
+| Panel settings on the hotspot | **`http://192.168.4.1/`** (also `/panel`); Wi-Fi network is in the sidebar |
 | Example router SSID | **`Panel-Test-2G`** — create or substitute your own network |
 | Router password | Enter your own password in WiFiManager; no router password is supplied or committed |
 
@@ -104,8 +104,8 @@ If a phone does not open the captive portal, stay connected to the hotspot and e
 After joining the router, the setup hotspot closes and serial reports the assigned IP and settings URL. Rejoin your normal Wi-Fi network and open:
 
 ```text
-http://192.168.1.80/panel          Example DHCP address only: use the actual serial-reported IP.
-http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suffix.
+http://192.168.1.80/          Example DHCP address only: use the actual serial-reported IP.
+http://red-panel-abcdef.local/  Example mDNS name: use your actual chip suffix.
 ```
 
 mDNS depends on the client/network; the printed IP works without it. The router's DHCP address is not hard-coded. A router reservation can keep it stable. Use a trusted local network for this plain HTTP configuration page. To require a login, copy `include/secrets.example.h` to `include/secrets.h` and set `SECRET_PANEL_PASSWORD`; `/panel` and `/api/*` then ask for user **`admin`** and that password (HTTP Basic, not encrypted). WiFiManager's own `/wifi` pages are not covered by this login.
@@ -129,7 +129,7 @@ Internet access is used for network time, not for storing or reading your local 
 
 *Browser preview using mock test-network data. The live page reads its status from your ESP32.*
 
-At **`/panel`**, set:
+The page opens at **`/`** (or `/panel`). Its sidebar jumps between **Clock**, **Settings**, **Connection** and **Device**, and links to WiFiManager's **Wi-Fi network** and **System info** pages, which show a matching bar back to the settings. In the setup hotspot a **Close setup hotspot** link also appears. Under **Settings**, set:
 
 1. **Location name:** 1–32 UTF-8 bytes; defaults to Sydney.
 2. **Time zone:** choose a listed region. Australian zones, Auckland, UTC and several international zones are included.
@@ -138,7 +138,7 @@ At **`/panel`**, set:
 
 Choose **Save and apply**. The ESP32 validates the complete form, saves one record, and changes the local time zone and brightness at once. The display restarts only when the startup view changed. Settings survive reset. A failed flash write leaves the previous settings active. Serial `+`/`-` changes are saved as the startup brightness once, five seconds after the last key press.
 
-The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age and hardware settings. Its clock is read from the **panel**, not from the browser. **Sync time** requests another NTP update. **Wi-Fi network** opens WiFiManager's network form. **Open setup hotspot**, or serial **`w`**, opens provisioning again without erasing saved settings.
+The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age, firmware version, Wi-Fi upload (OTA) state and hardware settings. Its clock is read from the **panel**, not from the browser. **Sync time** requests another NTP update. **Wi-Fi network** opens WiFiManager's network form. **Open setup hotspot**, or serial **`w`**, opens provisioning again without erasing saved settings.
 
 Status requests are read-only. Panel settings/sync/setup API mutations carry a boot-local token to prevent unrelated cross-origin pages from submitting changes. The page and APIs contain no Wi-Fi passwords; WiFiManager's internal debug output is disabled.
 
@@ -201,6 +201,7 @@ python3 -m venv .venv-docs
 | `+` then wait 5 s, reset | New brightness restored at boot |
 | OTA upload with the right password (v1.3.0) | Panel shows OTA progress, restarts, serial reports the new version |
 | OTA upload with a wrong password | Upload refused; current firmware keeps running |
+| Open `http://<panel>/` and use the sidebar | Each section scrolls into view; Wi-Fi network and System info show the bar back |
 
 See [screen examples](SCREEN_EXAMPLES.md) for generated output from every scene, boot cards and clock states. The reference-panel results below confirm observed Wi-Fi association, NTP sync, scene progression and a visually steady display. Use the acceptance table to check the remaining scenarios on your own installation.
 

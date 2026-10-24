@@ -9,8 +9,15 @@ Built and host-tested; **not yet flashed**. OTA needs one USB upload before it c
 - Firmware upload over Wi-Fi with ArduinoOTA. It is enabled only when `SECRET_OTA_PASSWORD` is set in `include/secrets.h`, starts on the first Wi-Fi connection on port 3232 (`OTA_PORT`), and advertises itself over mDNS.
 - `esp32dev_ota` PlatformIO environment: `PANEL_OTA_PASSWORD=… pio run -e esp32dev_ota -t upload`. The password comes from an environment variable, so it never enters `platformio.ini`.
 - Panel shows **OTA** with a percentage and progress bar during an upload. A failed upload returns to the current scene; success restarts.
-- `[ota]` status in boot and `i` reports, and a help line for network uploads.
-- Host regressions: OTA disabled without a password, configured once with one, progress and error callbacks, a second network test build with page and OTA passwords set, and the progress display in the app test.
+- `[ota]` status in boot and `i` reports, `ota` in `/api/status`, and a help line for network uploads.
+- The `esp32dev_ota` build fails with a clear message when `SECRET_OTA_PASSWORD` is empty, because that firmware would disable OTA and need USB again.
+
+### Changed
+
+- Redesigned the settings page in the documentation's style: a sidebar (a sticky top bar on phones) with **Clock**, **Settings**, **Connection** and **Device** sections that highlight as you scroll, plus links to the Wi-Fi network and system-info pages. The Device section shows firmware, OTA state, timing, polarity and a GPIO table instead of raw JSON.
+- The settings page now opens at `/` on the LAN and in the setup hotspot (`/panel` still works). WiFiManager's own pages are restyled to match and gain a navigation bar back to the settings.
+- Updated the settings-page screenshot and the preview server's mock status.
+- Host regressions: `/` serves the panel UI, `ota` status, OTA disabled without a password, configured once with one, progress and error callbacks, a second network test build with page and OTA passwords set, and the progress display in the app test.
 
 ### Fixed
 
