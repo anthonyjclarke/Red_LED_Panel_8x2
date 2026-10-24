@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build the local HTML documentation and ZIP from the tracked Markdown sources.
+"""Build the single-page HTML documentation and ZIP from the tracked Markdown sources.
 
 Requires Python 3.10+ and tools/docs-requirements.txt. Run from any directory.
-All assets stay local. The firmware is read for the share bundle, never modified.
+Every Markdown document becomes one section of index.html; the stylesheet is
+inlined and images stay local. The firmware is read for the share bundle, never modified.
 """
 from __future__ import annotations
 
@@ -34,7 +35,8 @@ PAGES = [
     ("images/README.md", "Image archive", "Image filenames and provenance"),
     ("docs/BRING_UP_REPORT.md", "Archived bring-up", "Historical investigation and panel replacement"),
 ]
-OUTPUTS = {ROOT / source: (ROOT / source).with_suffix(".html") for source, _, _ in PAGES}
+OUTPUT = ROOT / "index.html"
+STYLESHEET = ROOT / "docs/assets/docs.css"
 MANIFEST = json.loads((ROOT / "images/manifest.json").read_text())
 IMAGE_INFO = {ROOT / "images" / p["file"]: p for p in MANIFEST["photos"]}
 EXAMPLES = json.loads((ROOT / "images/demos/manifest.json").read_text())
@@ -42,110 +44,138 @@ SCREEN_INFO = {ROOT / "images/demos" / item["file"]: item for item in EXAMPLES}
 ARCHIVE = ROOT / "Red_LED_Panel_8x2_Documentation.zip"
 
 
-def relative(target: Path, parent: Path) -> str:
-    return quote(Path(os.path.relpath(target, parent)).as_posix(), safe="/-._~")
-
-
-def rewrite_url(url: str, source: Path, output: Path) -> str:
-    parts = urlsplit(url)
-    if parts.scheme or parts.netloc or not parts.path:
-        return url
-    target = (source.parent / unquote(parts.path)).resolve()
-    if target in OUTPUTS:
-        return urlunsplit(("", "", relative(OUTPUTS[target], output.parent), parts.query, parts.fragment))
-    return url
-
-
 def slug(text: str) -> str:
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", text).strip("-") or "section"
 
 
-def render_page(source: Path, output: Path, label: str, description: str) -> str:
+SECTION_IDS = {(ROOT / source).resolve(): slug(label) for source, label, _ in PAGES}
+
+
+def rewrite_url(url: str, source: Path) -> str:
+    """Point links at sections of the single page, or at files relative to the project root."""
+    parts = urlsplit(url)
+    if parts.scheme or parts.netloc:
+        return url
+    if not parts.path:
+        # Same-document anchor: prefix it with this document's section id.
+        return f"#{SECTION_IDS[source]}--{parts.fragment}" if parts.fragment else url
+    target = (source.parent / unquote(parts.path)).resolve()
+    if target in SECTION_IDS:
+        section = SECTION_IDS[target]
+        return f"#{section}--{parts.fragment}" if parts.fragment else f"#{section}"
+    path = quote(Path(os.path.relpath(target, ROOT)).as_posix(), safe="/-._~")
+    return urlunsplit(("", "", path, parts.query, parts.fragment))
+
+
+def render_section(source: Path, label: str, description: str) -> tuple[str, str, list]:
     md = MarkdownIt("commonmark", {"html": False}).enable("table")
     tokens = md.parse(source.read_text())
+    section = SECTION_IDS[source]
     headings = []
     used = {}
     title = label
     for i, token in enumerate(tokens):
+        if token.type in ("heading_open", "heading_close"):
+            # Demote one level: the page title is the only h1.
+            level = int(token.tag[1])
+            token.tag = f"h{min(level + 1, 6)}"
         if token.type == "heading_open":
             inline = tokens[i + 1]
             text = md.renderer.renderInlineAsText(inline.children or [], md.options, {})
             base = slug(text)
             used[base] = used.get(base, 0) + 1
             anchor = base if used[base] == 1 else f"{base}-{used[base]}"
-            token.attrSet("id", anchor)
-            if token.tag == "h1":
+            if token.tag == "h2":
                 title = text
-            elif token.tag in ("h2", "h3"):
-                headings.append((token.tag, text, anchor))
+                token.attrSet("id", section)
+                token.attrSet("class", "doc-title")
+            else:
+                token.attrSet("id", f"{section}--{anchor}")
+                if token.tag == "h3":
+                    headings.append((text, f"{section}--{anchor}"))
         if token.type == "inline":
             for child in token.children or []:
                 key = "href" if child.type == "link_open" else "src" if child.type == "image" else None
                 if key:
                     old = child.attrGet(key)
                     if old:
-                        child.attrSet(key, rewrite_url(old, source, output))
+                        child.attrSet(key, rewrite_url(old, source))
 
     original_image = md.renderer.rules["image"]
     def image_rule(items, index, options, env):
         item = items[index]
         src = item.attrGet("src") or ""
-        image_path = (output.parent / unquote(urlsplit(src).path)).resolve()
+        image_path = (ROOT / unquote(urlsplit(src).path)).resolve()
         info = IMAGE_INFO.get(image_path) or SCREEN_INFO.get(image_path)
         if info:
             item.attrSet("width", str(info["width"]))
             item.attrSet("height", str(info["height"]))
-        item.attrSet("loading", "eager")
-        item.attrSet("decoding", "sync")
+        item.attrSet("loading", "lazy")
+        item.attrSet("decoding", "async")
         image = original_image(items, index, options, env)
         return f'<a class="image-link" href="{html.escape(src, quote=True)}" target="_blank" rel="noopener" aria-label="Open image at available full size">{image}</a>'
     md.renderer.rules["image"] = image_rule
     md.renderer.rules["table_open"] = lambda *_: '<div class="table-wrap"><table>\n'
     md.renderer.rules["table_close"] = lambda *_: '</table></div>\n'
-    article = md.renderer.render(tokens, md.options, {})
+    body = md.renderer.render(tokens, md.options, {})
 
+    markdown = source.relative_to(ROOT).as_posix()
+    meta = (f'<p class="doc-meta"><span class="eyebrow">{html.escape(label)}</span> · '
+            f'{html.escape(description)} · <a href="{quote(markdown)}">{html.escape(markdown)}</a></p>')
+    # Place the label/source line directly under the section title.
+    body = re.sub(r"(</h2>\n)", r"\1" + meta.replace("\\", r"\\") + "\n", body, count=1)
+    return f'<section class="doc-section" aria-labelledby="{section}">\n{body}</section>\n', title, headings
+
+
+def render_page() -> str:
+    sections = []
     nav = []
-    for filename, name, _ in PAGES:
-        target = OUTPUTS[ROOT / filename]
-        current = ' aria-current="page"' if source == ROOT / filename else ""
-        nav.append(f'<a href="{relative(target, output.parent)}"{current}>{html.escape(name)}</a>')
-    toc_links = "\n".join(
-        f'<a href="#{anchor}" class="{"sub" if tag == "h3" else "section"}">{html.escape(text)}</a>'
-        for tag, text, anchor in headings
-    )
-    toc = f'<aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div>{toc_links}</aside>' if headings else ""
-    mobile_toc = f'<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation">{toc_links}</nav></details>' if headings else ""
-    home = relative(ROOT / "index.html", output.parent)
-    css = relative(ROOT / "docs/assets/docs.css", output.parent)
-    markdown = relative(source, output.parent)
+    contents = []
+    for filename, label, description in PAGES:
+        source = (ROOT / filename).resolve()
+        section_html, title, headings = render_section(source, label, description)
+        sections.append(section_html)
+        section = SECTION_IDS[source]
+        links = "".join(f'<a href="#{anchor}">{html.escape(text)}</a>' for text, anchor in headings)
+        nav.append(f'<details class="nav-group"><summary><a href="#{section}">{html.escape(label)}</a></summary>'
+                   f'<nav aria-label="{html.escape(label, quote=True)} sections">{links}</nav></details>'
+                   if headings else f'<a class="nav-single" href="#{section}">{html.escape(label)}</a>')
+        contents.append(f'<a href="#{section}"><strong>{html.escape(label)}</strong>'
+                        f'<span>{html.escape(description)}</span></a>')
     led_dots = '<i></i>' * 16
+    css = STYLESHEET.read_text()
     return f'''<!doctype html>
 <html lang="en-AU">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="{html.escape(description, quote=True)}">
+<meta name="description" content="Red LED Panel 8×2 — complete offline documentation">
 <meta name="color-scheme" content="light">
-<title>{html.escape(title)} · Red LED Panel 8×2</title>
-<link rel="stylesheet" href="{css}">
+<title>Red LED Panel 8×2 · Documentation</title>
+<style>
+{css}</style>
 </head>
 <body id="top">
 <a class="skip" href="#main">Skip to document</a>
 <aside class="sidebar">
-<a class="brand" href="{home}"><div class="led-mark" aria-hidden="true">{led_dots}</div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<a class="brand" href="#top"><div class="led-mark" aria-hidden="true">{led_dots}</div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
-<nav class="nav-links" aria-label="Documentation">{''.join(nav)}</nav>
+<div class="nav-links">{''.join(nav)}</div>
 <div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
-<div class="toolbar"><span class="eyebrow">Workshop reference / {html.escape(label)}</span><div class="tools"><a href="{markdown}">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
-<div class="doc-grid"><article>
+<div class="toolbar"><span class="eyebrow">Workshop reference · single-page edition</span><div class="tools"><button type="button" onclick="window.print()">Print</button></div></div>
+<article class="doc-body">
+<header class="cover">
 <div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
-{mobile_toc}
-{article}
-<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
-</article>{toc}</div>
+<h1>Red LED Panel 8×2 documentation</h1>
+<p>Everything for the ESP32 and red 64×16 HUB08 panel in one page: setup, wiring, controls, examples, history and maintainer notes.</p>
+<nav class="contents" aria-label="Contents">{''.join(contents)}</nav>
+</header>
+{''.join(sections)}
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Generated from the Markdown sources with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article>
 </main>
 </body>
 </html>
@@ -168,28 +198,23 @@ class References(HTMLParser):
                 self.refs.append(values[key])
 
 
-def check_links(pages: list[Path]):
-    parsed = {}
-    def read(path):
-        if path not in parsed:
-            parser = References()
-            parser.feed(path.read_text())
-            parsed[path] = parser
-        return parsed[path]
+def check_links(page: Path) -> int:
+    parser = References()
+    parser.feed(page.read_text())
     count = 0
-    for page in pages:
-        for ref in read(page).refs:
-            url = urlsplit(ref)
-            if url.scheme or url.netloc:
-                continue
-            path = (page.parent / unquote(url.path)).resolve() if url.path else page
+    for ref in parser.refs:
+        url = urlsplit(ref)
+        if url.scheme or url.netloc:
+            continue
+        if url.path:
+            path = (page.parent / unquote(url.path)).resolve()
             if not path.is_relative_to(ROOT):
-                raise ValueError(f"Link escapes documentation root: {page}: {ref}")
+                raise ValueError(f"Link escapes documentation root: {ref}")
             if not path.is_file():
-                raise ValueError(f"Missing local target: {page.relative_to(ROOT)} -> {ref}")
-            if url.fragment and path.suffix == ".html" and unquote(url.fragment) not in read(path).ids:
-                raise ValueError(f"Missing anchor: {page.relative_to(ROOT)} -> {ref}")
-            count += 1
+                raise ValueError(f"Missing local target: {ref}")
+        elif url.fragment and unquote(url.fragment) not in parser.ids:
+            raise ValueError(f"Missing anchor: {ref}")
+        count += 1
     return count
 
 
@@ -200,32 +225,22 @@ def main():
     for path, info in SCREEN_INFO.items():
         if hashlib.sha256(path.read_bytes()).hexdigest() != info["sha256"]:
             raise SystemExit(f"Screen example checksum mismatch: {path.relative_to(ROOT)}")
-    pages = []
-    for filename, label, description in PAGES:
-        source = ROOT / filename
-        output = OUTPUTS[source]
-        output.write_text(render_page(source, output, label, description))
-        pages.append(output)
-    index = ROOT / "index.html"
-    index.write_text((ROOT / "README.html").read_text())
-    pages.append(index)
-    count = check_links(pages)
-    bundled = set(pages) | set(OUTPUTS) | set(IMAGE_INFO)
+    OUTPUT.write_text(render_page())
+    count = check_links(OUTPUT)
+    bundled = {OUTPUT, STYLESHEET} | {ROOT / source for source, _, _ in PAGES} | set(IMAGE_INFO)
     bundled |= {
-        ROOT / "images/manifest.json", ROOT / "docs/assets/docs.css",
-        ROOT / "tools/build_docs.py", ROOT / "tools/docs-requirements.txt",
-        ROOT / "src/main.cpp", ROOT / "src/Hub08Panel.cpp", ROOT / "src/Hub08Panel.h",
-        ROOT / "include/config.h", ROOT / "include/debug.h", ROOT / "platformio.ini",
+        ROOT / "images/manifest.json", ROOT / "tools/build_docs.py", ROOT / "tools/docs-requirements.txt",
+        ROOT / "platformio.ini", ROOT / ".clang-format", ROOT / ".editorconfig",
     }
     for directory in ("src", "include", "web", "test_host", "tools", "images/demos"):
         bundled |= {path for path in (ROOT / directory).rglob("*")
                     if path.is_file() and "__pycache__" not in path.parts
                     and path.suffix not in (".pyc",) and path.name != ".DS_Store"}
-    bundled |= {ROOT / ".clang-format", ROOT / ".editorconfig"}
     with zipfile.ZipFile(ARCHIVE, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(bundled):
             archive.write(path, "Red_LED_Panel_8x2_Documentation/" + path.relative_to(ROOT).as_posix())
-    print(f"Built {len(pages)} HTML pages; verified {len(IMAGE_INFO)} photos and {count} local references.")
+    print(f"Built {OUTPUT.name} from {len(PAGES)} documents; verified {len(IMAGE_INFO)} photos, "
+          f"{len(SCREEN_INFO)} screen examples and {count} local references.")
     print(f"Share bundle: {ARCHIVE.name} ({ARCHIVE.stat().st_size:,} bytes)")
 
 

@@ -62,9 +62,9 @@ The default ESP32 pin map is **25 → LA, 26 → LB, 27 → LC, 13 → LD, 22 �
 
 ## Documentation and sharing
 
-Open **[index.html](index.html)** in a browser for the offline HTML edition. It includes the [panel guide](docs/PANEL_GUIDE.md), [ESP32 test configuration](docs/ESP32_TEST_CONFIG.md), [screen examples](docs/SCREEN_EXAMPLES.md), [hardware photos](docs/PHOTO_LOG.md), and [changelog](CHANGELOG.md). Earlier troubleshooting is retained separately in the [archived bring-up report](docs/BRING_UP_REPORT.md).
+Open **[index.html](index.html)** in a browser for the offline documentation: every Markdown document combined into one page with a section sidebar and print layout. It includes the [panel guide](docs/PANEL_GUIDE.md), [ESP32 test configuration](docs/ESP32_TEST_CONFIG.md), [screen examples](docs/SCREEN_EXAMPLES.md), [hardware photos](docs/PHOTO_LOG.md), and [changelog](CHANGELOG.md). Earlier troubleshooting is retained at the end as the [archived bring-up report](docs/BRING_UP_REPORT.md).
 
-Markdown is the editable source. To regenerate the HTML and **`Red_LED_Panel_8x2_Documentation.zip`**, use Python 3.10 or newer:
+Markdown is the editable source; there are no per-document HTML files. To regenerate `index.html` and **`Red_LED_Panel_8x2_Documentation.zip`**, use Python 3.10 or newer:
 
 ```sh
 python3 -m venv .venv-docs
@@ -76,6 +76,6 @@ To regenerate the screen examples from the actual firmware/GFX renderer, install
 
 Logging follows the shared `[ERR ]` / `[WARN]` / `[INFO]` / `[VERB]` convention. C++ formatting is defined in [.clang-format](.clang-format); the [test setup guide](docs/ESP32_TEST_CONFIG.md#boot-status-and-debug-conventions) has check commands.
 
-Extract the ZIP and open `index.html`; keep its folders together. No server or internet connection is needed except to follow external reference links.
+Extract the ZIP and open `index.html`; keep the `images/` folder beside it. No server or internet connection is needed except to follow external reference links.
 
 Repository: [anthonyjclarke/Red_LED_Panel_8x2](https://github.com/anthonyjclarke/Red_LED_Panel_8x2).

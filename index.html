@@ -3,35 +3,187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Project overview and quick start">
+<meta name="description" content="Red LED Panel 8×2 — complete offline documentation">
 <meta name="color-scheme" content="light">
-<title>Red LED Panel 8×2 · Red LED Panel 8×2</title>
-<link rel="stylesheet" href="docs/assets/docs.css">
+<title>Red LED Panel 8×2 · Documentation</title>
+<style>
+:root {
+  color-scheme: light;
+  --ink: #1d2933;
+  --muted: #586775;
+  --red: #b92535;
+  --nav: #14232d;
+  --paper: #fcfbf8;
+  --line: #dfE3e5;
+  --soft: #f1f3f4;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+a { color: #a51f30; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: #691221; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid #df9c28; outline-offset: 4px; }
+.skip { position: fixed; z-index: 10; top: -80px; left: 16px; background: white; padding: 10px 16px; }
+.skip:focus { top: 12px; }
+.sidebar { position: fixed; inset: 0 auto 0 0; width: 244px; padding: 34px 24px; background: var(--nav); color: #e2eaee; overflow-y: auto; }
+.brand { display: block; color: white; text-decoration: none; margin-bottom: 34px; }
+.brand:hover { color: white; }
+.brand strong { display: block; font-size: 29px; letter-spacing: -1px; line-height: 1.2; }
+.brand span { display: block; margin-top: 8px; color: #acbec9; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
+.led-mark { display: grid; grid-template-columns: repeat(8, 7px); gap: 4px; margin-bottom: 18px; width: max-content; }
+.led-mark i { width: 7px; height: 7px; border-radius: 50%; background: #e94d59; box-shadow: 0 0 9px #e94d5940; }
+.led-mark i:nth-child(3n) { opacity: .42; }
+.nav-label { margin: 20px 10px 10px; color: #94aab7; text-transform: uppercase; font-size: 10px; font-weight: 700; letter-spacing: 1.7px; }
+.nav-links { display: grid; gap: 5px; }
+.nav-links a { display: block; color: #d1dde4; text-decoration: none; padding: 9px 12px; border-radius: 6px; font-size: 14px; line-height: 1.5; }
+.nav-links a:hover { color: white; background: #ffffff0b; }
+.nav-links a[aria-current="page"] { background: #b92535; color: white; }
+.sidebar-note { margin-top: 34px; padding: 16px 10px 0; border-top: 1px solid #ffffff20; color: #a7bac5; font-size: 12px; line-height: 1.7; }
+.sidebar-note strong { color: #e8f0f3; }
+.page { margin-left: 244px; padding: 34px clamp(24px, 4vw, 68px) 60px; }
+.toolbar { max-width: 1180px; margin: 0 auto 28px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1.7px; font-weight: 700; color: var(--muted); }
+.tools { display: flex; gap: 14px; align-items: center; font-size: 12px; }
+.tools a { color: var(--muted); }
+button { font: inherit; color: var(--ink); background: white; border: 1px solid #cbd2d6; border-radius: 5px; padding: 5px 12px; cursor: pointer; }
+button:hover { border-color: var(--red); }
+.doc-grid { display: grid; grid-template-columns: minmax(0, 820px) 180px; gap: 44px; max-width: 1180px; margin: 0 auto; align-items: start; }
+article { min-width: 0; }
+h1, h2, h3, h4 { line-height: 1.23; color: #14232d; }
+h1 { margin: 0 0 24px; font-size: clamp(34px, 3.3vw, 49px); font-weight: 750; letter-spacing: -1.9px; max-width: 900px; }
+h2 { margin: 48px 0 18px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 27px; letter-spacing: -.7px; }
+h3 { margin: 30px 0 14px; font-size: 20px; letter-spacing: -.3px; }
+h4 { font-size: 17px; margin-bottom: 12px; }
+p { margin: 0 0 18px; }
+li { margin: 7px 0; }
+ul, ol { padding-left: 24px; margin: 0 0 22px; }
+blockquote { margin: 26px 0; padding: 20px 24px; border: 1px solid #e9c6cb; border-left: 5px solid var(--red); background: #fff2f1; border-radius: 0 8px 8px 0; }
+blockquote p { margin: 0; }
+.table-wrap { width: 100%; overflow-x: auto; margin: 22px 0 28px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 1.55; }
+th, td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid #e6e9eb; }
+th { background: #eaf0f2; color: #263e4c; font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) { background: #fafbfb; }
+code, pre { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: .86em; }
+code { background: #eaeef0; color: #263d4a; padding: 2px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { padding: 21px 24px; margin: 20px 0 26px; border: 1px solid #30434f; border-radius: 8px; background: #192b35; color: #eaf2f6; line-height: 1.7; overflow-x: auto; }
+pre code { padding: 0; background: transparent; color: inherit; overflow-wrap: normal; }
+.image-link { display: block; margin: 26px 0 12px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd2d6; background: #edf0f1; }
+.image-link img { display: block; width: 100%; height: auto; }
+.image-link:hover { outline: 3px solid #b9253533; }
+p:has(> .image-link) { margin-bottom: 12px; }
+.toc { position: sticky; top: 26px; max-height: calc(100vh - 60px); overflow-y: auto; border-left: 1px solid var(--line); padding-left: 18px; font-size: 12px; line-height: 1.55; }
+.toc-title { text-transform: uppercase; letter-spacing: 1.4px; font-weight: 700; color: var(--muted); font-size: 10px; margin-bottom: 14px; }
+.toc a { display: block; color: #526776; text-decoration: none; margin-bottom: 11px; }
+.toc a.sub { margin-left: 12px; font-size: 11px; color: #677986; }
+.toc a:hover { color: var(--red); }
+.mobile-toc { display: none; }
+.footer { border-top: 1px solid var(--line); margin-top: 50px; padding-top: 20px; font-size: 12px; color: var(--muted); }
+.footer a { color: var(--muted); }
+.status-line { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
+.tag { border: 1px solid #cad9de; color: #3c5766; background: #eef4f5; font-size: 11px; padding: 4px 9px; border-radius: 4px; font-weight: 650; letter-spacing: .15px; }
+.tag.resolved { background: #e7f2ed; color: #2a6248; border-color: #bed9cc; }
+/* Single-page edition: one section per Markdown document */
+.doc-body { max-width: 880px; margin: 0 auto; }
+.cover h1 { margin-bottom: 14px; }
+.cover > p { color: var(--muted); font-size: 17px; }
+.contents { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin: 26px 0 0; }
+.contents a { display: block; padding: 13px 15px; border: 1px solid var(--line); border-radius: 8px; background: #fff; text-decoration: none; color: var(--ink); }
+.contents a:hover { border-color: var(--red); }
+.contents strong { display: block; font-size: 14px; }
+.contents span { display: block; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.doc-section { margin-top: 72px; padding-top: 10px; border-top: 3px solid var(--red); }
+h2.doc-title { margin: 22px 0 8px; padding-top: 0; border-top: 0; font-size: clamp(30px, 3vw, 42px); letter-spacing: -1.4px; }
+.doc-meta { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+.doc-meta a { color: var(--muted); }
+.doc-section h3 { margin: 46px 0 16px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 24px; letter-spacing: -.6px; }
+.doc-section h4 { margin: 30px 0 12px; font-size: 19px; letter-spacing: -.3px; }
+.doc-section h5 { margin: 24px 0 10px; font-size: 16px; }
+.nav-group summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; border-radius: 6px; padding-right: 10px; color: #8fa5b2; }
+.nav-group summary::-webkit-details-marker { display: none; }
+.nav-group summary::after { content: "+"; font-size: 13px; }
+.nav-group[open] summary::after { content: "−"; }
+.nav-group summary:hover { background: #ffffff0b; }
+.nav-group nav { display: grid; gap: 1px; margin: 2px 0 8px; }
+.nav-links .nav-group nav a { padding: 4px 12px 4px 24px; font-size: 12.5px; color: #a9bcc7; }
+@media (max-width: 1200px) {
+  .doc-grid { grid-template-columns: minmax(0, 1fr); max-width: 870px; }
+  .toc { display: none; }
+  .mobile-toc { display: block; margin-bottom: 26px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; }
+  .mobile-toc summary { cursor: pointer; font-weight: 650; }
+  .mobile-toc nav { display: grid; gap: 9px; padding-top: 14px; }
+  .mobile-toc a.sub { padding-left: 12px; }
+}
+@media (max-width: 720px) {
+  .sidebar { position: static; width: auto; padding: 23px 20px; }
+  .brand { margin-bottom: 18px; }
+  .brand strong { font-size: 26px; }
+  .brand span { margin-top: 4px; font-size: 10px; }
+  .led-mark { display: none; }
+  .nav-label, .sidebar-note { display: none; }
+  .nav-links { display: flex; flex-wrap: wrap; gap: 4px; }
+  .nav-group nav, .nav-group summary::after { display: none; }
+  .nav-links a { font-size: 12px; padding: 6px 9px; }
+  .page { margin-left: 0; padding: 24px 20px 40px; }
+  .toolbar { margin-bottom: 25px; }
+  .eyebrow { font-size: 10px; }
+  .tools { font-size: 11px; }
+  h1 { font-size: 34px; letter-spacing: -1.2px; }
+  h2 { font-size: 24px; margin-top: 36px; }
+  p, li { font-size: 15px; }
+  blockquote { padding: 17px 18px; }
+  pre { padding: 16px; font-size: 11px; }
+  th, td { padding: 10px; min-width: 105px; font-size: 12px; }
+}
+@media print {
+  @page { size: A4; margin: 16mm; }
+  html { scroll-behavior: auto; }
+  body { background: white; font-size: 10pt; line-height: 1.5; }
+  .sidebar, .toolbar, .toc, .mobile-toc, .skip, .contents { display: none; }
+  .doc-section { break-before: page; margin-top: 0; }
+  .doc-body { max-width: none; }
+  .page { margin: 0; padding: 0; }
+  .doc-grid { display: block; max-width: none; }
+  h1 { font-size: 27pt; }
+  h2 { font-size: 18pt; margin-top: 24pt; break-after: avoid; }
+  h3 { font-size: 13pt; break-after: avoid; }
+  pre { white-space: pre-wrap; background: #f2f2f2; color: black; border-color: #ccc; }
+  pre code { color: black; }
+  .table-wrap { overflow: visible; border-radius: 0; }
+  tr, .image-link { break-inside: avoid; }
+  img { max-height: 220mm; object-fit: contain; }
+  a { color: #222; }
+  .footer { font-size: 8pt; }
+}
+</style>
 </head>
 <body id="top">
 <a class="skip" href="#main">Skip to document</a>
 <aside class="sidebar">
-<a class="brand" href="index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<a class="brand" href="#top"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
-<nav class="nav-links" aria-label="Documentation"><a href="README.html" aria-current="page">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/ESP32_TEST_CONFIG.html">ESP32 test setup</a><a href="docs/SCREEN_EXAMPLES.html">Screen examples</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html">Changelog</a><a href="CLAUDE.html">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<div class="nav-links"><details class="nav-group"><summary><a href="#overview">Overview</a></summary><nav aria-label="Overview sections"><a href="#overview--get-started">Get started</a><a href="#overview--what-s-on-screen">What&#x27;s on screen</a><a href="#overview--connect-wi-fi-and-set-your-location">Connect Wi-Fi and set your location</a><a href="#overview--make-it-yours">Make it yours</a><a href="#overview--documentation-and-sharing">Documentation and sharing</a></nav></details><details class="nav-group"><summary><a href="#panel-guide">Panel guide</a></summary><nav aria-label="Panel guide sections"><a href="#panel-guide--what-the-panel-can-do">What the panel can do</a><a href="#panel-guide--power-and-level-shifting">Power and level shifting</a><a href="#panel-guide--build-and-run">Build and run</a><a href="#panel-guide--wi-fi-location-and-startup-status">Wi-Fi, location and startup status</a><a href="#panel-guide--the-showcase-playlist">The showcase playlist</a><a href="#panel-guide--serial-controls">Serial controls</a><a href="#panel-guide--customise-the-showcase">Customise the showcase</a><a href="#panel-guide--draw-your-own-content">Draw your own content</a><a href="#panel-guide--photographing-the-display">Photographing the display</a><a href="#panel-guide--debug-and-formatting">Debug and formatting</a><a href="#panel-guide--reference-material">Reference material</a></nav></details><details class="nav-group"><summary><a href="#esp32-test-setup">ESP32 test setup</a></summary><nav aria-label="ESP32 test setup sections"><a href="#esp32-test-setup--hardware-and-software">Hardware and software</a><a href="#esp32-test-setup--exact-electrical-connections">Exact electrical connections</a><a href="#esp32-test-setup--firmware-defaults">Firmware defaults</a><a href="#esp32-test-setup--build-and-first-connection">Build and first connection</a><a href="#esp32-test-setup--web-settings-and-status">Web settings and status</a><a href="#esp32-test-setup--live-clock-behaviour">Live clock behaviour</a><a href="#esp32-test-setup--boot-status-and-debug-conventions">Boot/status and debug conventions</a><a href="#esp32-test-setup--bench-acceptance-checks">Bench acceptance checks</a><a href="#esp32-test-setup--blank-screen-with-refresh-setup-error">Blank screen with refresh setup error</a><a href="#esp32-test-setup--check-display-flicker">Check display flicker</a><a href="#esp32-test-setup--recorded-reference-panel-result-25-october-2026">Recorded reference-panel result — 25 October 2026</a></nav></details><details class="nav-group"><summary><a href="#screen-examples">Screen examples</a></summary><nav aria-label="Screen examples sections"><a href="#screen-examples--01-boot-1">01 — Boot 1</a><a href="#screen-examples--02-boot-2">02 — Boot 2</a><a href="#screen-examples--03-boot-3">03 — Boot 3</a><a href="#screen-examples--04-letters">04 — Letters</a><a href="#screen-examples--05-checkerboard">05 — Checkerboard</a><a href="#screen-examples--06-bouncing-balls">06 — Bouncing Balls</a><a href="#screen-examples--07-starfield">07 — Starfield</a><a href="#screen-examples--08-pixel-rain">08 — Pixel Rain</a><a href="#screen-examples--09-animated-bars">09 — Animated Bars</a><a href="#screen-examples--10-conway-s-life">10 — Conway&#x27;S Life</a><a href="#screen-examples--11-beating-hearts">11 — Beating Hearts</a><a href="#screen-examples--12-scrolling-text">12 — Scrolling Text</a><a href="#screen-examples--13-pong">13 — Pong</a><a href="#screen-examples--14-clock">14 — Clock</a><a href="#screen-examples--15-all-pixels-off">15 — All Pixels Off</a><a href="#screen-examples--16-all-pixels-on">16 — All Pixels On</a><a href="#screen-examples--17-output-blanked">17 — Output Blanked</a><a href="#screen-examples--18-clock-offline-holdover">18 — Clock Offline Holdover</a><a href="#screen-examples--19-clock-waiting-for-wi-fi">19 — Clock Waiting For Wi-Fi</a><a href="#screen-examples--20-clock-waiting-for-ntp">20 — Clock Waiting For Ntp</a><a href="#screen-examples--regenerate-and-verify">Regenerate and verify</a></nav></details><details class="nav-group"><summary><a href="#hardware-photos">Hardware photos</a></summary><nav aria-label="Hardware photos sections"><a href="#hardware-photos--01-static-letters-before-mapping-correction">01 — Static letters before mapping correction</a><a href="#hardware-photos--02-corrected-letter-placement-section-fault-remains">02 — Corrected letter placement, section fault remains</a><a href="#hardware-photos--03-complete-rear-pcb">03 — Complete rear PCB</a><a href="#hardware-photos--04-output201-labels">04 — OUTPUT201 labels</a><a href="#hardware-photos--05-unmarked-input200-and-u201">05 — Unmarked INPUT200 and U201</a><a href="#hardware-photos--06-u105-u107-latch-check-area">06 — U105/U107 latch-check area</a><a href="#hardware-photos--image-files">Image files</a></nav></details><details class="nav-group"><summary><a href="#changelog">Changelog</a></summary><nav aria-label="Changelog sections"><a href="#changelog--unreleased">[Unreleased]</a><a href="#changelog--1-1-0-25-10-2026">[1.1.0] 25-10-2026</a><a href="#changelog--1-0-0-24-10-2026">[1.0.0] 24-10-2026</a><a href="#changelog--0-1-0-23-10-2026">[0.1.0] 23-10-2026</a></nav></details><details class="nav-group"><summary><a href="#maintainer-notes">Maintainer notes</a></summary><nav aria-label="Maintainer notes sections"><a href="#maintainer-notes--target-and-configuration">Target and configuration</a><a href="#maintainer-notes--showcase-application">Showcase application</a><a href="#maintainer-notes--network-settings-and-conventions">Network, settings and conventions</a><a href="#maintainer-notes--refresh-driver">Refresh driver</a><a href="#maintainer-notes--documentation">Documentation</a><a href="#maintainer-notes--checks-and-examples">Checks and examples</a></nav></details><details class="nav-group"><summary><a href="#image-archive">Image archive</a></summary><nav aria-label="Image archive sections"><a href="#image-archive--generated-screen-examples">Generated screen examples</a></nav></details><details class="nav-group"><summary><a href="#archived-bring-up">Archived bring-up</a></summary><nav aria-label="Archived bring-up sections"><a href="#archived-bring-up--resolution">Resolution</a><a href="#archived-bring-up--the-starting-point">The starting point</a><a href="#archived-bring-up--investigation-chronology">Investigation chronology</a><a href="#archived-bring-up--measurement-record">Measurement record</a><a href="#archived-bring-up--diagnostic-firmware-at-the-time-of-resolution">Diagnostic firmware at the time of resolution</a><a href="#archived-bring-up--lessons-for-the-next-panel">Lessons for the next panel</a><a href="#archived-bring-up--evidence-and-further-reading">Evidence and further reading</a></nav></details></div>
 <div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
-<div class="toolbar"><span class="eyebrow">Workshop reference / Overview</span><div class="tools"><a href="README.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
-<div class="doc-grid"><article>
+<div class="toolbar"><span class="eyebrow">Workshop reference · single-page edition</span><div class="tools"><button type="button" onclick="window.print()">Print</button></div></div>
+<article class="doc-body">
+<header class="cover">
 <div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
-<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#get-started" class="section">Get started</a>
-<a href="#what-s-on-screen" class="section">What&#x27;s on screen</a>
-<a href="#connect-wi-fi-and-set-your-location" class="section">Connect Wi-Fi and set your location</a>
-<a href="#make-it-yours" class="section">Make it yours</a>
-<a href="#documentation-and-sharing" class="section">Documentation and sharing</a></nav></details>
-<h1 id="red-led-panel-82">Red LED Panel 8×2</h1>
+<h1>Red LED Panel 8×2 documentation</h1>
+<p>Everything for the ESP32 and red 64×16 HUB08 panel in one page: setup, wiring, controls, examples, history and maintainer notes.</p>
+<nav class="contents" aria-label="Contents"><a href="#overview"><strong>Overview</strong><span>Project overview and quick start</span></a><a href="#panel-guide"><strong>Panel guide</strong><span>Hardware, wiring, firmware, and daily use</span></a><a href="#esp32-test-setup"><strong>ESP32 test setup</strong><span>Complete bench wiring, Wi-Fi and acceptance checks</span></a><a href="#screen-examples"><strong>Screen examples</strong><span>Rendered examples of every scene, boot and clock state</span></a><a href="#hardware-photos"><strong>Hardware photos</strong><span>Panel, connector, and component reference photos</span></a><a href="#changelog"><strong>Changelog</strong><span>Firmware and documentation changes</span></a><a href="#maintainer-notes"><strong>Maintainer notes</strong><span>Architecture, constraints, and evidence limits</span></a><a href="#image-archive"><strong>Image archive</strong><span>Image filenames and provenance</span></a><a href="#archived-bring-up"><strong>Archived bring-up</strong><span>Historical investigation and panel replacement</span></a></nav>
+</header>
+<section class="doc-section" aria-labelledby="overview">
+<h2 id="overview" class="doc-title">Red LED Panel 8×2</h2>
+<p class="doc-meta"><span class="eyebrow">Overview</span> · Project overview and quick start · <a href="README.md">README.md</a></p>
 <p><strong>Version 1.1.0</strong> — Wi-Fi setup, live local time, and an eleven-scene showcase.</p>
 <p>An animated showcase for an <strong>ESP32 and a red 64×16 HUB08 panel</strong>: bouncing balls, a starfield, pixel rain, animated bars, Conway's Life, beating hearts, scrolling text, Pong, and a network-synchronised clock. Two simple patterns make it easy to check placement and pixel detail.</p>
 <p>The panel is an <strong>8×2 grid of 8×8 modules</strong>, with one colour driven through R1. Drawing uses Adafruit GFX; the driver continuously refreshes the display in the background.</p>
-<h2 id="get-started">Get started</h2>
+<h3 id="overview--get-started">Get started</h3>
 <ol>
-<li>Connect the panel's <strong>5 V supply</strong>, common ground, and eight control signals through a level shifter. Use the <a href="docs/PANEL_GUIDE.html#esp32-to-matrix-wiring">wiring table</a>.</li>
+<li>Connect the panel's <strong>5 V supply</strong>, common ground, and eight control signals through a level shifter. Use the <a href="#panel-guide--esp32-to-matrix-wiring">wiring table</a>.</li>
 <li>Open this project in VS Code with PlatformIO. Build and upload:</li>
 </ol>
 <pre><code class="language-sh">pio run
@@ -42,7 +194,7 @@ pio device monitor --baud 115200
 <li>Three boot cards show the header, display settings, and network state, then the clock starts the cycle. Serial Monitor prints the full startup/settings report and each scene.</li>
 <li>Type <strong><code>1</code>–<code>9</code></strong>, <strong><code>g</code></strong> (Pong), or <strong><code>c</code></strong> (clock) to select a scene, <strong><code>n</code></strong> for next, <strong><code>p</code></strong> to pause/resume, or <strong><code>+</code> / <code>-</code></strong> to change brightness. No Enter is needed.</li>
 </ol>
-<h2 id="what-s-on-screen">What's on screen</h2>
+<h3 id="overview--what-s-on-screen">What's on screen</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -111,34 +263,1548 @@ pio device monitor --baud 115200
 </table></div>
 <p>The default cycle is <strong>clock (10 seconds) → letters → clock (10 seconds) → checkerboard → clock → next demo</strong>, continuing through Pong and repeating. A full rotation takes about <strong>2 minutes 47 seconds</strong> with the default text. Selecting a demo runs it immediately, then returns to the clock before the following demo; use <code>p</code> to keep a scene on screen. <code>t</code> holds the letter pattern immediately. <code>f</code>, <code>o</code>, and <code>b</code> provide all-off, all-on, and output blanking. <code>r</code> restarts at the clock, with letters next; <code>?</code> prints help.</p>
 <p>Pong plays automatically; no controllers are required. <strong><code>c</code> holds the live clock</strong> on screen; <code>n</code> leaves it and <code>p</code> resumes the playlist timer. Time continues while the playlist is paused.</p>
-<h2 id="connect-wi-fi-and-set-your-location">Connect Wi-Fi and set your location</h2>
+<h3 id="overview--connect-wi-fi-and-set-your-location">Connect Wi-Fi and set your location</h3>
 <p>If a saved network is unavailable after 10 seconds, join <strong><code>RedPanel-XXXXXX</code></strong> using <strong><code>PanelSetup32</code></strong>, then open <strong><code>http://192.168.4.1/</code></strong>. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.</p>
 <p>After connection, open <strong><code>http://&lt;panel-IP&gt;/panel</code></strong> using the address printed by serial. Set the location, time zone, startup brightness and startup view. Defaults are <strong>Sydney</strong>, <strong>Australia/Sydney</strong>, <strong>90/255</strong>, and <strong>Clock + demos</strong>. Daylight saving follows the selected zone automatically.</p>
 <p>The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled <strong>HLD</strong>. Send <strong><code>w</code></strong> to reopen setup, <strong><code>i</code></strong> for status, and <strong><code>d</code></strong> to cycle debug levels.</p>
-<p>Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. Send <code>i</code> for refresh timing counters; see the <a href="docs/ESP32_TEST_CONFIG.html#check-display-flicker">flicker check</a> after uploading. Clock colons blink and hearts pulse deliberately.</p>
+<p>Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. Send <code>i</code> for refresh timing counters; see the <a href="#esp32-test-setup--check-display-flicker">flicker check</a> after uploading. Clock colons blink and hearts pulse deliberately.</p>
 <p>The reference ESP32/panel check on <strong>25 October 2026</strong> confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.</p>
-<p>The <a href="docs/ESP32_TEST_CONFIG.html">ESP32 reference test setup</a> contains every connection, buffer pin, network address, default setting and bench check. <a href="docs/SCREEN_EXAMPLES.html">Screen examples</a> show rendered output for every demo and startup/clock state.</p>
-<h2 id="make-it-yours">Make it yours</h2>
-<p>Change <strong><code>SCROLL_TEXT</code></strong>, <strong><code>DEFAULT_BRIGHTNESS</code></strong>, and animation timing in <a href="include/config.h">include/config.h</a>. Scene lengths and drawing routines are in <a href="src/main.cpp">src/main.cpp</a>. The <a href="docs/PANEL_GUIDE.html">panel guide</a> includes the complete control reference, power and wiring details, and examples for drawing your own text and graphics.</p>
+<p>The <a href="#esp32-test-setup">ESP32 reference test setup</a> contains every connection, buffer pin, network address, default setting and bench check. <a href="#screen-examples">Screen examples</a> show rendered output for every demo and startup/clock state.</p>
+<h3 id="overview--make-it-yours">Make it yours</h3>
+<p>Change <strong><code>SCROLL_TEXT</code></strong>, <strong><code>DEFAULT_BRIGHTNESS</code></strong>, and animation timing in <a href="include/config.h">include/config.h</a>. Scene lengths and drawing routines are in <a href="src/main.cpp">src/main.cpp</a>. The <a href="#panel-guide">panel guide</a> includes the complete control reference, power and wiring details, and examples for drawing your own text and graphics.</p>
 <p>The default ESP32 pin map is <strong>25 → LA, 26 → LB, 27 → LC, 13 → LD, 22 → EN, 23 → R1, 4 → LT, 18 → SK</strong>. Monitor speed is <strong>115200 baud</strong>. The configured panel orientation uses reversed columns and row-address XOR <code>0x0F</code>; row bits are in normal A/B/C/D order.</p>
-<h2 id="documentation-and-sharing">Documentation and sharing</h2>
-<p>Open <strong><a href="index.html">index.html</a></strong> in a browser for the offline HTML edition. It includes the <a href="docs/PANEL_GUIDE.html">panel guide</a>, <a href="docs/ESP32_TEST_CONFIG.html">ESP32 test configuration</a>, <a href="docs/SCREEN_EXAMPLES.html">screen examples</a>, <a href="docs/PHOTO_LOG.html">hardware photos</a>, and <a href="CHANGELOG.html">changelog</a>. Earlier troubleshooting is retained separately in the <a href="docs/BRING_UP_REPORT.html">archived bring-up report</a>.</p>
-<p>Markdown is the editable source. To regenerate the HTML and <strong><code>Red_LED_Panel_8x2_Documentation.zip</code></strong>, use Python 3.10 or newer:</p>
+<h3 id="overview--documentation-and-sharing">Documentation and sharing</h3>
+<p>Open <strong><a href="index.html">index.html</a></strong> in a browser for the offline documentation: every Markdown document combined into one page with a section sidebar and print layout. It includes the <a href="#panel-guide">panel guide</a>, <a href="#esp32-test-setup">ESP32 test configuration</a>, <a href="#screen-examples">screen examples</a>, <a href="#hardware-photos">hardware photos</a>, and <a href="#changelog">changelog</a>. Earlier troubleshooting is retained at the end as the <a href="#archived-bring-up">archived bring-up report</a>.</p>
+<p>Markdown is the editable source; there are no per-document HTML files. To regenerate <code>index.html</code> and <strong><code>Red_LED_Panel_8x2_Documentation.zip</code></strong>, use Python 3.10 or newer:</p>
 <pre><code class="language-sh">python3 -m venv .venv-docs
 .venv-docs/bin/python -m pip install -r tools/docs-requirements.txt
 .venv-docs/bin/python tools/build_docs.py
 </code></pre>
 <p>To regenerate the screen examples from the actual firmware/GFX renderer, install project libraries with <code>pio pkg install</code>, then run <code>.venv-docs/bin/python tools/render_examples.py</code> (requires a C++17 compiler). The command also runs the host regressions. Edit <code>web/index.html</code> for the embedded settings page and PlatformIO embeds it automatically before building firmware (<code>python3 tools/embed_web.py</code> also works directly). For a browser preview with mock status: <code>python3 tools/preview_web.py</code>.</p>
-<p>Logging follows the shared <code>[ERR ]</code> / <code>[WARN]</code> / <code>[INFO]</code> / <code>[VERB]</code> convention. C++ formatting is defined in <a href=".clang-format">.clang-format</a>; the <a href="docs/ESP32_TEST_CONFIG.html#boot-status-and-debug-conventions">test setup guide</a> has check commands.</p>
-<p>Extract the ZIP and open <code>index.html</code>; keep its folders together. No server or internet connection is needed except to follow external reference links.</p>
+<p>Logging follows the shared <code>[ERR ]</code> / <code>[WARN]</code> / <code>[INFO]</code> / <code>[VERB]</code> convention. C++ formatting is defined in <a href=".clang-format">.clang-format</a>; the <a href="#esp32-test-setup--boot-status-and-debug-conventions">test setup guide</a> has check commands.</p>
+<p>Extract the ZIP and open <code>index.html</code>; keep the <code>images/</code> folder beside it. No server or internet connection is needed except to follow external reference links.</p>
 <p>Repository: <a href="https://github.com/anthonyjclarke/Red_LED_Panel_8x2">anthonyjclarke/Red_LED_Panel_8x2</a>.</p>
+</section>
+<section class="doc-section" aria-labelledby="panel-guide">
+<h2 id="panel-guide" class="doc-title">Panel hardware and usage guide</h2>
+<p class="doc-meta"><span class="eyebrow">Panel guide</span> · Hardware, wiring, firmware, and daily use · <a href="docs/PANEL_GUIDE.md">docs/PANEL_GUIDE.md</a></p>
+<p>Build a compact animated display with an <strong>ESP32, a 5 V HUB08 panel, and Adafruit GFX</strong>. This guide covers the working setup and the eleven-scene showcase.</p>
+<h3 id="panel-guide--what-the-panel-can-do">What the panel can do</h3>
+<p>This red <strong>P3.75, 64×16</strong> panel contains sixteen 8×8 modules in an <strong>8×2 grid</strong>. Every pixel is individually addressable, making it suitable for text, icons, simple games, cellular automata, and motion effects. Pixels are on/off; brightness control applies to the whole display rather than to individual pixels.</p>
+<p>The driver scans one of sixteen rows at a time. Background refresh continues while your application draws or pauses. The configured 500 µs row period gives a nominal <strong>125 Hz complete refresh</strong>; scene animation runs separately, typically at 25 frames per second.</p>
+<p><a class="image-link" href="images/03-panel-rear.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/03-panel-rear.jpg" alt="Rear view of the panel with INPUT200, OUTPUT201, drivers, and the power terminal" width="2048" height="559" loading="lazy" decoding="async" /></a></p>
+<p><em>Rear PCB: INPUT200 at left, OUTPUT201 at right, power near the centre. These reference photos come from the original bring-up board.</em></p>
+<h3 id="panel-guide--power-and-level-shifting">Power and level shifting</h3>
+<p>Use a <strong>regulated 5 V supply</strong> connected directly to the panel's <strong>VCC/GND screw terminal</strong>. A 2–3 A supply is a practical starting point, not a measured maximum panel rating. Keep power leads short and adequately sized. Join the panel, ESP32, and level-shifter grounds. Route LED-panel current through its power terminal rather than through the ESP32 or breadboard rails.</p>
+<p>Start at the default brightness <strong>90/255</strong>. Increasing brightness or the number of lit pixels increases the load. USB can power the ESP32 while the separate supply powers the matrix; their grounds must be common.</p>
+<p>Pass all eight control signals through a level shifter from ESP32 3.3 V logic to the panel's 5 V logic. The recorded setup uses an <strong>EzSBC LS1</strong>. Its VLo connects to 3.3 V, VHi to the panel logic supply, and each Lo channel pairs with the matching Hi channel. LS1 uses resistor pull-ups; a <strong>74AHCT245</strong> provides actively driven outputs and is another suitable interface. <a href="https://levelshifter.weebly.com/">EzSBC LS1 description</a>, <a href="https://news.ezsbc.com/new-level-shifter-buffer/">manufacturer design notes</a></p>
+<h4 id="panel-guide--esp32-to-matrix-wiring">ESP32-to-matrix wiring</h4>
+<p>These are <strong>ESP32 GPIO numbers</strong>, not development-board header positions. Connect to <strong>INPUT200</strong> beside U201.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">ESP32 GPIO</th>
+<th style="text-align:left">Matrix signal</th>
+<th style="text-align:left">Config name</th>
+<th style="text-align:left">Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">25</td>
+<td style="text-align:left">LA</td>
+<td style="text-align:left"><code>PIN_A</code></td>
+<td style="text-align:left">Row-address A</td>
+</tr>
+<tr>
+<td style="text-align:left">26</td>
+<td style="text-align:left">LB</td>
+<td style="text-align:left"><code>PIN_B</code></td>
+<td style="text-align:left">Row-address B</td>
+</tr>
+<tr>
+<td style="text-align:left">27</td>
+<td style="text-align:left">LC</td>
+<td style="text-align:left"><code>PIN_C</code></td>
+<td style="text-align:left">Row-address C</td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left">LD</td>
+<td style="text-align:left"><code>PIN_D</code></td>
+<td style="text-align:left">Row-address D</td>
+</tr>
+<tr>
+<td style="text-align:left">22</td>
+<td style="text-align:left">EN</td>
+<td style="text-align:left"><code>PIN_OE</code></td>
+<td style="text-align:left">Output enable</td>
+</tr>
+<tr>
+<td style="text-align:left">23</td>
+<td style="text-align:left">R1</td>
+<td style="text-align:left"><code>PIN_R1</code></td>
+<td style="text-align:left">Red pixel data</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">LT</td>
+<td style="text-align:left"><code>PIN_LAT</code></td>
+<td style="text-align:left">Column latch</td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left">SK</td>
+<td style="text-align:left"><code>PIN_CLK</code></td>
+<td style="text-align:left">Shift clock</td>
+</tr>
+<tr>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">—</td>
+<td style="text-align:left">Common reference</td>
+</tr>
+</tbody>
+</table></div>
+<p>All eight signals travel <strong>ESP32 → low-side input → matching high-side output → matrix input</strong>. R2/G1/G2 are unused by this firmware. The configured pins are below 32, as required by the driver's direct GPIO writes.</p>
+<h4 id="panel-guide--connector-reference">Connector reference</h4>
+<p>The pictured board has an unmarked INPUT200 and labelled OUTPUT201. With the <strong>rear PCB text upright</strong>, OUTPUT201 reads as follows. Row numbers are descriptive, not official IDC pin numbers.</p>
+<pre><code class="language-text">                    LEFT       RIGHT
+Top, row 1          GND        LA
+     row 2          GND        LB
+     row 3          GND        LC
+     row 4          EN         LD
+     row 5          R1         G1
+     row 6          R2         G2
+     row 7          GND        LT
+Bottom, row 8       GND        SK
+</code></pre>
+<p>The matching INPUT200 ground positions in left rows 1/2/3/7/8 were verified on this board. Use this as the connector orientation reference for this panel, not a universal pinout for every HUB08 product. OUTPUT201 is for cascading onward; this firmware controls one 64×16 panel.</p>
+<p><a class="image-link" href="images/04-output201-header.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/04-output201-header.jpg" alt="OUTPUT201 connector showing the labelled signal positions" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<h4 id="panel-guide--using-a-74ahct245">Using a 74AHCT245</h4>
+<p>For a standard 20-pin 74AHCT245, connect <strong>pin 20/VCC and pin 1/DIR to 5 V</strong>, and <strong>pin 10 (GND) and pin 19 (/OE) to ground</strong>. Add a 100 nF decoupling capacitor close to VCC/GND. This selects A-to-B direction. Verify the exact package pinout used. The chip's buffer-enable pin is separate from matrix EN. <a href="https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf">TI datasheet</a></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">GPIO</th>
+<th style="text-align:left">Buffer input</th>
+<th style="text-align:left">Buffer output</th>
+<th style="text-align:left">Matrix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">25</td>
+<td style="text-align:left">A1 / pin 2</td>
+<td style="text-align:left">B1 / pin 18</td>
+<td style="text-align:left">LA</td>
+</tr>
+<tr>
+<td style="text-align:left">26</td>
+<td style="text-align:left">A2 / pin 3</td>
+<td style="text-align:left">B2 / pin 17</td>
+<td style="text-align:left">LB</td>
+</tr>
+<tr>
+<td style="text-align:left">27</td>
+<td style="text-align:left">A3 / pin 4</td>
+<td style="text-align:left">B3 / pin 16</td>
+<td style="text-align:left">LC</td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left">A4 / pin 5</td>
+<td style="text-align:left">B4 / pin 15</td>
+<td style="text-align:left">LD</td>
+</tr>
+<tr>
+<td style="text-align:left">22</td>
+<td style="text-align:left">A5 / pin 6</td>
+<td style="text-align:left">B5 / pin 14</td>
+<td style="text-align:left">EN</td>
+</tr>
+<tr>
+<td style="text-align:left">23</td>
+<td style="text-align:left">A6 / pin 7</td>
+<td style="text-align:left">B6 / pin 13</td>
+<td style="text-align:left">R1</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">A7 / pin 8</td>
+<td style="text-align:left">B7 / pin 12</td>
+<td style="text-align:left">LT</td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left">A8 / pin 9</td>
+<td style="text-align:left">B8 / pin 11</td>
+<td style="text-align:left">SK</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="panel-guide--build-and-run">Build and run</h3>
+<p>Open the project in <strong>VS Code with PlatformIO</strong>, select environment <strong>esp32dev</strong>, and use Build, Upload, then Serial Monitor. The project uses <code>espressif32@6.9.0</code>, Arduino, and Adafruit GFX. From the PlatformIO terminal:</p>
+<pre><code class="language-sh">pio run
+pio device list
+pio run --target upload
+pio device monitor --baud 115200
+</code></pre>
+<p>Choose the USB port for your ESP32 if several devices are connected. Close an existing monitor before uploading. Reset the board with Serial Monitor open to see the startup message.</p>
+<p>The display shows three startup cards, then enters the saved startup view: Clock + demos by default, or a held live clock. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.</p>
+<h3 id="panel-guide--wi-fi-location-and-startup-status">Wi-Fi, location and startup status</h3>
+<p>The firmware includes <strong>WiFiManager 2.0.17</strong>, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens <strong>RedPanel-XXXXXX</strong> with setup password <strong>PanelSetup32</strong>. Join it and open <strong>http://192.168.4.1/</strong> to select a 2.4 GHz network.</p>
+<p>Once connected, open the serial-reported <strong>http://&lt;panel-IP&gt;/panel</strong>. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. <strong><code>w</code></strong> reopens setup and <strong><code>i</code></strong> prints status.</p>
+<p>Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.</p>
+<p>Use the <a href="#esp32-test-setup">complete ESP32 test configuration</a> for exact buffer/header connections, provisioning, network services, persistence and acceptance checks. <a href="#screen-examples">Generated examples</a> show the expected output for all scenes and status states.</p>
+<h3 id="panel-guide--the-showcase-playlist">The showcase playlist</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Key</th>
+<th style="text-align:left">Scene</th>
+<th style="text-align:left">Default time</th>
+<th style="text-align:left">What it demonstrates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>1</code></td>
+<td style="text-align:left">Letters</td>
+<td style="text-align:left">2.5 s</td>
+<td style="text-align:left">A–H above I–P, one small letter in each module</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>2</code></td>
+<td style="text-align:left">Checkerboard</td>
+<td style="text-align:left">1.2 s</td>
+<td style="text-align:left">Six alternating pixel patterns</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>3</code></td>
+<td style="text-align:left">Bouncing balls</td>
+<td style="text-align:left">5.6 s</td>
+<td style="text-align:left">Three independent paths, filled and outlined circles</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>4</code></td>
+<td style="text-align:left">Starfield</td>
+<td style="text-align:left">5.6 s</td>
+<td style="text-align:left">Twenty-four stars, three speeds, short trails</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>5</code></td>
+<td style="text-align:left">Pixel rain</td>
+<td style="text-align:left">6 s</td>
+<td style="text-align:left">Staggered falling trails of different lengths</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>6</code></td>
+<td style="text-align:left">Animated bars</td>
+<td style="text-align:left">6.4 s</td>
+<td style="text-align:left">Eight smoothly interpolated bars and peak marks</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>7</code></td>
+<td style="text-align:left">Conway's Life</td>
+<td style="text-align:left">7.2 s</td>
+<td style="text-align:left">Gliders and blinkers with wrapping edges</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>8</code></td>
+<td style="text-align:left">Beating hearts</td>
+<td style="text-align:left">4 s</td>
+<td style="text-align:left">Three enlarged pixel-art hearts with pulsing brightness</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>9</code></td>
+<td style="text-align:left">Scrolling text</td>
+<td style="text-align:left">About 12.2 s</td>
+<td style="text-align:left">Size-2 text crossing the full screen</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>g</code></td>
+<td style="text-align:left">Pong</td>
+<td style="text-align:left">16 s</td>
+<td style="text-align:left">Automatic paddles, ball physics, goals, and a small scoreboard</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>c</code></td>
+<td style="text-align:left">Live clock</td>
+<td style="text-align:left">10 s between demos; held by <code>c</code></td>
+<td style="text-align:left">NTP local time, large HH:MM:SS digits, blinking colons, seconds bar</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Clock (10 s) → letters → clock (10 s) → checkerboard → clock → balls</strong>, and so on through Pong, then repeat. A complete rotation is approximately <strong>2 minutes 47 seconds</strong> with the default text. A directly selected demo returns to the clock, then advances to the following demo. <code>n</code> follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.</p>
+<p>Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.</p>
+<h4 id="panel-guide--pong-and-live-clock">Pong and live clock</h4>
+<p><strong>Pong</strong> is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting <code>g</code> starts a fresh match. Use <code>p</code> to freeze or resume play.</p>
+<p><strong>Clock</strong> displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows <strong>NO WIFI / JOIN AP</strong> or <strong>SYNC TIME / WAIT NTP</strong>. The lower label is <strong>NTP</strong> when connected, <strong>HLD</strong> while holding time offline. Selecting <code>c</code> holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.</p>
+<h3 id="panel-guide--serial-controls">Serial controls</h3>
+<p>Click inside the PlatformIO <strong>Serial Monitor terminal</strong> and type a key. <strong>No Enter or comma is required.</strong> Letter commands also accept uppercase. Local echo may be off; the firmware's printed response confirms receipt.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Key</th>
+<th style="text-align:left">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>1</code>–<code>9</code></td>
+<td style="text-align:left">Start the chosen scene, then continue the playlist</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>g</code></td>
+<td style="text-align:left">Start a fresh Pong simulation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>c</code></td>
+<td style="text-align:left">Hold the live clock; does not reset the time</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>w</code></td>
+<td style="text-align:left">Open the Wi-Fi setup hotspot without erasing settings</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>i</code></td>
+<td style="text-align:left">Print the startup/settings status report</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>d</code></td>
+<td style="text-align:left">Cycle runtime debug level 0–4</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>n</code></td>
+<td style="text-align:left">Start the next scene; resumes if paused</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>p</code></td>
+<td style="text-align:left">Pause/resume the playlist; refresh and live clock continue</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>r</code></td>
+<td style="text-align:left">Restart at the clock, with letters next</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>t</code></td>
+<td style="text-align:left">Hold the static letters indefinitely; <code>p</code> resumes their timer</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>s</code></td>
+<td style="text-align:left">Jump directly to scrolling text, then continue the playlist</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Hold all pixels OFF</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">Hold all pixels ON at the selected brightness</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>b</code></td>
+<td style="text-align:left">Blank the output at brightness zero</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>+</code> / <code>-</code></td>
+<td style="text-align:left">Change requested brightness by 15, bounded to 0–255; <code>=</code> also increases it</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>?</code> / <code>h</code></td>
+<td style="text-align:left">Print help, scene list, and selected brightness</td>
+</tr>
+</tbody>
+</table></div>
+<p>From held <code>f/o/b</code>, <strong><code>p</code>, <code>r</code>, or <code>n</code> returns to the clock</strong> (<code>r</code> also resets the next demo to letters). Scene keys (<code>1</code>–<code>9</code>, <code>g</code>, <code>c</code>) also leave any held pattern. Changing brightness preserves the current frame and pause state; <code>b</code> remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the saved web setting (or compiled default) when the ESP32 resets. Brightness zero remains dark until increased again.</p>
+<p>Requested brightness is an on-time setting, not a calibrated light percentage. At higher settings the driver caps it to the time remaining after shifting, so the upper end can saturate.</p>
+<p>For a clear placement reference, send <code>t</code>:</p>
+<pre><code class="language-text">A B C D E F G H
+I J K L M N O P
+</code></pre>
+<p>The rightmost three module columns should show F/G/H above N/O/P. Use <code>p</code> to continue from this held scene, or select another scene directly.</p>
+<h3 id="panel-guide--customise-the-showcase">Customise the showcase</h3>
+<p>Edit <a href="include/config.h">include/config.h</a>, rebuild, and upload:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Setting</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>DEFAULT_BRIGHTNESS</code></td>
+<td style="text-align:left">90</td>
+<td style="text-align:left">Fallback brightness before any web setting is saved</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>SCROLL_TEXT</code></td>
+<td style="text-align:left"><code>ESP32 + HUB08 = FUN!</code></td>
+<td style="text-align:left">Message in scene 9</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>LETTER_HOLD_MS</code></td>
+<td style="text-align:left">2500</td>
+<td style="text-align:left">Time on the letter pattern</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CHECKER_STEP_MS</code></td>
+<td style="text-align:left">200</td>
+<td style="text-align:left">Time per checkerboard phase</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>ANIMATION_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Frame interval for balls, stars, bars, and hearts</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>RAIN_STEP_MS</code></td>
+<td style="text-align:left">50</td>
+<td style="text-align:left">Rain frame interval</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>LIFE_STEP_MS</code></td>
+<td style="text-align:left">100</td>
+<td style="text-align:left">Time per Life generation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>SCROLL_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Time per one-pixel scroll step</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>PONG_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Pong physics and drawing interval</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CLOCK_STEP_MS</code></td>
+<td style="text-align:left">250</td>
+<td style="text-align:left">Live-clock redraw interval; time comes from NTP/system clock</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CLOCK_HOLD_MS</code></td>
+<td style="text-align:left">10000</td>
+<td style="text-align:left">Clock display time between demos</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>WIFI_CONNECT_TIMEOUT_MS</code></td>
+<td style="text-align:left">10000</td>
+<td style="text-align:left">Saved connection attempt before setup hotspot</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>BOOT_CARD_MS</code></td>
+<td style="text-align:left">2000</td>
+<td style="text-align:left">Time per startup card</td>
+</tr>
+</tbody>
+</table></div>
+<p>Scene frame counts are in the <code>scenes</code> table in <a href="src/main.cpp">src/main.cpp</a>. Each render draws into the working buffer and calls <code>show()</code>. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits use elapsed milliseconds and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.</p>
+<h4 id="panel-guide--orientation-and-scan-settings">Orientation and scan settings</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Setting</th>
+<th style="text-align:left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Geometry</td>
+<td style="text-align:left">64×16; 1/16 scan</td>
+</tr>
+<tr>
+<td style="text-align:left">Column stream</td>
+<td style="text-align:left"><code>REVERSE_SHIFT_COLUMNS = true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">A/B/C/D source bits</td>
+<td style="text-align:left"><code>ROW_ADDRESS_Y_BITS = {0, 1, 2, 3}</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Row-address inversion</td>
+<td style="text-align:left"><code>ROW_ADDRESS_XOR = 0x0F</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Data / output-enable polarity</td>
+<td style="text-align:left"><code>DATA_ACTIVE_LOW = true</code>, <code>OE_ACTIVE_LOW = true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Row period / signal phase / guard</td>
+<td style="text-align:left">500 µs / 1 µs / 50 µs</td>
+</tr>
+</tbody>
+</table></div>
+<p>These values match the working panel orientation. Drawing coordinates remain <strong>(0,0) at top left</strong>. Changing geometry alone does not make the driver a generic multi-panel cascade driver.</p>
+<h3 id="panel-guide--draw-your-own-content">Draw your own content</h3>
+<p><code>Hub08Panel</code> derives from <code>Adafruit_GFX</code>. Colour <strong>0 is OFF</strong> and a nonzero colour is ON. Draw text or graphics, then call <strong><code>show()</code></strong>. For a permanent label, replace the demo application in <code>src/main.cpp</code> with:</p>
+<pre><code class="language-cpp">#include &lt;Arduino.h&gt;
+#include &quot;Hub08Panel.h&quot;
 
-<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
-</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#get-started" class="section">Get started</a>
-<a href="#what-s-on-screen" class="section">What&#x27;s on screen</a>
-<a href="#connect-wi-fi-and-set-your-location" class="section">Connect Wi-Fi and set your location</a>
-<a href="#make-it-yours" class="section">Make it yours</a>
-<a href="#documentation-and-sharing" class="section">Documentation and sharing</a></aside></div>
+Hub08Panel panel;
+
+void setup() {
+  Serial.begin(115200);
+  panel.begin();
+  panel.setBrightness(DEFAULT_BRIGHTNESS);
+  panel.setTextWrap(false);
+  panel.setTextSize(1);
+  panel.setTextColor(1);
+  panel.fillScreen(0);
+  panel.setCursor(1, 0);
+  panel.print(&quot;READY&quot;);
+  panel.setCursor(1, 8);
+  panel.print(&quot;ESP32&quot;);
+  panel.show();
+}
+
+void loop() {
+  delay(10);  // Background scanning keeps the label visible.
+}
+</code></pre>
+<p>Use this instead of the original <code>setup()</code>/<code>loop()</code>, rather than adding a second pair. To draw a border, line, and circle after initialisation:</p>
+<pre><code class="language-cpp">panel.fillScreen(0);
+panel.drawRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT, 1);
+panel.drawLine(0, 0, PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 1);
+panel.drawCircle(32, 8, 5, 1);
+panel.show();
+</code></pre>
+<p>Size-1 text fits two rows of small characters. Size-2 text gives a single 14-pixel-tall line, as used by the scroller. <code>setTextWrap(false)</code> lets text move through the screen edges. GFX clips drawing to the framebuffer and honours <code>setRotation()</code>.</p>
+<h4 id="panel-guide--driver-api">Driver API</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Method</th>
+<th style="text-align:left">Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>begin()</code></td>
+<td style="text-align:left">Initialise pins and start background refresh; call once</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>drawPixel(x, y, colour)</code></td>
+<td style="text-align:left">Set a pixel, with clipping and GFX rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>fillScreen(colour)</code></td>
+<td style="text-align:left">Clear or fill the drawing buffer</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>show()</code></td>
+<td style="text-align:left">Queue the drawing buffer for the next complete scan</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>setBrightness(level)</code></td>
+<td style="text-align:left">Set requested row on-time; zero blanks output</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>rowAddressFor(y)</code></td>
+<td style="text-align:left">Return the mapped hardware address for a logical row</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>refreshStats()</code></td>
+<td style="text-align:left">Snapshot cumulative rows/deadlines and maximum wake/scan times</td>
+</tr>
+</tbody>
+</table></div>
+<p>The working, pending and active framebuffers each occupy <strong>128 bytes</strong>. <code>show()</code> copies to the pending buffer; refresh applies it only before row zero, so one complete scan uses one picture. Brightness also changes at that boundary.</p>
+<p>Hardware timer <strong>TG0/T0</strong> sets the 500 µs row cadence and blanks output. A dedicated high-priority task on core 1 shifts the 64 bits, sets the address and latches. <strong>TG0/T1</strong> ends the brightness pulse in a short interrupt; the row interrupt supplies a second blanking deadline. Late rows remain dark and missed ticks are skipped. These two timers are reserved for the panel. Their IRAM handlers use shared interrupts at an available level 1–3, avoiding the two exclusive level-3 allocations that caused a blank display during startup. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/intr_alloc.html">ESP-IDF interrupt allocation</a> Interrupts do not shift data or print logs. This removes row work from the shared <code>esp_timer</code> task that Wi-Fi activity can delay. The pin map, polarity, 1 µs signal phases and nominal 125 Hz refresh remain the same. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/timer.html">ESP-IDF hardware timer reference</a>, <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html">ESP timer dispatch limitations</a></p>
+<p>This addresses possible timing jitter and frame tearing. On 25 October 2026 the user confirmed no visible flicker on the reference panel; two held-letter readings showed increasing rows and unchanged missed/late counters. See the <a href="#esp32-test-setup--recorded-reference-panel-result-25-october-2026">recorded result</a> for the measurements and scope. Flash writes can still pause the scan task briefly. See the <a href="#esp32-test-setup--check-display-flicker">bench flicker check</a>; camera banding is a separate exposure effect.</p>
+<h3 id="panel-guide--photographing-the-display">Photographing the display</h3>
+<p>Send <code>t</code>, or pause an animation with <code>p</code>. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at <strong>1/25 second and low ISO</strong>, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. <a href="https://www.sony.com.au/electronics/support/articles/00122281">Sony guidance on LED banding</a></p>
+<h3 id="panel-guide--debug-and-formatting">Debug and formatting</h3>
+<p>Logs use the shared runtime levels: 0 Off, 1 Error <code>[ERR ]</code>, 2 Warn <code>[WARN]</code>, 3 Info <code>[INFO]</code>, and 4 Verbose <code>[VERB]</code>. <code>DEBUG_LEVEL</code> in PlatformIO sets the boot level, and serial <code>d</code> cycles it. INFO prints startup settings and scene/network transitions; frequent details use VERBOSE. Wi-Fi passwords are not logged.</p>
+<p>C++ follows two-space indentation, attached braces and a 100-column limit in <a href=".clang-format">.clang-format</a>. See the <a href="#esp32-test-setup--boot-status-and-debug-conventions">test setup</a> for formatting and host-check commands.</p>
+<h3 id="panel-guide--reference-material">Reference material</h3>
+<p>Open <a href="index.html">index.html</a> for the single-page HTML edition of all documentation. The <a href="#hardware-photos">photo gallery</a> provides connector and component close-ups; <a href="images/manifest.json">manifest.json</a> records the original attachment checksums. Rebuild it and the share ZIP using the instructions in <a href="#overview">README.md</a>.</p>
+<p>Earlier diagnostic commands and electrical measurements are retained in the <a href="#archived-bring-up">archived bring-up report</a>. That report describes the older test firmware, not the current showcase controls.</p>
+</section>
+<section class="doc-section" aria-labelledby="esp32-test-setup">
+<h2 id="esp32-test-setup" class="doc-title">ESP32 reference test configuration</h2>
+<p class="doc-meta"><span class="eyebrow">ESP32 test setup</span> · Complete bench wiring, Wi-Fi and acceptance checks · <a href="docs/ESP32_TEST_CONFIG.md">docs/ESP32_TEST_CONFIG.md</a></p>
+<p>A complete bench setup for the <strong>64×16 red HUB08 panel</strong>, with Wi-Fi provisioning, network time and an embedded settings page. These are reproducible connection and acceptance instructions; host tests and a firmware build do not establish physical Wi-Fi, power or signal performance.</p>
+<h3 id="esp32-test-setup--hardware-and-software">Hardware and software</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Item</th>
+<th style="text-align:left">Reference configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Controller</td>
+<td style="text-align:left">Classic ESP32 DevKit with ESP-WROOM-32, 4 MB flash; PlatformIO <code>esp32dev</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Panel</td>
+<td style="text-align:left">Red P3.75 HUB08, 64×16 pixels, sixteen 8×8 modules, 1/16 scan</td>
+</tr>
+<tr>
+<td style="text-align:left">Logic interface</td>
+<td style="text-align:left">5 V 74AHCT245 with 100 nF decoupling; EzSBC LS1 is the previously used alternative</td>
+</tr>
+<tr>
+<td style="text-align:left">Panel power</td>
+<td style="text-align:left">Regulated 5 V through VCC/GND screw terminal; a 2–3 A supply is a starting recommendation, not a measured maximum rating</td>
+</tr>
+<tr>
+<td style="text-align:left">ESP32 power</td>
+<td style="text-align:left">USB data cable; common ground with panel and buffer</td>
+</tr>
+<tr>
+<td style="text-align:left">Network</td>
+<td style="text-align:left">2.4 GHz Wi-Fi, for example a WPA2-Personal test SSID; DHCP enabled</td>
+</tr>
+<tr>
+<td style="text-align:left">Framework</td>
+<td style="text-align:left">Arduino on <code>espressif32@6.9.0</code> (Arduino core 2.0.17)</td>
+</tr>
+<tr>
+<td style="text-align:left">Libraries</td>
+<td style="text-align:left">Adafruit GFX <code>^1.11.9</code>, WiFiManager <strong>2.0.17</strong>; WiFi, Preferences, mDNS and SNTP from the ESP32 core</td>
+</tr>
+<tr>
+<td style="text-align:left">Serial</td>
+<td style="text-align:left"><strong>115200 baud</strong>, one-key commands without Enter</td>
+</tr>
+</tbody>
+</table></div>
+<p>The ESP32 radio uses 2.4 GHz Wi-Fi. Use the classic ESP32 target here; arbitrary ESP32 variants have different GPIO and timer arrangements. <a href="https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf">Espressif ESP32 datasheet</a></p>
+<h3 id="esp32-test-setup--exact-electrical-connections">Exact electrical connections</h3>
+<p>Power off while wiring. Connect panel VCC and buffer VCC to the regulated 5 V rail. Connect <strong>panel GND, buffer GND and ESP32 GND</strong> together. Supply panel LED current through its terminal, not through the ESP32 board.</p>
+<p>For the standard 20-pin <strong>74AHCT245</strong>:</p>
+<ul>
+<li><strong>Pin 20/VCC → 5 V</strong>, <strong>pin 1/DIR → 5 V</strong> for A-to-B operation.</li>
+<li><strong>Pin 10/GND → common GND</strong>, <strong>pin 19 (/OE) → GND</strong> to enable the buffer.</li>
+<li><strong>100 nF</strong> between pins 20 and 10 close to the chip.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">ESP32 pin label / GPIO</th>
+<th style="text-align:left">Buffer input</th>
+<th style="text-align:left">Buffer output</th>
+<th style="text-align:left">Matrix INPUT200 signal</th>
+<th style="text-align:left">Contact in rear-upright reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">IO25 / GPIO 25</td>
+<td style="text-align:left">A1 / 2</td>
+<td style="text-align:left">B1 / 18</td>
+<td style="text-align:left">LA</td>
+<td style="text-align:left">Row 1, right</td>
+</tr>
+<tr>
+<td style="text-align:left">IO26 / GPIO 26</td>
+<td style="text-align:left">A2 / 3</td>
+<td style="text-align:left">B2 / 17</td>
+<td style="text-align:left">LB</td>
+<td style="text-align:left">Row 2, right</td>
+</tr>
+<tr>
+<td style="text-align:left">IO27 / GPIO 27</td>
+<td style="text-align:left">A3 / 4</td>
+<td style="text-align:left">B3 / 16</td>
+<td style="text-align:left">LC</td>
+<td style="text-align:left">Row 3, right</td>
+</tr>
+<tr>
+<td style="text-align:left">IO13 / GPIO 13</td>
+<td style="text-align:left">A4 / 5</td>
+<td style="text-align:left">B4 / 15</td>
+<td style="text-align:left">LD</td>
+<td style="text-align:left">Row 4, right</td>
+</tr>
+<tr>
+<td style="text-align:left">IO22 / GPIO 22</td>
+<td style="text-align:left">A5 / 6</td>
+<td style="text-align:left">B5 / 14</td>
+<td style="text-align:left">EN</td>
+<td style="text-align:left">Row 4, left</td>
+</tr>
+<tr>
+<td style="text-align:left">IO23 / GPIO 23</td>
+<td style="text-align:left">A6 / 7</td>
+<td style="text-align:left">B6 / 13</td>
+<td style="text-align:left">R1</td>
+<td style="text-align:left">Row 5, left</td>
+</tr>
+<tr>
+<td style="text-align:left">IO4 / GPIO 4</td>
+<td style="text-align:left">A7 / 8</td>
+<td style="text-align:left">B7 / 12</td>
+<td style="text-align:left">LT</td>
+<td style="text-align:left">Row 7, right</td>
+</tr>
+<tr>
+<td style="text-align:left">IO18 / GPIO 18</td>
+<td style="text-align:left">A8 / 9</td>
+<td style="text-align:left">B8 / 11</td>
+<td style="text-align:left">SK</td>
+<td style="text-align:left">Row 8, right</td>
+</tr>
+<tr>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">Pin 10 and /OE pin 19</td>
+<td style="text-align:left">Common ground</td>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">Left rows 1/2/3/7/8</td>
+</tr>
+</tbody>
+</table></div>
+<p>GPIO numbers are the labels printed on the development board, not physical header positions. R2, G1 and G2 are unused. Connect to <strong>INPUT200</strong>, beside U201, rather than the cascade output.</p>
+<p>The contact positions use this board's labelled OUTPUT201 and matching checked INPUT200 ground orientation. They are not a universal HUB08 pin-numbering convention. See the <a href="#panel-guide--connector-reference">connector photos and orientation</a> before attaching an unmarked header. <a href="https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf">TI buffer pinout</a></p>
+<p>For an <strong>EzSBC LS1</strong>, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and eight matching Lo/Hi channels. Do not apply the AHCT245 package pin numbers to an LS1 board. The <a href="#panel-guide--power-and-level-shifting">guide</a> explains the difference.</p>
+<h3 id="esp32-test-setup--firmware-defaults">Firmware defaults</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Setting</th>
+<th style="text-align:left">Value / behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Firmware</td>
+<td style="text-align:left"><code>1.1.0</code>, network-clock update after the v1.0.0 showcase</td>
+</tr>
+<tr>
+<td style="text-align:left">LA/LB/LC/LD</td>
+<td style="text-align:left">GPIO 25/26/27/13; normal A/B/C/D bit order</td>
+</tr>
+<tr>
+<td style="text-align:left">EN/R1/LT/SK</td>
+<td style="text-align:left">GPIO 22/23/4/18</td>
+</tr>
+<tr>
+<td style="text-align:left">Geometry and scan</td>
+<td style="text-align:left">64×16, 1/16 scan; 500 µs per row, nominal 125 Hz complete refresh</td>
+</tr>
+<tr>
+<td style="text-align:left">Signal phase / row guard</td>
+<td style="text-align:left">1 µs / 50 µs</td>
+</tr>
+<tr>
+<td style="text-align:left">Data / EN polarity</td>
+<td style="text-align:left">Active LOW / active LOW</td>
+</tr>
+<tr>
+<td style="text-align:left">Orientation</td>
+<td style="text-align:left">Reversed column stream, row XOR <code>0x0F</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Default location</td>
+<td style="text-align:left"><strong>Sydney</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Default time zone</td>
+<td style="text-align:left"><strong>Australia/Sydney</strong>, with automatic daylight saving</td>
+</tr>
+<tr>
+<td style="text-align:left">POSIX rule</td>
+<td style="text-align:left"><code>AEST-10AEDT,M10.1.0,M4.1.0/3</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Startup brightness / view</td>
+<td style="text-align:left"><strong>90/255</strong>, <strong>Clock + demos</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Boot cards</td>
+<td style="text-align:left">Three cards, 2 seconds each: header/version, geometry/brightness, network/time state</td>
+</tr>
+<tr>
+<td style="text-align:left">Clock drawing interval / visit</td>
+<td style="text-align:left">250 ms redraw; 10 seconds between demos, from elapsed milliseconds</td>
+</tr>
+<tr>
+<td style="text-align:left">Refresh scheduling</td>
+<td style="text-align:left">Hardware TG0/T0 row cadence + TG0/T1 OE deadline; dedicated scan task on core 1</td>
+</tr>
+<tr>
+<td style="text-align:left">NTP servers</td>
+<td style="text-align:left"><code>pool.ntp.org</code>, <code>time.cloudflare.com</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Unsynchronised NTP retry</td>
+<td style="text-align:left">Every 60 seconds while Wi-Fi is connected</td>
+</tr>
+<tr>
+<td style="text-align:left">Wi-Fi connection window</td>
+<td style="text-align:left">10 seconds before opening the setup hotspot</td>
+</tr>
+<tr>
+<td style="text-align:left">Saved-network retry</td>
+<td style="text-align:left">Every 30 seconds while offline, with no client on the setup hotspot</td>
+</tr>
+<tr>
+<td style="text-align:left">Serial debug default</td>
+<td style="text-align:left">Level 3 / INFO; <code>d</code> cycles runtime levels 0–4</td>
+</tr>
+<tr>
+<td style="text-align:left">Persistent storage</td>
+<td style="text-align:left">ESP32 NVS: Wi-Fi credentials managed by WiFiManager; one validated panel settings record under <code>redpanel/clock</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Changing the time zone changes how UTC is displayed, not the underlying network time. The location name is a label; it does not geolocate the device or contact a location service. Choose the matching time zone explicitly. Sydney's POSIX rule is from the <a href="https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h">Arduino time-zone reference</a>.</p>
+<h3 id="esp32-test-setup--build-and-first-connection">Build and first connection</h3>
+<p>From the PlatformIO terminal:</p>
+<pre><code class="language-sh">pio run
+pio device list
+pio run --target upload
+pio device monitor --baud 115200
+</code></pre>
+<p>No separate filesystem upload is required: the settings page is compiled into flash. The ESP32 shows boot cards and prints its header, GPIO mapping, timing, location and network settings. The playlist continues while the first Wi-Fi connection is attempted.</p>
+<p>With no usable saved network, wait about 10 seconds, then join:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Connection item</th>
+<th style="text-align:left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Setup SSID</td>
+<td style="text-align:left"><strong><code>RedPanel-ABCDEF</code></strong> — ABCDEF is an example; use the suffix printed by your ESP32</td>
+</tr>
+<tr>
+<td style="text-align:left">Setup password</td>
+<td style="text-align:left"><strong><code>PanelSetup32</code></strong> — configurable as <code>WIFI_AP_PASSWORD</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Captive portal / Wi-Fi selection</td>
+<td style="text-align:left"><strong><code>http://192.168.4.1/</code></strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Panel settings on the hotspot</td>
+<td style="text-align:left"><strong><code>http://192.168.4.1/panel</code></strong></td>
+</tr>
+<tr>
+<td style="text-align:left">Example router SSID</td>
+<td style="text-align:left"><strong><code>Panel-Test-2G</code></strong> — create or substitute your own network</td>
+</tr>
+<tr>
+<td style="text-align:left">Router password</td>
+<td style="text-align:left">Enter your own password in WiFiManager; no router password is supplied or committed</td>
+</tr>
+</tbody>
+</table></div>
+<p>If a phone does not open the captive portal, stay connected to the hotspot and enter the HTTP address manually. Select your 2.4 GHz network and enter its password. WiFiManager saves the credentials on the ESP32. Normal firmware uploads retain NVS; a full flash erase removes the saved credentials and panel settings. Its save/connect operation can briefly pause animation for roughly the two-second portal-close delay plus an eight-second association window; <strong>panel scanning continues</strong>.</p>
+<p>After joining the router, the setup hotspot closes and serial reports the assigned IP and settings URL. Rejoin your normal Wi-Fi network and open:</p>
+<pre><code class="language-text">http://192.168.1.80/panel          Example DHCP address only: use the actual serial-reported IP.
+http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suffix.
+</code></pre>
+<p>mDNS depends on the client/network; the printed IP works without it. The router's DHCP address is not hard-coded. A router reservation can keep it stable. Use a trusted local network for this plain HTTP configuration page.</p>
+<h4 id="esp32-test-setup--network-services">Network services</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Service</th>
+<th style="text-align:left">Connection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Configuration HTTP</td>
+<td style="text-align:left">Browser → panel, TCP port 80</td>
+</tr>
+<tr>
+<td style="text-align:left">Captive DNS</td>
+<td style="text-align:left">Phone → setup hotspot, UDP port 53</td>
+</tr>
+<tr>
+<td style="text-align:left">Router DHCP / DNS</td>
+<td style="text-align:left">ESP32 receives its address and resolves the NTP hosts</td>
+</tr>
+<tr>
+<td style="text-align:left">Network time</td>
+<td style="text-align:left">ESP32 → NTP servers, UDP port 123</td>
+</tr>
+<tr>
+<td style="text-align:left">mDNS</td>
+<td style="text-align:left">Local hostname discovery, UDP port 5353</td>
+</tr>
+</tbody>
+</table></div>
+<p>Internet access is used for network time, not for storing or reading your local settings. Network restrictions on DNS or UDP 123 can leave the clock waiting even when Wi-Fi is connected.</p>
+<h3 id="esp32-test-setup--web-settings-and-status">Web settings and status</h3>
+<p><a class="image-link" href="images/demos/web-config-preview.png" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/web-config-preview.png" alt="Embedded settings page with example Sydney test-network status" loading="lazy" decoding="async" /></a></p>
+<p><em>Browser preview using mock test-network data. The live page reads its status from your ESP32.</em></p>
+<p>At <strong><code>/panel</code></strong>, set:</p>
+<ol>
+<li><strong>Location name:</strong> 1–32 UTF-8 bytes; defaults to Sydney.</li>
+<li><strong>Time zone:</strong> choose a listed region. Australian zones, Auckland, UTC and several international zones are included.</li>
+<li><strong>Startup brightness:</strong> 0–255; default 90. This is the requested on-time and can saturate at the upper end.</li>
+<li><strong>Startup view:</strong> Clock + demos or Real-time clock. Clock + demos starts with 10 seconds of clock, runs one demo, returns to the clock for 10 seconds, then runs the following demo.</li>
+</ol>
+<p>Choose <strong>Save and apply</strong>. The ESP32 validates the complete form, saves one record, changes the local time zone and brightness, and enters the selected view. Settings survive reset. A failed flash write leaves the previous settings active. Changing brightness by serial remains temporary; it does not continuously write flash.</p>
+<p>The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age and hardware settings. Its clock is read from the <strong>panel</strong>, not from the browser. <strong>Sync time</strong> requests another NTP update. <strong>Wi-Fi network</strong> opens WiFiManager's network form. <strong>Open setup hotspot</strong>, or serial <strong><code>w</code></strong>, opens provisioning again without erasing saved settings.</p>
+<p>Status requests are read-only. Panel settings/sync/setup API mutations carry a boot-local token to prevent unrelated cross-origin pages from submitting changes. The page and APIs contain no Wi-Fi passwords; WiFiManager's internal debug output is disabled.</p>
+<h3 id="esp32-test-setup--live-clock-behaviour">Live clock behaviour</h3>
+<p>Send <strong><code>c</code></strong> to keep the live clock on screen. <strong><code>p</code></strong> resumes the playlist's clock-scene timer; <strong><code>n</code></strong> moves to the next demo (letters immediately after a fresh boot/restart). With clock selected as the startup view, it remains visible after boot.</p>
+<ul>
+<li>Before the first valid NTP response: <strong>NO WIFI / JOIN AP</strong>, or <strong>SYNC TIME / WAIT NTP</strong>.</li>
+<li>After sync: local <strong>HH:MM:SS</strong>, blinking colons, seconds bar and <strong>NTP</strong> label.</li>
+<li>After losing Wi-Fi: time continues from the ESP32's last sync, with <strong>HLD</strong> (holdover). Accuracy can drift until reconnection.</li>
+<li>After reset or power loss: this firmware waits for a new network sync; it does not invent a sample time.</li>
+<li>Pausing the playlist <strong>does not freeze the clock</strong>. Resuming or reselecting <code>c</code> does not reset the actual time.</li>
+</ul>
+<p>The clock uses <code>configTzTime()</code> and <code>localtime_r()</code> with a region-specific daylight-saving rule. <a href="https://github.com/espressif/arduino-esp32/blob/2.0.17/cores/esp32/esp32-hal-time.c">Espressif Arduino time implementation</a>, <a href="https://github.com/tzapu/WiFiManager/tree/v2.0.17">WiFiManager 2.0.17</a></p>
+<h3 id="esp32-test-setup--boot-status-and-debug-conventions">Boot/status and debug conventions</h3>
+<p>Serial <strong><code>i</code></strong> repeats the startup/settings report. A representative header is:</p>
+<pre><code class="language-text">[INFO] ============================================================
+[INFO] Red LED Panel 8x2 v1.1.0 | ESP32 DevKit / esp32dev
+[INFO] Panel=64x16, 1/16 scan, brightness=90/255, debug=3
+[INFO] GPIO LA=25 LB=26 LC=27 LD=13 EN=22 R1=23 LT=4 SK=18
+[INFO] Scan=500 us/row, signal=1 us, guard=50 us, nominal frame=125 Hz
+[INFO] [settings] Location=Sydney zone=Australia/Sydney rule=AEST-10AEDT,M10.1.0,M4.1.0/3
+</code></pre>
+<p>Application logging follows the shared convention: <strong>0 Off</strong>, <strong>1 Error <code>[ERR ]</code></strong>, <strong>2 Warn <code>[WARN]</code></strong>, <strong>3 Info <code>[INFO]</code></strong>, <strong>4 Verbose <code>[VERB]</code></strong>. Boot default comes from <code>-DDEBUG_LEVEL=3</code>; one shared runtime <code>debugLevel</code> applies across source files. <code>d</code> cycles it. INFO logs startup/settings and transitions; frequent retry/brightness details use VERBOSE. Credentials are never printed.</p>
+<p>C++ uses two spaces, attached braces and a 100-column limit in <a href=".clang-format">.clang-format</a>. <a href=".editorconfig">.editorconfig</a> records whitespace and newline rules. To reproduce formatting and checks:</p>
+<pre><code class="language-sh">python3 -m venv .venv-docs
+.venv-docs/bin/python -m pip install -r tools/dev-requirements.txt
+.venv-docs/bin/clang-format --dry-run --Werror src/*.cpp src/*.h include/config.h include/debug.h include/ClockSettings.h
+.venv-docs/bin/python tools/render_examples.py
+.venv-docs/bin/python tools/build_docs.py
+</code></pre>
+<p><code>include/ConfigPage.h</code> is generated from <a href="web/index.html">web/index.html</a>. PlatformIO embeds it automatically before each build through <code>tools/pio_prepare.py</code>; <strong><code>python3 tools/embed_web.py</code></strong> also regenerates it directly. Host regressions use the installed GFX library plus test doubles for GPIO, Wi-Fi, HTTP and storage; they do not configure any real network.</p>
+<h3 id="esp32-test-setup--bench-acceptance-checks">Bench acceptance checks</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Action</th>
+<th style="text-align:left">Expected result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">First boot without saved Wi-Fi</td>
+<td style="text-align:left">Three boot cards, useful serial settings, clock waiting state for 10 seconds, then letters; setup hotspot appears after the connection window</td>
+</tr>
+<tr>
+<td style="text-align:left">Send <code>r</code>, let the cycle run</td>
+<td style="text-align:left">Clock 10 s → letters → clock 10 s → checkerboard → clock, continuing through Pong and repeating</td>
+</tr>
+<tr>
+<td style="text-align:left">Save valid router credentials</td>
+<td style="text-align:left">DHCP IP/settings URL printed, settings page available from the LAN</td>
+</tr>
+<tr>
+<td style="text-align:left">Wait for NTP, send <code>c</code></td>
+<td style="text-align:left">Correct local HH:MM:SS; no simulated starting time</td>
+</tr>
+<tr>
+<td style="text-align:left">Change Sydney to Brisbane</td>
+<td style="text-align:left">Correct regional time; Sydney observes DST, Brisbane does not</td>
+</tr>
+<tr>
+<td style="text-align:left">Save location/brightness/Clock and reset</td>
+<td style="text-align:left">Saved values restored; clock waits for sync, then stays on screen</td>
+</tr>
+<tr>
+<td style="text-align:left">Pause or reselect clock</td>
+<td style="text-align:left">Time continues; selection does not reset it</td>
+</tr>
+<tr>
+<td style="text-align:left">Disconnect router after sync</td>
+<td style="text-align:left">Clock continues with HLD, reconnect/setup fallback is available</td>
+</tr>
+<tr>
+<td style="text-align:left">Enter a wrong router password</td>
+<td style="text-align:left">Portal remains usable; display refresh continues</td>
+</tr>
+<tr>
+<td style="text-align:left">Use <code>w</code> while connected</td>
+<td style="text-align:left">Setup hotspot opens; no credentials or panel settings are erased</td>
+</tr>
+<tr>
+<td style="text-align:left">Send invalid settings through the API</td>
+<td style="text-align:left">HTTP 400; existing settings retained</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>1</code>–<code>9</code>, <code>g</code>, <code>p</code>, <code>n</code>, <code>r</code>, <code>f/o/b</code></td>
+<td style="text-align:left">Demo and held-pattern controls retain their documented behaviour</td>
+</tr>
+</tbody>
+</table></div>
+<p>See <a href="#screen-examples">screen examples</a> for generated output from every scene, boot cards and clock states. The reference-panel results below confirm observed Wi-Fi association, NTP sync, scene progression and a visually steady display. Use the acceptance table to check the remaining scenarios on your own installation.</p>
+<h3 id="esp32-test-setup--blank-screen-with-refresh-setup-error">Blank screen with refresh setup error</h3>
+<p>If serial reports <code>timer_isr_callback_add: register interrupt service failed</code>, <code>ESP_ERR_NOT_FOUND</code> and <code>Refresh: rows=0</code>, the display scanner has not started. Application scene messages and Wi-Fi can still work while OE remains blanked. The earlier driver requested two exclusive level-3 interrupts; the corrected driver uses shared IRAM interrupts at an available level 1–3. This log identifies a firmware interrupt allocation failure.</p>
+<p>Build/upload the corrected firmware and reset. Successful startup includes:</p>
+<pre><code class="language-text">[INFO] HUB08 panel 64x16 started, row period 500 us (125 Hz frame)
+[INFO] Refresh: hardware timers TG0/T0+T1, shared IRAM interrupts, scan task on core 1
+</code></pre>
+<p>Send <code>t</code> to hold letters, then <code>i</code> twice a few seconds apart. The row count should be nonzero and increasing. A remaining setup error names the failed stage (for example, <code>row interrupt</code>); capture that line. Host tests model constrained allocation and startup cleanup. The reference-panel check below confirms that the corrected firmware started refresh and displayed successfully.</p>
+<h3 id="esp32-test-setup--check-display-flicker">Check display flicker</h3>
+<p>Upload the new firmware, reset, and keep Serial Monitor at <strong>115200 baud</strong>. Use <strong><code>r</code></strong> to verify clock (10 s) → letters → clock (10 s) → checkerboard, then further demos. A saved <strong>Real-time clock</strong> startup view stays on the clock; choose <strong>Clock + demos</strong> on the settings page to make the alternating cycle the boot default.</p>
+<p>For a steady reference send <strong><code>t</code></strong> (letters), then <strong><code>i</code></strong>. Observe the whole display by eye for 30 seconds; reload <code>/panel</code> several times, then send <strong><code>i</code></strong> again. Repeat with <strong><code>o</code></strong> (all on) at the normal 90/255 brightness. The status line includes:</p>
+<pre><code class="language-text">Refresh: rows=..., missed ticks=..., late rows=..., max wake=... us, max scan=... us
+</code></pre>
+<p>Counters are cumulative since reset. Compare the two readings: missed ticks and late rows should stay unchanged during steady operation and normal page polling. Increasing values indicate missed refresh deadlines; record both reports and which action triggers them. Max wake/scan values are lifetime peaks, including startup or earlier flash saves, so reset for a fresh comparison. Saving settings or Wi-Fi credentials writes flash and can cause a brief disturbance; check that steady output resumes afterwards.</p>
+<p>The new driver isolates refresh from the shared timer task and commits pictures between scans. Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. <strong>Clock colons alternate every half-second and hearts change brightness intentionally.</strong> Camera bands can persist at 125 Hz even with a steady appearance by eye; see the <a href="#panel-guide--photographing-the-display">photography guidance</a>.</p>
+<h3 id="esp32-test-setup--recorded-reference-panel-result-25-october-2026">Recorded reference-panel result — 25 October 2026</h3>
+<p>The user reported <strong>“All appears ok, no flicker”</strong> after uploading the corrected interrupt-allocation build (<code>1.1.0-dev</code>, subsequently finalised as <code>1.1.0</code>). The supplied serial log confirms Wi-Fi connection, NTP synchronisation at <strong>01:46:53 AEDT on 25 October 2026</strong>, then clock → letters → clock → checkerboard. Letters were then held with <code>t</code> for two <code>i</code> status readings, at brightness <strong>90/255</strong>, with the standard GPIO mapping and 500 µs row period.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Refresh metric</th>
+<th style="text-align:right">First reading</th>
+<th style="text-align:right">Second reading</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Rows</td>
+<td style="text-align:right">67,642</td>
+<td style="text-align:right">77,988</td>
+</tr>
+<tr>
+<td style="text-align:left">Missed ticks</td>
+<td style="text-align:right">39</td>
+<td style="text-align:right">39</td>
+</tr>
+<tr>
+<td style="text-align:left">Late rows</td>
+<td style="text-align:right">45</td>
+<td style="text-align:right">45</td>
+</tr>
+<tr>
+<td style="text-align:left">Maximum wake</td>
+<td style="text-align:right">491 µs</td>
+<td style="text-align:right">491 µs</td>
+</tr>
+<tr>
+<td style="text-align:left">Maximum scan</td>
+<td style="text-align:right">2,244 µs</td>
+<td style="text-align:right">2,244 µs</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rows increased by <strong>10,346</strong>, with no new missed ticks or late rows during the recorded interval. The nonzero missed/late totals and maximum times are cumulative observations from earlier in that run; their cause was not established by these two snapshots. This is a user-observed visual check and serial evidence, not an oscilloscope measurement or an extended web/flash stress test. No new working-panel photo or video was supplied; gallery animations remain generated examples.</p>
+</section>
+<section class="doc-section" aria-labelledby="screen-examples">
+<h2 id="screen-examples" class="doc-title">Screen output examples</h2>
+<p class="doc-meta"><span class="eyebrow">Screen examples</span> · Rendered examples of every scene, boot and clock state · <a href="docs/SCREEN_EXAMPLES.md">docs/SCREEN_EXAMPLES.md</a></p>
+<p>Generated from the actual <code>src/main.cpp</code> drawing routines and installed Adafruit GFX library, using host fixtures for panel GPIO, Wi-Fi and time. These are <strong>rendered examples, not photographs or proof of hardware operation</strong>.</p>
+<p>Each dot represents one pixel. GIFs sample animation frames to keep the archive compact; dot colour and brightness are illustrative, not calibrated light measurements. Clock values come from a fixed host time and do not represent the time when you open this document.</p>
+<p>Use the <a href="#panel-guide">panel guide</a> for controls and the <a href="#esp32-test-setup">ESP32 test configuration</a> for wiring, Wi-Fi and bench checks.</p>
+<h3 id="screen-examples--01-boot-1">01 — Boot 1</h3>
+<p>Startup header and firmware version.</p>
+<p><a class="image-link" href="images/demos/01-boot-1.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/01-boot-1.gif" alt="Rendered Boot 1 output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--02-boot-2">02 — Boot 2</h3>
+<p>Panel geometry, scan ratio and selected brightness.</p>
+<p><a class="image-link" href="images/demos/02-boot-2.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/02-boot-2.gif" alt="Rendered Boot 2 output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--03-boot-3">03 — Boot 3</h3>
+<p>Network/time status. This fixture is connected and synchronised; a fresh offline boot shows waiting states instead.</p>
+<p><a class="image-link" href="images/demos/03-boot-3.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/03-boot-3.gif" alt="Rendered Boot 3 output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--04-letters">04 — Letters</h3>
+<p>Key 1, or t to hold: A-H above I-P, one letter per 8x8 module.</p>
+<p><a class="image-link" href="images/demos/04-letters.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/04-letters.gif" alt="Rendered LETTERS output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--05-checkerboard">05 — Checkerboard</h3>
+<p>Key 2: alternating single-pixel phases.</p>
+<p><a class="image-link" href="images/demos/05-checkerboard.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/05-checkerboard.gif" alt="Rendered CHECKERBOARD output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--06-bouncing-balls">06 — Bouncing Balls</h3>
+<p>Key 3: independent moving circles, filled and outlined.</p>
+<p><a class="image-link" href="images/demos/06-bouncing-balls.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/06-bouncing-balls.gif" alt="Rendered BOUNCING BALLS output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--07-starfield">07 — Starfield</h3>
+<p>Key 4: several speeds and short horizontal star trails.</p>
+<p><a class="image-link" href="images/demos/07-starfield.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/07-starfield.gif" alt="Rendered STARFIELD output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--08-pixel-rain">08 — Pixel Rain</h3>
+<p>Key 5: staggered falling trails.</p>
+<p><a class="image-link" href="images/demos/08-pixel-rain.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/08-pixel-rain.gif" alt="Rendered PIXEL RAIN output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--09-animated-bars">09 — Animated Bars</h3>
+<p>Key 6: simulated equalizer bars; no audio input.</p>
+<p><a class="image-link" href="images/demos/09-animated-bars.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/09-animated-bars.gif" alt="Rendered ANIMATED BARS output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--10-conway-s-life">10 — Conway'S Life</h3>
+<p>Key 7: actual glider/blinker updates on wrapping edges.</p>
+<p><a class="image-link" href="images/demos/10-conway-s-life.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/10-conway-s-life.gif" alt="Rendered CONWAY'S LIFE output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--11-beating-hearts">11 — Beating Hearts</h3>
+<p>Key 8: enlarged pixel art with whole-display brightness modulation.</p>
+<p><a class="image-link" href="images/demos/11-beating-hearts.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/11-beating-hearts.gif" alt="Rendered BEATING HEARTS output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--12-scrolling-text">12 — Scrolling Text</h3>
+<p>Key 9 or s: full-height text crossing the screen.</p>
+<p><a class="image-link" href="images/demos/12-scrolling-text.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/12-scrolling-text.gif" alt="Rendered SCROLLING TEXT output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--13-pong">13 — Pong</h3>
+<p>Key g: automatic paddles, collisions, goals and fresh serves.</p>
+<p><a class="image-link" href="images/demos/13-pong.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/13-pong.gif" alt="Rendered PONG output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--14-clock">14 — Clock</h3>
+<p>Starts the cycle and returns for 10 seconds between demos. Key c holds it indefinitely: local HH:MM:SS, blinking colons, seconds bar and NTP source label. Captured with a fixed network-time fixture.</p>
+<p><a class="image-link" href="images/demos/14-clock.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/14-clock.gif" alt="Rendered CLOCK output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--15-all-pixels-off">15 — All Pixels Off</h3>
+<p>Key f: an empty pixel buffer at the selected brightness.</p>
+<p><a class="image-link" href="images/demos/15-all-pixels-off.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/15-all-pixels-off.gif" alt="Rendered All pixels off output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--16-all-pixels-on">16 — All Pixels On</h3>
+<p>Key o: every pixel on at the selected brightness.</p>
+<p><a class="image-link" href="images/demos/16-all-pixels-on.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/16-all-pixels-on.gif" alt="Rendered All pixels on output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--17-output-blanked">17 — Output Blanked</h3>
+<p>Key b: output disabled. Visually dark like f; it uses zero output on-time.</p>
+<p><a class="image-link" href="images/demos/17-output-blanked.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/17-output-blanked.gif" alt="Rendered Output blanked output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--18-clock-offline-holdover">18 — Clock Offline Holdover</h3>
+<p>Time continues from its last sync; HLD replaces the NTP label.</p>
+<p><a class="image-link" href="images/demos/18-clock-offline-holdover.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/18-clock-offline-holdover.gif" alt="Rendered Clock offline holdover output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--19-clock-waiting-for-wi-fi">19 — Clock Waiting For Wi-Fi</h3>
+<p>No valid time yet: NO WIFI / JOIN AP. No sample epoch is displayed.</p>
+<p><a class="image-link" href="images/demos/19-clock-waiting-for-wi-fi.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/19-clock-waiting-for-wi-fi.gif" alt="Rendered Clock waiting for Wi-Fi output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--20-clock-waiting-for-ntp">20 — Clock Waiting For Ntp</h3>
+<p>Wi-Fi is connected, but time has not arrived: SYNC TIME / WAIT NTP.</p>
+<p><a class="image-link" href="images/demos/20-clock-waiting-for-ntp.gif" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/demos/20-clock-waiting-for-ntp.gif" alt="Rendered Clock waiting for NTP output" width="640" height="160" loading="lazy" decoding="async" /></a></p>
+<h3 id="screen-examples--regenerate-and-verify">Regenerate and verify</h3>
+<p>Install the project libraries with <code>pio pkg install</code>. With a C++17 compiler and the dependencies in <code>tools/docs-requirements.txt</code>, run:</p>
+<pre><code class="language-sh">python3 tools/render_examples.py
+python3 tools/build_docs.py
+</code></pre>
+<p>The renderer runs host regressions with address/undefined-behaviour sanitizers before writing these GIFs and their <a href="images/demos/manifest.json">manifest</a>. Tests cover clock/demo alternation and deadlines, controls, Conway rules, Pong, live-clock/DST/holdover, settings validation, portal/LAN routes, NVS failure/reload and reconnects. The actual refresh driver is exercised with timer/GPIO fixtures for scan-boundary frames, OE deadlines, late rows and brightness. Real interrupt latency, Wi-Fi association, captive portals and electrical output require the bench checks.</p>
+<p>Original panel photographs remain separate in the <a href="#hardware-photos">hardware photo log</a>.</p>
+</section>
+<section class="doc-section" aria-labelledby="hardware-photos">
+<h2 id="hardware-photos" class="doc-title">Panel and connector photos</h2>
+<p class="doc-meta"><span class="eyebrow">Hardware photos</span> · Panel, connector, and component reference photos · <a href="docs/PHOTO_LOG.md">docs/PHOTO_LOG.md</a></p>
+<p>Six reference photographs from the original panel bring-up: front patterns, the complete rear PCB, connector labels, and driver close-ups. The front images show the earlier faulty board; use them as historical examples, not as expected output from the current showcase. See the <a href="#archived-bring-up">archived report</a> for that investigation.</p>
+<p>Click a photograph or its full-size link to inspect it separately. Files preserve the available attachment resolution without re-encoding. <a href="images/manifest.json">File manifest and checksums</a>.</p>
+<h3 id="hardware-photos--01-static-letters-before-mapping-correction">01 — Static letters before mapping correction</h3>
+<p><a class="image-link" href="images/01-static-before-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/01-static-before-mapping.jpg" alt="Initial static-letter test: reversed/permuted characters on the left and six fully lit modules on the right" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p>The first <code>t</code> photograph shows readable glyph structure on the responding left section, with reversed character placement and displaced row strokes. The right three module columns, across both rows, are fully lit. It motivated a coordinate-mapping check rather than treating the whole picture as camera banding.</p>
+<p><a href="images/01-static-before-mapping.jpg">Open full-size image</a> · Available size: <strong>1824×1368</strong>.</p>
+<h3 id="hardware-photos--02-corrected-letter-placement-section-fault-remains">02 — Corrected letter placement, section fault remains</h3>
+<p><a class="image-link" href="images/02-static-after-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/02-static-after-mapping.jpg" alt="Follow-up static test: A B C D E above I J K L M on the left; right three columns still fully lit" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p>The left five columns now show ABCDE above IJKLM. The right section remains fully lit. At this point code still included the temporary B/C exchange; the owner subsequently found and corrected crossed GPIO 26/27 wiring and that software compensation was removed. This is a progress image of the faulty panel, not the successful replacement.</p>
+<p><a href="images/02-static-after-mapping.jpg">Open full-size image</a> · Available size: <strong>1824×1368</strong>.</p>
+<h3 id="hardware-photos--03-complete-rear-pcb">03 — Complete rear PCB</h3>
+<p><a class="image-link" href="images/03-panel-rear.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/03-panel-rear.jpg" alt="Complete rear PCB with INPUT200 at left, power terminal near centre, and OUTPUT201 at right" width="2048" height="559" loading="lazy" decoding="async" /></a></p>
+<p>The rear view establishes module and component locations. INPUT200 is beside U201 at the left; OUTPUT201 is at the right. The front-right stuck section corresponds to the rear-left U101/U103/U105 area. The transition is near U105/U107. This is a physical location reference, not proof of serial-chain direction.</p>
+<p><a href="images/03-panel-rear.jpg">Open full-size image</a> · Available size: <strong>2048×559</strong>.</p>
+<h3 id="hardware-photos--04-output201-labels">04 — OUTPUT201 labels</h3>
+<p><a class="image-link" href="images/04-output201-header.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/04-output201-header.jpg" alt="OUTPUT201 close-up with visible GND, EN, R1, R2, LA, LB, LC, LD, G1, G2, LT, and SK labels" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p>This connector supplied the visible pin-label reference. The R1 contact used for the output measurement is the left column, fifth row from the top in this orientation. The layout was initially assumed to apply to INPUT200; its ground pattern was then checked separately.</p>
+<p><a href="images/04-output201-header.jpg">Open full-size image</a> · Available size: <strong>1824×1368</strong>.</p>
+<h3 id="hardware-photos--05-unmarked-input200-and-u201">05 — Unmarked INPUT200 and U201</h3>
+<p><a class="image-link" href="images/05-input200-header.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/05-input200-header.jpg" alt="Unmarked INPUT200 beside the SM74HC245D buffer at U201" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p>The photo shows why input assignments could not be independently read from silkscreen labels. It also identifies the onboard buffer family. Ground continuity was checked against the matrix GND terminal with all power removed. The populated and unpopulated LED pads reflect the board variant and should not automatically be treated as damage.</p>
+<p><a href="images/05-input200-header.jpg">Open full-size image</a> · Available size: <strong>1824×1368</strong>.</p>
+<h3 id="hardware-photos--06-u105-u107-latch-check-area">06 — U105/U107 latch-check area</h3>
+<p><a class="image-link" href="images/06-u105-u107-closeup.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/06-u105-u107-closeup.jpg" alt="Close-up showing U105 and U107 SM74HC595D devices and their pin orientation" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p>U105 is at the left and U107 at the right. U107's pin-1 dot is visible at the lower-left of the package. For that orientation the top legs run 16 through 9 left to right, making latch pin 12 the fifth top leg from the left. Resistance between the two pin-12 nodes was reported as OL. Comparative readings on other chip pairs were proposed but not reported before the panel was replaced.</p>
+<p><a href="images/06-u105-u107-closeup.jpg">Open full-size image</a> · Available size: <strong>1824×1368</strong>.</p>
+<h3 id="hardware-photos--image-files">Image files</h3>
+<p>The six JPEG files total approximately <strong>2.85 MB</strong>. <a href="images/manifest.json">manifest.json</a> records their byte counts, dimensions, and SHA-256 hashes.</p>
+<p>Use the <a href="#panel-guide">panel guide</a> for wiring and running the current showcase.</p>
+</section>
+<section class="doc-section" aria-labelledby="changelog">
+<h2 id="changelog" class="doc-title">Changelog</h2>
+<p class="doc-meta"><span class="eyebrow">Changelog</span> · Firmware and documentation changes · <a href="CHANGELOG.md">CHANGELOG.md</a></p>
+<h3 id="changelog--unreleased">[Unreleased]</h3>
+<h4 id="changelog--changed">Changed</h4>
+<ul>
+<li>Documentation is now one self-contained <code>index.html</code> built from all Markdown sources, with per-document sections, a collapsible section sidebar and a print layout. The nine per-document HTML files were removed; <code>tools/build_docs.py</code> and the share ZIP were updated to match.</li>
+</ul>
+<h3 id="changelog--1-1-0-25-10-2026">[1.1.0] 25-10-2026</h3>
+<h4 id="changelog--reference-panel-check-25-october-2026">Reference-panel check — 25 October 2026</h4>
+<ul>
+<li>User confirmed the corrected pre-release build displayed normally with no visible flicker.</li>
+<li>Serial confirmed Wi-Fi association, NTP synchronisation in Sydney/AEDT, and clock → letters → clock → checkerboard progression.</li>
+<li>While letters were held, rows advanced from 67,642 to 77,988; missed ticks stayed at 39 and late rows at 45. No new missed/late events appeared between those snapshots. Recorded maximum wake/scan times were cumulative peaks, not a continuous latency measurement.</li>
+<li>Finalised the firmware version as 1.1.0 and refreshed the example gallery, HTML documentation and share bundle.</li>
+</ul>
+<h4 id="changelog--blank-display-startup-fix">Blank-display startup fix</h4>
+<ul>
+<li>Fixed <code>timer_isr_callback_add</code> failing with <code>ESP_ERR_NOT_FOUND</code>, which left OE blanked and refresh rows at zero. The two timers now request compatible shared IRAM interrupts at an available low/medium level instead of two exclusive level-3 vectors.</li>
+<li>Added stage-specific startup errors and cleanup of acquired timers, interrupts and the scan task if setup fails.</li>
+<li>Added a constrained-interrupt regression that reproduces the old failure, verifies shared allocation starts scanning, and checks failure cleanup. The corrected driver subsequently passed the reference-panel visual check.</li>
+</ul>
+<h4 id="changelog--clock-led-cycle-and-refresh-timing">Clock-led cycle and refresh timing</h4>
+<ul>
+<li>Start with the clock for 10 seconds, run one demo, then return to the clock before the next demo. <code>r</code> resets the demo cursor, while direct <code>c</code> and saved Clock mode remain clock-only.</li>
+<li>Preserve the clock visit deadline across pause/resume and handle delayed loops and millis rollover.</li>
+<li>Move refresh from shared <code>esp_timer</code> callbacks to hardware row/OE timers and a dedicated scan task on core 1. Late rows stay blank, and pending pictures/brightness apply at row zero to reduce tearing.</li>
+<li>Add serial <code>i</code> refresh counters and host driver regressions for pulse deadlines, late slots and complete-scan updates. Keep electrical mapping and scan timings unchanged. Reference-panel bench results are recorded below.</li>
+</ul>
+<h4 id="changelog--wi-fi-real-time-and-configuration">Wi-Fi, real time and configuration</h4>
+<ul>
+<li>Added WiFiManager 2.0.17 with a setup hotspot, saved-network retries and a LAN-accessible <code>/panel</code> configuration/status page.</li>
+<li>Replaced the clock simulation with NTP-synchronised local time, automatic daylight saving, honest waiting states and offline holdover. Selecting or pausing the clock no longer resets/freezes actual time.</li>
+<li>Added validated persistent location, time zone, startup brightness and startup-view settings. Sydney is the default. Credentials remain in device storage and are never logged.</li>
+<li>Added startup/version/settings cards and a full serial/web status report. Serial <code>w</code> opens setup, <code>i</code> prints status and <code>d</code> controls runtime verbosity.</li>
+<li>Applied the shared debug prefixes/runtime levels, two-space C++ formatting, <code>.clang-format</code> and <code>.editorconfig</code>.</li>
+<li>Added the complete ESP32 reference bench configuration and rendered screen examples for every demo, boot and clock state. Host regressions use the actual application/GFX and network application with hardware doubles.</li>
+<li>Regenerated the offline HTML and share bundle. The reference-board log confirms Wi-Fi connection, NTP sync and clock/demo alternation; the user reported no visible flicker. Captive-portal phone behaviour, persistence/reconnect scenarios and extended stress testing remain separate acceptance checks.</li>
+</ul>
+<h3 id="changelog--1-0-0-24-10-2026">[1.0.0] 24-10-2026</h3>
+<p>Completed the working-panel bring-up and eleven-scene showcase, with setup instructions, historical measurements, photographs, and offline documentation.</p>
+<h4 id="changelog--pong-and-clock-demos">Pong and clock demos</h4>
+<ul>
+<li>Added an automatic Pong match with paddle tracking, wall/paddle rebounds, occasional misses, scores, and a serve delay. <code>g</code> starts a new match.</li>
+<li>Added a clock simulation with enlarged HH:MM:SS digits, half-second blinking colons, a seconds bar, and a SIM label. <code>c</code> starts at 23:59:55 to demonstrate midnight rollover without Wi-Fi or an RTC.</li>
+<li>Extended the looping playlist to eleven scenes while preserving the existing <code>1</code>–<code>9</code> shortcuts and pause/brightness controls. Both new scenes run for 16 seconds by default.</li>
+<li>Added Pong and clock timing/start-time settings, refreshed the guide and HTML edition, and rebuilt the share bundle.</li>
+</ul>
+<h4 id="changelog--showcase-and-everyday-use">Showcase and everyday use</h4>
+<ul>
+<li>Replaced the long wiring-test sequence with a looping nine-scene showcase: letters, checkerboard, bouncing balls, starfield, pixel rain, simulated equalizer bars, Conway's Life, beating hearts, and scrolling text.</li>
+<li>Added direct scene selection with <code>1</code>–<code>9</code>, adjustable brightness with <code>+/-</code>, and consistent next/pause/restart controls. Serial output describes scene transitions without per-frame chatter.</li>
+<li>Kept static letters and simple all-off/all-on/blank controls. Removed row/column/address walks, stripes, corner/module walks, the pre-scroll black comparison, runtime OE-polarity switching, and the long-latch experiment. <code>s</code> now selects scrolling text.</li>
+<li>Preserved the working GPIO map, orientation, signal polarity, and normal scan timing. Brightness zero still disables output; application pauses keep refresh running.</li>
+<li>Reworked the README, usage guide, and HTML edition around a working display. Retained earlier investigation and photographs as historical reference, and regenerated the offline share bundle.</li>
+</ul>
+<h4 id="changelog--confirmed-hardware-outcome-24-october-2026">Confirmed hardware outcome — 24 October 2026</h4>
+<ul>
+<li>Replacing the original panel with an identical panel made the setup work. The original panel was faulty; its precise defective component or connection was not established.</li>
+<li>Recorded the separate corrected GPIO 26/27 wiring error, the EzSBC LS1 flicker improvement, all reported measurements, and the unsuccessful LT-width comparison.</li>
+</ul>
+<h4 id="changelog--documentation">Documentation</h4>
+<ul>
+<li>Added a detailed panel hardware/usage guide, a complete bring-up report, and a captioned six-photo archive in <code>images/</code>.</li>
+<li>Added an offline HTML edition of the documentation, local styles, a reproducible Markdown build script, image checksum manifest, and a shareable documentation ZIP.</li>
+<li>Clarified that all supplied photographs depict the faulty original and no working-replacement photo was supplied. Firmware behaviour is unchanged by this documentation update.</li>
+</ul>
+<h4 id="changelog--fixed">Fixed</h4>
+<ul>
+<li>Configurable column-stream reversal and row-address permutation/inversion for panel orientation. Address-bit order is normal after correcting the crossed GPIO 26/27 wiring; software B/C compensation has been removed.</li>
+<li>Blank before every row shift, cancel stale OE-off events, bound light pulses to the remaining row period, and skip overdue row callbacks.</li>
+</ul>
+<h4 id="changelog--added">Added</h4>
+<ul>
+<li>Held LT-pulse comparison (<code>l</code>): toggle normal 1 µs versus 20 µs latch high time while retaining the current frame and corrected wiring map.</li>
+<li>Static letter mode (<code>t</code>): <code>ABCDEFGH</code> above <code>IJKLMNOP</code>, one letter per 8×8 module, held without scrolling for placement checks.</li>
+<li>Held pre-scroll black comparison (<code>s</code> versus <code>f</code>) with a firmware revision marker and expected R1-level diagnostics for the remaining partial-panel fault.</li>
+<li>External 74AHCT245 wiring for all eight signals and documented direct-wiring test observations; corrected the HC245 input-threshold description.</li>
+<li>Three-second pre-scroll black interval and VS Code serial command instructions to help reproduce partial-panel faults.</li>
+<li>Runtime EN/OE polarity comparison (<code>b</code>, then <code>e</code>) with explicit HIGH/LOW reporting to distinguish full blanking from brightness changes.</li>
+<li>Explicit 1 us shift-clock/data/latch timing and held serial diagnostics (<code>f</code> black data, <code>o</code> all on, <code>b</code> OE blank) to isolate stuck module sections.</li>
+<li>Serial-guided 11-test wiring sequence with per-row/column progress, address-bit patterns, stripes, checkerboard, corner pixels, module walk, and OE brightness checks.</li>
+<li>Serial GPIO/polarity summary and restart, pause/resume, next-test, and help controls at 115200 baud.</li>
+<li>Configurable pattern timings and wiring-test instructions in the README.</li>
+</ul>
+<h3 id="changelog--0-1-0-23-10-2026">[0.1.0] 23-10-2026</h3>
+<h4 id="changelog--added-2">Added</h4>
+<ul>
+<li>HUB08 64×16 single-colour panel driver (<code>Hub08Panel</code>, an Adafruit_GFX subclass) with esp_timer row refresh and OE-based brightness.</li>
+<li>Boot test sequence: all on, all off, row walk, column walk.</li>
+<li>Scrolling text demo.</li>
+<li><code>config.h</code> with the pin map, signal polarity flags and timing constants.</li>
+<li>README covering the panel analysis and wiring.</li>
+</ul>
+</section>
+<section class="doc-section" aria-labelledby="maintainer-notes">
+<h2 id="maintainer-notes" class="doc-title">Maintainer notes — Red LED Panel 8×2</h2>
+<p class="doc-meta"><span class="eyebrow">Maintainer notes</span> · Architecture, constraints, and evidence limits · <a href="CLAUDE.md">CLAUDE.md</a></p>
+<h3 id="maintainer-notes--target-and-configuration">Target and configuration</h3>
+<ul>
+<li>ESP32 DevKit, PlatformIO <code>esp32dev</code>, <code>espressif32@6.9.0</code>, Arduino framework.</li>
+<li>Red HUB08 64×16, eight by two 8×8 modules, 1/16 scan; Adafruit GFX drawing.</li>
+<li>GPIO 25/26/27/13 → LA/LB/LC/LD, 22 → EN, 23 → R1, 4 → LT, 18 → SK.</li>
+<li>Active-low data/OE. Reversed column stream, normal row-bit order <code>{0,1,2,3}</code>, row XOR <code>0x0F</code>.</li>
+<li>All configured GPIOs must be below 32 for direct register writes.</li>
+<li>The project folder's RGB name is historical; the firmware drives red only.</li>
+</ul>
+<h3 id="maintainer-notes--showcase-application">Showcase application</h3>
+<p><code>src/main.cpp</code> starts with a real NTP clock for 10 seconds, runs one demo, returns to the clock for 10 seconds, then runs the next demo. The ten demos cycle through letters, checkerboard, balls, stars, rain, animated bars, Life, hearts, scrolling and Pong. A separate cursor tracks the next demo; direct demo selection advances that cursor, and <code>r</code> resets it to letters while showing the clock first. Each scene has a frame count and interval; scrolling derives its count from text bounds. Animation timing uses unsigned millisecond subtraction, renders one frame at a time, and does not replay missed frames. Serial prints scene transitions and user commands, not individual animation frames.</p>
+<p><code>1</code>–<code>9</code>, <code>g</code> (Pong), and <code>c</code> (held live clock) select a scene; <code>n</code> advances; <code>p</code> pauses/resumes; <code>r</code> restarts. <code>t</code> holds letters; <code>s</code> selects scrolling. <code>f/o/b</code> hold off/on/blank; <code>p/r/n</code> return to the playlist. Brightness changes with <code>+/-</code> in steps of 15, bounded to 0–255; hearts modulate up to that requested level. Conway's Life uses packed buffers and wrapping neighbours. Bars are simulated, with no audio input.</p>
+<p>Pong uses quarter-pixel ball positions, bounded paddle tracking, collision/reflection rules, single-digit scores, and a serve delay. Update its state only in <code>stepPong()</code>, not rendering, so pause and brightness controls preserve gameplay. Clock reads <code>PanelNetwork::localTime()</code> and never invents a sample epoch. It renders waiting/holdover states, enlarged digits, and NTP/HLD labels. Pausing freezes playlist progression, not the live clock. Direct <code>c</code> and saved Clock startup mode hold it indefinitely; normal clock visits last <code>CLOCK_HOLD_MS</code> (10 seconds). Elapsed-time deadlines survive pauses, delayed app loops and millis rollover.</p>
+<p>Retired diagnostics (<code>e</code> polarity, <code>l</code> latch width, pre-scroll black comparison, row/address walks) are absent from the current application and driver API. Keep the working wiring, polarity, and scan timing stable when adding scenes.</p>
+<h3 id="maintainer-notes--network-settings-and-conventions">Network, settings and conventions</h3>
+<p><code>src/PanelNetwork.*</code> owns WiFiManager 2.0.17, one HTTP server (portal or LAN), Preferences, mDNS and SNTP. <code>loop()</code> processes it even while animation is paused. Initial/retry association is asynchronous. WiFiManager's save/connect path can briefly pause animation, but background row scanning continues. Keep custom routes registered through its web-server callback so they survive portal/LAN transitions.</p>
+<p><code>/panel</code> serves <code>include/ConfigPage.h</code>, generated from <code>web/index.html</code> by <code>tools/embed_web.py</code> (also invoked by the PlatformIO pre-build hook). <code>/api/status</code> reports device time/settings without passwords; POST settings/sync/setup requests require a boot-local token. Settings are validated, saved as one NVS record, then applied in the application loop. A failed NVS write must not change active settings. IANA IDs map to a fixed POSIX-zone table in <code>include/ClockSettings.h</code>; Sydney is the default.</p>
+<p>Serial <code>w</code> opens setup, <code>i</code> prints status, <code>d</code> cycles one shared runtime debug level. Use the standard <code>[ERR ]</code>, <code>[WARN]</code>, <code>[INFO]</code>, <code>[VERB]</code> macros; log transitions rather than frames, and never credentials. <code>.clang-format</code> defines two-space indentation, attached braces and 100 columns. Generated <code>ConfigPage.h</code> is excluded from formatting.</p>
+<h3 id="maintainer-notes--refresh-driver">Refresh driver</h3>
+<p><code>Hub08Panel</code> subclasses <code>Adafruit_GFX</code>. Draw into <code>drawBuf_</code>; <code>show()</code> copies 128 bytes to <code>pendingBuf_</code> under a lock. The scan task commits it to <code>showBuf_</code> only at row zero, together with brightness. Intermediate pending pictures may be replaced; the active picture remains stable for a full scan.</p>
+<p>Hardware timers TG0/T0 (row tick) and TG0/T1 (OE off) are reserved for refresh. The row ISR blanks and notifies a dedicated high-priority task pinned to the same core as setup/interrupt allocation (core 1 on this target); the off ISR only blanks. Allocate both timer callbacks with <code>ESP_INTR_FLAG_SHARED | ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_IRAM</code>; two exclusive level-3 requests failed on the reference board with <code>ESP_ERR_NOT_FOUND</code>, leaving the panel blank. The IDF timer wrapper filters each source by its status bit. Unwind acquired interrupts, timers and the scan task on initialization failure, and log the failing stage. Keep ISRs short, IRAM-safe, and free of logging. Shifting occurs in the task, never an ISR or the shared <code>esp_timer</code> task. Use the hardware row counter and tick generation to cap light windows; if a tick arrives during shifting, leave the expired row dark. Skip accumulated notifications instead of replaying a backlog. Keep the 500 µs row period, 1 µs signal phases and 50 µs guard. Nominal complete-frame rate is 125 Hz; animation timing is separate. Serial <code>i</code> reports lifetime rows/missed ticks/late rows/max wake and scan durations. The user confirmed normal display with no visible flicker on 25 October 2026, and two held-letter readings showed advancing rows with unchanged missed/late counters. See the recorded reference-panel result in <code>docs/ESP32_TEST_CONFIG.md</code>. This is limited visual/serial evidence; host fixtures do not measure real interrupt latency, and flash writes can still stall the shifting task.</p>
+<p>Framebuffer 1 means ON. Output mapping/polarity apply during scanning; GFX coordinates remain top-left. Brightness is a requested on-time, capped by remaining row time.</p>
+<h3 id="maintainer-notes--documentation">Documentation</h3>
+<p><a href="#panel-guide">The guide</a> describes the current application. The archived <a href="#archived-bring-up">bring-up report</a> records the former diagnostic firmware and original faulty panel; its commands and settings are historical. All six photos are from that original board. An identical replacement worked; no specific failed chip or trace was confirmed.</p>
+<p>Rebuild the single-page <code>index.html</code> (all Markdown documents as sections, CSS inlined) and the share ZIP with Python 3.10+ using <a href="tools/build_docs.py">tools/build_docs.py</a> and <a href="tools/docs-requirements.txt">tools/docs-requirements.txt</a>. Edit Markdown and the template/CSS, not generated HTML; do not reintroduce per-document HTML files. The ZIP includes the current firmware source snapshot and original photo bytes.</p>
+<h3 id="maintainer-notes--checks-and-examples">Checks and examples</h3>
+<p><code>tools/render_examples.py</code> compiles the actual main/GFX renderer and actual network application against <code>test_host</code> fixtures, with address/undefined-behaviour sanitizers. It checks controls, Life, Pong, live-clock/DST/holdover, settings validation, HTTP routes/tokens, NVS failure/reload and reconnects. It also compiles the actual refresh driver against timer/GPIO fixtures for frame boundaries, OE deadlines, late slots, brightness and initialization failures. It renders documented example GIFs from the captured framebuffer. This is not a hardware or real-Wi-Fi test.</p>
+<p><code>tools/preview_web.py</code> serves mock status locally for browser UI checks. Rebuild the embedded HTML after edits, run formatting/build/host checks, then regenerate HTML/ZIP. Do not commit or push unless explicitly requested for the current work.</p>
+</section>
+<section class="doc-section" aria-labelledby="image-archive">
+<h2 id="image-archive" class="doc-title">Image archive</h2>
+<p class="doc-meta"><span class="eyebrow">Image archive</span> · Image filenames and provenance · <a href="images/README.md">images/README.md</a></p>
+<p>These six JPEG files were supplied by the project owner during the bring-up investigation. Every photograph shows the <strong>original faulty panel</strong>, not the working replacement.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">File</th>
+<th style="text-align:left">Subject</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><a href="images/01-static-before-mapping.jpg">01-static-before-mapping.jpg</a></td>
+<td style="text-align:left">Initial static letters and the fully lit right section</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="images/02-static-after-mapping.jpg">02-static-after-mapping.jpg</a></td>
+<td style="text-align:left">Corrected responding-section placement; right section still faulty</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="images/03-panel-rear.jpg">03-panel-rear.jpg</a></td>
+<td style="text-align:left">Entire rear PCB</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="images/04-output201-header.jpg">04-output201-header.jpg</a></td>
+<td style="text-align:left">Labelled output connector</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="images/05-input200-header.jpg">05-input200-header.jpg</a></td>
+<td style="text-align:left">Unmarked input connector and buffer</td>
+</tr>
+<tr>
+<td style="text-align:left"><a href="images/06-u105-u107-closeup.jpg">06-u105-u107-closeup.jpg</a></td>
+<td style="text-align:left">Chip orientation and latch-measurement area</td>
+</tr>
+</tbody>
+</table></div>
+<p>The available conversation attachment bytes were copied without image re-encoding. Original camera-resolution files were not independently available; the conversation copies include resizing. Exact dimensions and SHA-256 checksums are in <a href="images/manifest.json">manifest.json</a>.</p>
+<p>See the <a href="#hardware-photos">photo log</a> for the full illustrated gallery and the <a href="#archived-bring-up">bring-up report</a> for the outcome. No replacement-panel photograph was supplied.</p>
+<h3 id="image-archive--generated-screen-examples">Generated screen examples</h3>
+<p>The separate <code>demos/</code> folder contains generated examples of the firmware framebuffer, including animated GIFs. They are illustrations from host fixtures, not photographs or proof of physical output. See <a href="#screen-examples">screen examples</a> for provenance and regeneration.</p>
+</section>
+<section class="doc-section" aria-labelledby="archived-bring-up">
+<h2 id="archived-bring-up" class="doc-title">Archived bring-up report</h2>
+<p class="doc-meta"><span class="eyebrow">Archived bring-up</span> · Historical investigation and panel replacement · <a href="docs/BRING_UP_REPORT.md">docs/BRING_UP_REPORT.md</a></p>
+<blockquote>
+<p><strong>Historical reference:</strong> this report describes the diagnostic firmware used before the showcase. Its eleven tests and <code>e</code>/<code>l</code>/pre-scroll commands are retired. For current setup and controls, use the <a href="#panel-guide">panel guide</a>.</p>
+</blockquote>
+<p><strong>Project:</strong> Red LED Panel 8×2 · <strong>Recorded outcome:</strong> 24 October 2026 · <strong>Controller:</strong> ESP32 DevKit · <strong>Display:</strong> single-colour red P3.75 HUB08, 64×16 pixels.</p>
+<h3 id="archived-bring-up--resolution">Resolution</h3>
+<p><strong>The original panel was faulty.</strong> After the owner replaced it with another panel described as exactly the same, the display worked with the existing setup. This was the decisive functional comparison.</p>
+<p>The investigation also found <strong>crossed GPIO 26/27 row-address wiring</strong>, which was corrected separately. A software B/C exchange introduced during diagnosis was removed after that correction. Adding an <strong>EzSBC LS1</strong> removed the observed flickering, but it did not remove the stuck section on the original panel.</p>
+<p>The exact defective trace, latch connection, shift register, buffer, or output stage inside the original panel was <strong>not established</strong>. A measured <code>OL</code> between U105 and U107 latch pins remains an observation, not a proven root cause. The proposed comparison measurements on other adjacent chips were not reported before the successful panel replacement.</p>
+<h3 id="archived-bring-up--the-starting-point">The starting point</h3>
+<p>The initial application already provided all-on, all-off, row-walk, and column-walk tests followed by scrolling text. Individual row/column logs used a verbose debug level, making it harder to compare the panel with serial output at the default settings.</p>
+<p>The application was expanded into an eleven-test sequence with explicit descriptions and per-step serial output at <strong>115200 baud</strong>. Controls were added to restart, pause, advance, and hold diagnostic states without stopping row refresh. Subsequent additions made a static letter pattern, the pre-scroll black state, runtime OE polarity, and LT-pulse width directly comparable.</p>
+<p>The rightmost <strong>three module columns by two module rows</strong> stayed lit during tests. This is a 24×16-pixel section, or <strong>384 LEDs</strong>; the responding left section covered five module columns. The physical left/right distinction later mattered when inspecting the board from behind.</p>
+<h3 id="archived-bring-up--investigation-chronology">Investigation chronology</h3>
+<h4 id="archived-bring-up--1-localised-constant-illumination-and-flicker">1. Localised constant illumination and flicker</h4>
+<p>The owner reported that tests partially worked while the right 3×2 modules remained on. Later clarification established that the visible flickering was confined to that section rather than the whole panel.</p>
+<p>The driver's column transmission covers all 64 bits on every row scan, including during a black frame. A different column orientation can rearrange content, but cannot turn a uniform black buffer into a solid lit block. A simple increase in shift-chain length was therefore not adopted as a fix: an intact continuously clocked chain would eventually fill with uniform OFF data.</p>
+<h4 id="archived-bring-up--2-separate-black-data-from-output-blanking">2. Separate black data from output blanking</h4>
+<p>The held serial commands made the distinction observable:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Command</th>
+<th style="text-align:left">Requested state</th>
+<th style="text-align:left">Original-panel observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Black data, ordinary output timing</td>
+<td style="text-align:left">Right 3×2 stayed on, steadily</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">All pixels ON</td>
+<td style="text-align:left">Entire panel on, no flicker in the held state</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>b</code></td>
+<td style="text-align:left">All-one data with brightness 0 / OE disabled</td>
+<td style="text-align:left">Entire panel dark</td>
+</tr>
+</tbody>
+</table></div>
+<p>An early description that the section cleared “after Test 11” was ambiguous. Later the owner identified the exact line: <strong><code>brightness 0/255 (dark)</code></strong> in Test 11. That phase suppresses output through EN/OE. It does not show that the right section accepted black column data.</p>
+<h4 id="archived-bring-up--3-explicit-signal-and-refresh-timing">3. Explicit signal and refresh timing</h4>
+<p>The driver gained 1 µs data setup and clock high/low timing, plus latch settling intervals. Refresh was adjusted to blank before shifting, cancel old OE-off events, cap each light pulse to the remaining row time with a 50 µs margin, and skip overdue row callbacks rather than process a backlog in a burst.</p>
+<p>These changes addressed identifiable timing weaknesses in the software. They were not evidence of a repaired panel, and they did not eliminate the original section fault.</p>
+<h4 id="archived-bring-up--4-compare-both-black-frame-entry-paths">4. Compare both black-frame entry paths</h4>
+<p>The pre-scroll interval and <code>f</code> both request a zero-filled <strong>128-byte</strong> framebuffer at brightness <strong>90/255</strong>. The <code>s</code> command was added to hold the exact pre-scroll state, while <code>BLACK CHECK</code> logged its settings.</p>
+<p>The owner confirmed that <strong><code>f</code> and <code>s</code> behaved the same</strong>, with the right section remaining on. This resolved the apparent difference between black-data states. The pre-scroll black interval was also lengthened to three seconds for easy observation.</p>
+<p>A representative command report was:</p>
+<pre><code class="language-text">TEST 2/11: ALL OFF - every LED should be dark
+BLACK CHECK: frame=128 zero bytes, brightness=90/255,
+             OE_ACTIVE_LOW=true, DATA_ACTIVE_LOW=true
+R1 GPIO 23 should stay HIGH; each row still gets 64 SK clocks and one LT pulse.
+HELD: pattern continuously shifted and latched at normal brightness
+</code></pre>
+<p>Serial labels describe intended electrical/display states; there is no automatic readback or wiring-fault detector in the firmware.</p>
+<h4 id="archived-bring-up--5-add-a-level-shifter">5. Add a level shifter</h4>
+<p>The initial ESP32-to-panel connection was direct. After a level shifter was fitted, the owner reported <strong>no flickering</strong>, while the right section still failed to clear with black data.</p>
+<p>The specific device was subsequently identified as <strong>EzSBC.COM LS1</strong>. Earlier references to a possible HCT/AHCT buffer were therefore corrected in the documentation. LS1 uses a different design from the 74AHCT245 alternative described in the usage guide.</p>
+<p>The flicker improvement was a real observation. It did not establish the cause of the remaining fixed section fault. The later successful identical-panel replacement is stronger evidence for that remaining fault being in the original panel.</p>
+<h4 id="archived-bring-up--6-static-letters-reveal-a-second-independent-mapping-issue">6. Static letters reveal a second, independent mapping issue</h4>
+<p>The <code>t</code> mode displays one character per module:</p>
+<pre><code class="language-text">A B C D E F G H
+I J K L M N O P
+</code></pre>
+<p>The first photo showed letter-like content on the left, but in reversed order with displaced row strokes. The right section was fully lit. Comparing the glyph patterns with the installed GFX font suggested reversed columns, inverted row orientation, and an exchange of row bits B/C.</p>
+<p><a class="image-link" href="images/01-static-before-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/01-static-before-mapping.jpg" alt="Original static-letter result before mapping correction" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p><em>First static-letter photograph. The responding section has incorrect mapping; the right section remains solidly on.</em></p>
+<p>Configurable output mapping was introduced. A follow-up photo showed <strong>ABCDE above IJKLM</strong> on the responding left five columns, while the right three columns remained on.</p>
+<p><a class="image-link" href="images/02-static-after-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/02-static-after-mapping.jpg" alt="Static letters with corrected responding-section placement but the right section still lit" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p><em>Second static-letter photograph, taken before the wiring-error correction was completed. It shows successful placement on the left, not a working replacement panel.</em></p>
+<h4 id="archived-bring-up--7-find-and-correct-crossed-gpio-26-27">7. Find and correct crossed GPIO 26/27</h4>
+<p>The owner asked whether software was compensating for incorrect wiring. It could: a B/C permutation in code can hide crossed B/C wires.</p>
+<p>The connections were traced and <strong>GPIO 26 and 27 were found to be wrong</strong>. The intended wiring is <strong>26 → LB</strong> and <strong>27 → LC</strong> through the level shifter. The wiring was corrected, and <code>ROW_ADDRESS_Y_BITS</code> was restored to <strong><code>{0, 1, 2, 3}</code></strong>. Column reversal and full row-address inversion were retained as viewing-orientation settings.</p>
+<p>This was a separate fault from the right section remaining lit. Reordering rows or columns leaves a uniform zero buffer unchanged, so a mapping correction could not resolve that symptom.</p>
+<h4 id="archived-bring-up--8-verify-accessible-voltages-and-header-orientation">8. Verify accessible voltages and header orientation</h4>
+<p>R1 voltage was measured while <code>f</code> and <code>o</code> held their states indefinitely. The input levels matched the requested active-low column-data convention. Supply values and later output-header readings were also recorded in the table below.</p>
+<p>INPUT200 has no signal labels in the supplied image. OUTPUT201 does. The initial assumption of matching connector layout was treated as a hypothesis and the ground contacts were verified with all power disconnected. The owner confirmed continuity from the panel GND terminal to the proposed INPUT200 left contacts in rows 1, 2, 3, 7, and 8.</p>
+<p>That confirms the ground pattern/orientation check, not a complete independent schematic trace of every connector signal. The subsequent replacement-panel result confirms the corrected setup was practically usable.</p>
+<h4 id="archived-bring-up--9-test-a-longer-latch-pulse">9. Test a longer latch pulse</h4>
+<p>The <code>l</code> comparison changes <strong>only LT high time</strong>, between the normal <strong>1 µs</strong> and a <strong>20 µs</strong> diagnostic setting, while holding the current image. It leaves the requested brightness, column data, and row mapping unchanged; row-time limits still apply.</p>
+<p>The owner reported <strong>no change</strong>. Therefore a wider LT pulse by itself did not solve the original fault. This does not establish that every local latch/clock connection was intact, and no oscilloscope captures were supplied.</p>
+<h4 id="archived-bring-up--10-inspect-the-physical-boundary">10. Inspect the physical boundary</h4>
+<p>The full rear view established that front-right corresponds to rear-left. The suspect area is around <strong>U101/U103/U105</strong>, with the working/stuck transition near <strong>U105/U107</strong>.</p>
+<p>A close-up identified the SM74HC595D packages and the pin-1 orientation. Pin 12 is the storage/latch clock. With all power disconnected, resistance between <strong>U105 pin 12 and U107 pin 12</strong> was reported as <strong><code>OL</code></strong>.</p>
+<p><a class="image-link" href="images/06-u105-u107-closeup.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="images/06-u105-u107-closeup.jpg" alt="Close-up of U105 and U107 at the working/stuck boundary" width="1824" height="1368" loading="lazy" decoding="async" /></a></p>
+<p><em>U105 at left and U107 at right. The image made package orientation readable for the resistance check. It does not establish an electrical break by itself.</em></p>
+<p>Comparison checks were proposed between U103/U105 and U107/U109 latch pins. No results for those comparisons were recorded. No jumper repair, trace repair, chip replacement, or reflow outcome was reported.</p>
+<h4 id="archived-bring-up--11-replace-the-panel">11. Replace the panel</h4>
+<p>The owner obtained another panel described as exactly the same and replaced the original. The replacement <strong>worked</strong>. The reported change was the panel replacement; the fault investigation did not proceed to a component-level repair of the original.</p>
+<p>The correct final diagnosis is therefore <strong>a faulty original panel</strong>, alongside a corrected external B/C wiring error and observed flicker improvement after adding level shifting. It is not a confirmed diagnosis of “U105 failed” or “the U105–U107 latch trace is broken.”</p>
+<h3 id="archived-bring-up--measurement-record">Measurement record</h3>
+<p>All values below are owner-reported readings from the original setup. They were taken at different points in the investigation; they are not a simultaneous power-distribution survey. The <code>f - 5.2v</code> / <code>o -0.3v</code> notation was interpreted in context as labels followed by approximately 5.2 V and 0.3 V.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Measurement</th>
+<th style="text-align:left">Held state / condition</th>
+<th style="text-align:left">Reported result</th>
+<th style="text-align:left">What it established</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">R1 at matrix input, relative to panel GND</td>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">4.7 V</td>
+<td style="text-align:left">HIGH DC data level reached the input measurement point</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at matrix input, relative to panel GND</td>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">0 V</td>
+<td style="text-align:left">LOW DC data level reached the input measurement point</td>
+</tr>
+<tr>
+<td style="text-align:left">LS1 VLo</td>
+<td style="text-align:left">Powered</td>
+<td style="text-align:left">3.31 V</td>
+<td style="text-align:left">Low-side supply reading</td>
+</tr>
+<tr>
+<td style="text-align:left">LS1 VHi</td>
+<td style="text-align:left">Powered</td>
+<td style="text-align:left">4.5 V</td>
+<td style="text-align:left">High-side supply reading; further supply-terminal comparisons were suggested but not reported</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at OUTPUT201, relative to panel GND</td>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Approximately 5.2 V</td>
+<td style="text-align:left">HIGH appeared at the output contact</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at OUTPUT201, relative to panel GND</td>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">Approximately 0.3 V</td>
+<td style="text-align:left">LOW appeared at the output contact</td>
+</tr>
+<tr>
+<td style="text-align:left">INPUT200 ground pattern</td>
+<td style="text-align:left">All power disconnected</td>
+<td style="text-align:left">Confirmed</td>
+<td style="text-align:left">Proposed left-hand ground contacts in rows 1/2/3/7/8 connected to panel GND</td>
+</tr>
+<tr>
+<td style="text-align:left">U105 pin 12 ↔ U107 pin 12</td>
+<td style="text-align:left">All power disconnected, resistance test</td>
+<td style="text-align:left"><code>OL</code></td>
+<td style="text-align:left">No measurable DC connection within the meter's selected range in that test</td>
+</tr>
+<tr>
+<td style="text-align:left">LT pulse comparison</td>
+<td style="text-align:left"><code>f</code>, then <code>l</code>: 1 µs versus 20 µs</td>
+<td style="text-align:left">No change</td>
+<td style="text-align:left">Widening LT alone did not resolve the symptom</td>
+</tr>
+<tr>
+<td style="text-align:left">Identical-panel replacement</td>
+<td style="text-align:left">Existing setup</td>
+<td style="text-align:left">Worked</td>
+<td style="text-align:left">Original panel was responsible for the remaining functional fault</td>
+</tr>
+</tbody>
+</table></div>
+<p>DC R1 readings cannot prove pulse widths, edge quality, every intermediate serial stage, or correct latched parallel outputs. Likewise, one <code>OL</code> result can reflect an open route, separate buffered paths, intervening components, contact/range problems, or an incorrect assumption about the net. Those alternatives were not fully distinguished before replacement.</p>
+<h3 id="archived-bring-up--diagnostic-firmware-at-the-time-of-resolution">Diagnostic firmware at the time of resolution</h3>
+<p>The following records the diagnostic build at resolution. The current showcase replaces these tests and runtime comparison modes:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Item</th>
+<th style="text-align:left">Final recorded state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">GPIO B/C wiring</td>
+<td style="text-align:left">26 → LB; 27 → LC, corrected physically</td>
+</tr>
+<tr>
+<td style="text-align:left">Software B/C mapping</td>
+<td style="text-align:left">Normal <code>{0, 1, 2, 3}</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Column / row orientation</td>
+<td style="text-align:left">Reversed column stream; row XOR <code>0x0F</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Data / OE polarity</td>
+<td style="text-align:left">Active LOW / active LOW</td>
+</tr>
+<tr>
+<td style="text-align:left">Row timing</td>
+<td style="text-align:left">500 µs slots; nominal 125 Hz frames</td>
+</tr>
+<tr>
+<td style="text-align:left">Brightness on reset</td>
+<td style="text-align:left">90/255</td>
+</tr>
+<tr>
+<td style="text-align:left">LT on reset</td>
+<td style="text-align:left">Normal 1 µs; diagnostic 20 µs selectable with <code>l</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Tests and serial controls</td>
+<td style="text-align:left">Retained for future panels</td>
+</tr>
+<tr>
+<td style="text-align:left">Firmware revision banner</td>
+<td style="text-align:left"><code>latch-compare-1</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Runtime latch and OE toggles are not persisted through reset. The exact runtime latch setting at the moment of replacement was not separately recorded; normal 1 µs remains the reset default.</p>
+<h3 id="archived-bring-up--lessons-for-the-next-panel">Lessons for the next panel</h3>
+<ol>
+<li><strong>Compare a known-good panel early</strong> when a sharply bounded section remains faulty after basic input checks. The replacement was the decisive experiment here.</li>
+<li><strong>Verify wires before changing bit mappings.</strong> The temporary B/C compensation produced readable letters while hiding an external wiring error.</li>
+<li><strong>Distinguish pixel OFF from OE blanking.</strong> A section going dark only at brightness 0 does not show that it accepted black data.</li>
+<li><strong>Use a held, recognisable pattern.</strong> The sixteen static letters exposed mapping errors that moving text made difficult to interpret.</li>
+<li><strong>Treat electrical measurements as bounded evidence.</strong> Correct DC levels do not replace pulse measurements; one open-circuit reading does not identify a failed chip.</li>
+<li><strong>Keep observations separate from hypotheses.</strong> The record supports board replacement as the resolution without inventing a component-level cause.</li>
+</ol>
+<h3 id="archived-bring-up--evidence-and-further-reading">Evidence and further reading</h3>
+<p>The <a href="#hardware-photos">photo log</a> contains all six supplied images in order. No working-replacement photograph was supplied, so the visual archive is explicitly a record of the original faulty panel. Attachment files are copied without re-encoding at the resolution retained in the conversation.</p>
+<p>For current wiring, command instructions, and application examples, use the <a href="#panel-guide">panel guide</a>. Chip pin functions can be checked in the <a href="https://taoic.oss-cn-hangzhou.aliyuncs.com/6466/product/HZ6749_1623831323000.pdf">manufacturer-authored Sunmoon SM74HC595 datasheet</a>; the investigation's measurements and outcome come from the owner, not from that datasheet.</p>
+</section>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Generated from the Markdown sources with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article>
 </main>
 </body>
 </html>

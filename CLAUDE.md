@@ -39,7 +39,7 @@ Framebuffer 1 means ON. Output mapping/polarity apply during scanning; GFX coord
 
 [The guide](docs/PANEL_GUIDE.md) describes the current application. The archived [bring-up report](docs/BRING_UP_REPORT.md) records the former diagnostic firmware and original faulty panel; its commands and settings are historical. All six photos are from that original board. An identical replacement worked; no specific failed chip or trace was confirmed.
 
-Rebuild HTML and the share ZIP with Python 3.10+ using [tools/build_docs.py](tools/build_docs.py) and [tools/docs-requirements.txt](tools/docs-requirements.txt). Edit Markdown and the template/CSS, not generated HTML. The ZIP includes the current firmware source snapshot and original photo bytes.
+Rebuild the single-page `index.html` (all Markdown documents as sections, CSS inlined) and the share ZIP with Python 3.10+ using [tools/build_docs.py](tools/build_docs.py) and [tools/docs-requirements.txt](tools/docs-requirements.txt). Edit Markdown and the template/CSS, not generated HTML; do not reintroduce per-document HTML files. The ZIP includes the current firmware source snapshot and original photo bytes.
 
 ## Checks and examples
 

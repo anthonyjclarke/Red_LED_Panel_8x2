@@ -1,6 +1,12 @@
 # Changelog
 
-## [1.1.0] - 2026-10-25
+## [Unreleased]
+
+### Changed
+
+- Documentation is now one self-contained `index.html` built from all Markdown sources, with per-document sections, a collapsible section sidebar and a print layout. The nine per-document HTML files were removed; `tools/build_docs.py` and the share ZIP were updated to match.
+
+## [1.1.0] 25-10-2026
 
 ### Reference-panel check — 25 October 2026
 
@@ -31,7 +37,7 @@
 - Added the complete ESP32 reference bench configuration and rendered screen examples for every demo, boot and clock state. Host regressions use the actual application/GFX and network application with hardware doubles.
 - Regenerated the offline HTML and share bundle. The reference-board log confirms Wi-Fi connection, NTP sync and clock/demo alternation; the user reported no visible flicker. Captive-portal phone behaviour, persistence/reconnect scenarios and extended stress testing remain separate acceptance checks.
 
-## [1.0.0] - 2026-10-24
+## [1.0.0] 24-10-2026
 
 Completed the working-panel bring-up and eleven-scene showcase, with setup instructions, historical measurements, photographs, and offline documentation.
 

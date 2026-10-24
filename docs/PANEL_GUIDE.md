@@ -267,6 +267,6 @@ C++ follows two-space indentation, attached braces and a 100-column limit in [.c
 
 ## Reference material
 
-Open [index.html](../index.html) for the HTML edition. The [photo gallery](PHOTO_LOG.md) provides connector and component close-ups; [manifest.json](../images/manifest.json) records the original attachment checksums. Rebuild HTML and the share ZIP using the instructions in [README.md](../README.md).
+Open [index.html](../index.html) for the single-page HTML edition of all documentation. The [photo gallery](PHOTO_LOG.md) provides connector and component close-ups; [manifest.json](../images/manifest.json) records the original attachment checksums. Rebuild it and the share ZIP using the instructions in [README.md](../README.md).
 
 Earlier diagnostic commands and electrical measurements are retained in the [archived bring-up report](BRING_UP_REPORT.md). That report describes the older test firmware, not the current showcase controls.
