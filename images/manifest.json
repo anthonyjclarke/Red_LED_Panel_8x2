@@ -1,0 +1,47 @@
+{
+  "source": "Six photographs supplied by the project owner during panel bring-up; attachment bytes copied without image re-encoding.",
+  "photos": [
+    {
+      "file": "01-static-before-mapping.jpg",
+      "width": 1824,
+      "height": 1368,
+      "bytes": 548853,
+      "sha256": "aed76b2e8b6b45717b804e0a9ae397a352e7cf0f1f289c1d07408c0421eca591"
+    },
+    {
+      "file": "02-static-after-mapping.jpg",
+      "width": 1824,
+      "height": 1368,
+      "bytes": 441710,
+      "sha256": "8958e2ae2973badbb26abcbfb20a89b7a73cc19c79d2cb07443f6514cb33339c"
+    },
+    {
+      "file": "03-panel-rear.jpg",
+      "width": 2048,
+      "height": 559,
+      "bytes": 374516,
+      "sha256": "d1847372c9523b62f1bc6b8e5269c2a19c6f73a665a8b06153e931681e38477d"
+    },
+    {
+      "file": "04-output201-header.jpg",
+      "width": 1824,
+      "height": 1368,
+      "bytes": 497493,
+      "sha256": "3223bbe7a8149b3dc1132df094576dec0637e0a3e6c2df679eb9ed731cf44aab"
+    },
+    {
+      "file": "05-input200-header.jpg",
+      "width": 1824,
+      "height": 1368,
+      "bytes": 466365,
+      "sha256": "5bf6a4a15df3b2e16ca98f3597171eaee620fdbe5adc64c297ffd1682e52b018"
+    },
+    {
+      "file": "06-u105-u107-closeup.jpg",
+      "width": 1824,
+      "height": 1368,
+      "bytes": 526043,
+      "sha256": "f039c3da4d747c84e1f50d065897d52f4f57f3e0cf849cc6aec5df9289c6841f"
+    }
+  ]
+}

@@ -18,11 +18,6 @@ class Hub08Panel : public Adafruit_GFX {
   void fillScreen(uint16_t color) override;
   void show();
   void setBrightness(uint8_t level);
-  void setOEActiveLow(bool activeLow);
-  bool oeActiveLow() const { return oeActiveLow_; }
-  void useLongLatchPulse(bool enabled) { longLatchPulse_ = enabled; }
-  bool longLatchPulse() const { return longLatchPulse_; }
-  uint32_t latchPulseUs() const { return longLatchPulse_ ? LATCH_TEST_PULSE_US : SIGNAL_DELAY_US; }
   // Raw A-D address corresponding to a logical top-to-bottom row number.
   static uint8_t rowAddressFor(uint8_t y);
 
@@ -41,7 +36,5 @@ class Hub08Panel : public Adafruit_GFX {
   esp_timer_handle_t rowTimer_   = nullptr;
   esp_timer_handle_t oeOffTimer_ = nullptr;
   volatile uint32_t onTimeUs_    = 0;
-  volatile bool oeActiveLow_    = OE_ACTIVE_LOW;
-  volatile bool longLatchPulse_ = false;
   uint8_t row_                   = 0;
 };

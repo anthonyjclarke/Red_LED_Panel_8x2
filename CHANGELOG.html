@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Firmware and documentation changes">
+<meta name="color-scheme" content="light">
+<title>Changelog · Red LED Panel 8×2</title>
+<link rel="stylesheet" href="docs/assets/docs.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to document</a>
+<aside class="sidebar">
+<a class="brand" href="index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<div class="nav-label">Documentation</div>
+<nav class="nav-links" aria-label="Documentation"><a href="README.html">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html" aria-current="page">Changelog</a><a href="CLAUDE.html">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+</aside>
+<main class="page" id="main">
+<div class="toolbar"><span class="eyebrow">Workshop reference / Changelog</span><div class="tools"><a href="CHANGELOG.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
+<div class="doc-grid"><article>
+<div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
+<a href="#pong-and-clock-demos" class="sub">Pong and clock demos</a>
+<a href="#showcase-and-everyday-use" class="sub">Showcase and everyday use</a>
+<a href="#confirmed-hardware-outcome-24-october-2026" class="sub">Confirmed hardware outcome — 24 October 2026</a>
+<a href="#documentation" class="sub">Documentation</a>
+<a href="#fixed" class="sub">Fixed</a>
+<a href="#added" class="sub">Added</a>
+<a href="#0-1-0-23-10-2026" class="section">[0.1.0] 23-10-2026</a>
+<a href="#added-2" class="sub">Added</a></nav></details>
+<h1 id="changelog">Changelog</h1>
+<h2 id="1-0-0-2026-10-24">[1.0.0] - 2026-10-24</h2>
+<p>Completed the working-panel bring-up and eleven-scene showcase, with setup instructions, historical measurements, photographs, and offline documentation.</p>
+<h3 id="pong-and-clock-demos">Pong and clock demos</h3>
+<ul>
+<li>Added an automatic Pong match with paddle tracking, wall/paddle rebounds, occasional misses, scores, and a serve delay. <code>g</code> starts a new match.</li>
+<li>Added a clock simulation with enlarged HH:MM:SS digits, half-second blinking colons, a seconds bar, and a SIM label. <code>c</code> starts at 23:59:55 to demonstrate midnight rollover without Wi-Fi or an RTC.</li>
+<li>Extended the looping playlist to eleven scenes while preserving the existing <code>1</code>–<code>9</code> shortcuts and pause/brightness controls. Both new scenes run for 16 seconds by default.</li>
+<li>Added Pong and clock timing/start-time settings, refreshed the guide and HTML edition, and rebuilt the share bundle.</li>
+</ul>
+<h3 id="showcase-and-everyday-use">Showcase and everyday use</h3>
+<ul>
+<li>Replaced the long wiring-test sequence with a looping nine-scene showcase: letters, checkerboard, bouncing balls, starfield, pixel rain, simulated equalizer bars, Conway's Life, beating hearts, and scrolling text.</li>
+<li>Added direct scene selection with <code>1</code>–<code>9</code>, adjustable brightness with <code>+/-</code>, and consistent next/pause/restart controls. Serial output describes scene transitions without per-frame chatter.</li>
+<li>Kept static letters and simple all-off/all-on/blank controls. Removed row/column/address walks, stripes, corner/module walks, the pre-scroll black comparison, runtime OE-polarity switching, and the long-latch experiment. <code>s</code> now selects scrolling text.</li>
+<li>Preserved the working GPIO map, orientation, signal polarity, and normal scan timing. Brightness zero still disables output; application pauses keep refresh running.</li>
+<li>Reworked the README, usage guide, and HTML edition around a working display. Retained earlier investigation and photographs as historical reference, and regenerated the offline share bundle.</li>
+</ul>
+<h3 id="confirmed-hardware-outcome-24-october-2026">Confirmed hardware outcome — 24 October 2026</h3>
+<ul>
+<li>Replacing the original panel with an identical panel made the setup work. The original panel was faulty; its precise defective component or connection was not established.</li>
+<li>Recorded the separate corrected GPIO 26/27 wiring error, the EzSBC LS1 flicker improvement, all reported measurements, and the unsuccessful LT-width comparison.</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>Added a detailed panel hardware/usage guide, a complete bring-up report, and a captioned six-photo archive in <code>images/</code>.</li>
+<li>Added an offline HTML edition of the documentation, local styles, a reproducible Markdown build script, image checksum manifest, and a shareable documentation ZIP.</li>
+<li>Clarified that all supplied photographs depict the faulty original and no working-replacement photo was supplied. Firmware behaviour is unchanged by this documentation update.</li>
+</ul>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li>Configurable column-stream reversal and row-address permutation/inversion for panel orientation. Address-bit order is normal after correcting the crossed GPIO 26/27 wiring; software B/C compensation has been removed.</li>
+<li>Blank before every row shift, cancel stale OE-off events, bound light pulses to the remaining row period, and skip overdue row callbacks.</li>
+</ul>
+<h3 id="added">Added</h3>
+<ul>
+<li>Held LT-pulse comparison (<code>l</code>): toggle normal 1 µs versus 20 µs latch high time while retaining the current frame and corrected wiring map.</li>
+<li>Static letter mode (<code>t</code>): <code>ABCDEFGH</code> above <code>IJKLMNOP</code>, one letter per 8×8 module, held without scrolling for placement checks.</li>
+<li>Held pre-scroll black comparison (<code>s</code> versus <code>f</code>) with a firmware revision marker and expected R1-level diagnostics for the remaining partial-panel fault.</li>
+<li>External 74AHCT245 wiring for all eight signals and documented direct-wiring test observations; corrected the HC245 input-threshold description.</li>
+<li>Three-second pre-scroll black interval and VS Code serial command instructions to help reproduce partial-panel faults.</li>
+<li>Runtime EN/OE polarity comparison (<code>b</code>, then <code>e</code>) with explicit HIGH/LOW reporting to distinguish full blanking from brightness changes.</li>
+<li>Explicit 1 us shift-clock/data/latch timing and held serial diagnostics (<code>f</code> black data, <code>o</code> all on, <code>b</code> OE blank) to isolate stuck module sections.</li>
+<li>Serial-guided 11-test wiring sequence with per-row/column progress, address-bit patterns, stripes, checkerboard, corner pixels, module walk, and OE brightness checks.</li>
+<li>Serial GPIO/polarity summary and restart, pause/resume, next-test, and help controls at 115200 baud.</li>
+<li>Configurable pattern timings and wiring-test instructions in the README.</li>
+</ul>
+<h2 id="0-1-0-23-10-2026">[0.1.0] 23-10-2026</h2>
+<h3 id="added-2">Added</h3>
+<ul>
+<li>HUB08 64×16 single-colour panel driver (<code>Hub08Panel</code>, an Adafruit_GFX subclass) with esp_timer row refresh and OE-based brightness.</li>
+<li>Boot test sequence: all on, all off, row walk, column walk.</li>
+<li>Scrolling text demo.</li>
+<li><code>config.h</code> with the pin map, signal polarity flags and timing constants.</li>
+<li>README covering the panel analysis and wiring.</li>
+</ul>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
+<a href="#pong-and-clock-demos" class="sub">Pong and clock demos</a>
+<a href="#showcase-and-everyday-use" class="sub">Showcase and everyday use</a>
+<a href="#confirmed-hardware-outcome-24-october-2026" class="sub">Confirmed hardware outcome — 24 October 2026</a>
+<a href="#documentation" class="sub">Documentation</a>
+<a href="#fixed" class="sub">Fixed</a>
+<a href="#added" class="sub">Added</a>
+<a href="#0-1-0-23-10-2026" class="section">[0.1.0] 23-10-2026</a>
+<a href="#added-2" class="sub">Added</a></aside></div>
+</main>
+</body>
+</html>

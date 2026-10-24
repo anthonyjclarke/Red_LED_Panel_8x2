@@ -12,8 +12,7 @@
 static_assert(PIN_A < 32 && PIN_B < 32 && PIN_C < 32 && PIN_D < 32 && PIN_OE < 32 &&
               PIN_R1 < 32 && PIN_LAT < 32 && PIN_CLK < 32,
               "HUB08 pins must be GPIO 0–31 for W1TS/W1TC register writes");
-static_assert(LATCH_TEST_PULSE_US >= SIGNAL_DELAY_US, "Latch test pulse must be at least the normal pulse");
-static_assert((3UL * PANEL_WIDTH + 2) * SIGNAL_DELAY_US + LATCH_TEST_PULSE_US + ROW_GUARD_US < ROW_PERIOD_US,
+static_assert((3UL * PANEL_WIDTH + 3) * SIGNAL_DELAY_US + ROW_GUARD_US < ROW_PERIOD_US,
               "Shift/latch timing must leave time for row refresh overhead");
 static_assert(ROW_ADDRESS_Y_BITS[0] < 4 && ROW_ADDRESS_Y_BITS[1] < 4 &&
               ROW_ADDRESS_Y_BITS[2] < 4 && ROW_ADDRESS_Y_BITS[3] < 4,
@@ -92,12 +91,6 @@ void Hub08Panel::setBrightness(uint8_t level) {
   DBG_VERBOSE("Brightness %u -> on-time %u us", level, onTimeUs_);
 }
 
-void Hub08Panel::setOEActiveLow(bool activeLow) {
-  // The refresh task applies this on its next OE write (within one row).
-  // Keep GPIO writes in the refresh task to avoid racing its timer callbacks.
-  oeActiveLow_ = activeLow;
-}
-
 uint8_t Hub08Panel::rowAddressFor(uint8_t y) {
   uint8_t address = 0;
   for (uint8_t bit = 0; bit < 4; ++bit) {
@@ -115,7 +108,7 @@ void Hub08Panel::oeOffTimerCb(void* arg) {
 }
 
 void Hub08Panel::setOE(bool on) {
-  PIN_SET(PIN_OE, on != oeActiveLow_);
+  PIN_SET(PIN_OE, on != OE_ACTIVE_LOW);
 }
 
 void Hub08Panel::scanRow() {
@@ -153,9 +146,8 @@ void Hub08Panel::scanRow() {
   PIN_SET(PIN_C, address & 0x04);
   PIN_SET(PIN_D, address & 0x08);
   delayMicroseconds(SIGNAL_DELAY_US);  // Row address and last shift settle
-  const uint32_t latchHighUs = latchPulseUs();
   PIN_HIGH(PIN_LAT);
-  delayMicroseconds(latchHighUs);
+  delayMicroseconds(SIGNAL_DELAY_US);
   PIN_LOW(PIN_LAT);
   delayMicroseconds(SIGNAL_DELAY_US);  // Latch outputs settle before enabling
 

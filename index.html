@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Project overview and quick start">
+<meta name="color-scheme" content="light">
+<title>Red LED Panel 8×2 · Red LED Panel 8×2</title>
+<link rel="stylesheet" href="docs/assets/docs.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to document</a>
+<aside class="sidebar">
+<a class="brand" href="index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<div class="nav-label">Documentation</div>
+<nav class="nav-links" aria-label="Documentation"><a href="README.html" aria-current="page">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html">Changelog</a><a href="CLAUDE.html">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+</aside>
+<main class="page" id="main">
+<div class="toolbar"><span class="eyebrow">Workshop reference / Overview</span><div class="tools"><a href="README.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
+<div class="doc-grid"><article>
+<div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#get-started" class="section">Get started</a>
+<a href="#what-s-on-screen" class="section">What&#x27;s on screen</a>
+<a href="#make-it-yours" class="section">Make it yours</a>
+<a href="#documentation-and-sharing" class="section">Documentation and sharing</a></nav></details>
+<h1 id="red-led-panel-82">Red LED Panel 8×2</h1>
+<p><strong>Version 1.0.0</strong> — working-panel showcase and complete setup guide.</p>
+<p>An animated showcase for an <strong>ESP32 and a red 64×16 HUB08 panel</strong>: bouncing balls, a starfield, pixel rain, animated bars, Conway's Life, beating hearts, scrolling text, Pong, and a simulated clock. Two simple patterns make it easy to check placement and pixel detail.</p>
+<p>The panel is an <strong>8×2 grid of 8×8 modules</strong>, with one colour driven through R1. Drawing uses Adafruit GFX; the driver continuously refreshes the display in the background.</p>
+<h2 id="get-started">Get started</h2>
+<ol>
+<li>Connect the panel's <strong>5 V supply</strong>, common ground, and eight control signals through a level shifter. Use the <a href="docs/PANEL_GUIDE.html#esp32-to-matrix-wiring">wiring table</a>.</li>
+<li>Open this project in VS Code with PlatformIO. Build and upload:</li>
+</ol>
+<pre><code class="language-sh">pio run
+pio run --target upload
+pio device monitor --baud 115200
+</code></pre>
+<ol start="3">
+<li>The eleven-scene playlist starts automatically and repeats. Serial Monitor prints each scene as it begins.</li>
+<li>Type <strong><code>1</code>–<code>9</code></strong>, <strong><code>g</code></strong> (Pong), or <strong><code>c</code></strong> (clock) to select a scene, <strong><code>n</code></strong> for next, <strong><code>p</code></strong> to pause/resume, or <strong><code>+</code> / <code>-</code></strong> to change brightness. No Enter is needed.</li>
+</ol>
+<h2 id="what-s-on-screen">What's on screen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Key</th>
+<th style="text-align:left">Scene</th>
+<th style="text-align:left">Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>1</code></td>
+<td style="text-align:left">Letters</td>
+<td style="text-align:left">A–H above I–P, one character per module</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>2</code></td>
+<td style="text-align:left">Checkerboard</td>
+<td style="text-align:left">Individual pixels and alternating patterns</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>3</code></td>
+<td style="text-align:left">Bouncing balls</td>
+<td style="text-align:left">Filled/outlined shapes and independent motion</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>4</code></td>
+<td style="text-align:left">Starfield</td>
+<td style="text-align:left">Several speeds and short star trails</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>5</code></td>
+<td style="text-align:left">Pixel rain</td>
+<td style="text-align:left">Falling, staggered trails</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>6</code></td>
+<td style="text-align:left">Animated bars</td>
+<td style="text-align:left">Smooth simulated equalizer animation; no microphone needed</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>7</code></td>
+<td style="text-align:left">Conway's Life</td>
+<td style="text-align:left">Gliders and oscillators on a wrapping 64×16 grid</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>8</code></td>
+<td style="text-align:left">Beating hearts</td>
+<td style="text-align:left">Enlarged pixel art and a brightness pulse</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>9</code></td>
+<td style="text-align:left">Scrolling text</td>
+<td style="text-align:left">Full-height text moving across the display</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>g</code></td>
+<td style="text-align:left">Pong</td>
+<td style="text-align:left">Automatic paddles, wall rebounds, rallies, and scoring</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>c</code></td>
+<td style="text-align:left">Clock simulation</td>
+<td style="text-align:left">HH:MM:SS, blinking colons, seconds bar, and midnight rollover</td>
+</tr>
+</tbody>
+</table></div>
+<p>The default playlist takes about <strong>83 seconds</strong>. Scene selection continues from that point in the playlist; use <code>p</code> to keep a scene on screen. <code>t</code> holds the letter pattern immediately. <code>f</code>, <code>o</code>, and <code>b</code> provide all-off, all-on, and output blanking. <code>r</code> restarts the playlist; <code>?</code> prints help.</p>
+<p>The clock is a self-contained simulation starting at <strong>23:59:55</strong> each time it is selected. It needs no Wi-Fi or RTC. Pong plays automatically; no controllers are required.</p>
+<h2 id="make-it-yours">Make it yours</h2>
+<p>Change <strong><code>SCROLL_TEXT</code></strong>, <strong><code>DEFAULT_BRIGHTNESS</code></strong>, and animation timing in <a href="include/config.h">include/config.h</a>. Scene lengths and drawing routines are in <a href="src/main.cpp">src/main.cpp</a>. The <a href="docs/PANEL_GUIDE.html">panel guide</a> includes the complete control reference, power and wiring details, and examples for drawing your own text and graphics.</p>
+<p>The default ESP32 pin map is <strong>25 → LA, 26 → LB, 27 → LC, 13 → LD, 22 → EN, 23 → R1, 4 → LT, 18 → SK</strong>. Monitor speed is <strong>115200 baud</strong>. The configured panel orientation uses reversed columns and row-address XOR <code>0x0F</code>; row bits are in normal A/B/C/D order.</p>
+<h2 id="documentation-and-sharing">Documentation and sharing</h2>
+<p>Open <strong><a href="index.html">index.html</a></strong> in a browser for the offline HTML edition. It includes the <a href="docs/PANEL_GUIDE.html">panel guide</a>, <a href="docs/PHOTO_LOG.html">hardware photos</a>, and <a href="CHANGELOG.html">changelog</a>. Earlier troubleshooting is retained separately in the <a href="docs/BRING_UP_REPORT.html">archived bring-up report</a>.</p>
+<p>Markdown is the editable source. To regenerate the HTML and <strong><code>Red_LED_Panel_8x2_Documentation.zip</code></strong>, use Python 3.10 or newer:</p>
+<pre><code class="language-sh">python3 -m venv .venv-docs
+.venv-docs/bin/python -m pip install -r tools/docs-requirements.txt
+.venv-docs/bin/python tools/build_docs.py
+</code></pre>
+<p>Extract the ZIP and open <code>index.html</code>; keep its folders together. No server or internet connection is needed except to follow external reference links.</p>
+<p>Repository: <a href="https://github.com/anthonyjclarke/Red_LED_Panel_8x2">anthonyjclarke/Red_LED_Panel_8x2</a>.</p>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#get-started" class="section">Get started</a>
+<a href="#what-s-on-screen" class="section">What&#x27;s on screen</a>
+<a href="#make-it-yours" class="section">Make it yours</a>
+<a href="#documentation-and-sharing" class="section">Documentation and sharing</a></aside></div>
+</main>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Historical investigation and panel replacement">
+<meta name="color-scheme" content="light">
+<title>Archived bring-up report · Red LED Panel 8×2</title>
+<link rel="stylesheet" href="assets/docs.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to document</a>
+<aside class="sidebar">
+<a class="brand" href="../index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<div class="nav-label">Documentation</div>
+<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html">Panel guide</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html" aria-current="page">Archived bring-up</a></nav>
+<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+</aside>
+<main class="page" id="main">
+<div class="toolbar"><span class="eyebrow">Workshop reference / Archived bring-up</span><div class="tools"><a href="BRING_UP_REPORT.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
+<div class="doc-grid"><article>
+<div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#resolution" class="section">Resolution</a>
+<a href="#the-starting-point" class="section">The starting point</a>
+<a href="#investigation-chronology" class="section">Investigation chronology</a>
+<a href="#1-localised-constant-illumination-and-flicker" class="sub">1. Localised constant illumination and flicker</a>
+<a href="#2-separate-black-data-from-output-blanking" class="sub">2. Separate black data from output blanking</a>
+<a href="#3-explicit-signal-and-refresh-timing" class="sub">3. Explicit signal and refresh timing</a>
+<a href="#4-compare-both-black-frame-entry-paths" class="sub">4. Compare both black-frame entry paths</a>
+<a href="#5-add-a-level-shifter" class="sub">5. Add a level shifter</a>
+<a href="#6-static-letters-reveal-a-second-independent-mapping-issue" class="sub">6. Static letters reveal a second, independent mapping issue</a>
+<a href="#7-find-and-correct-crossed-gpio-26-27" class="sub">7. Find and correct crossed GPIO 26/27</a>
+<a href="#8-verify-accessible-voltages-and-header-orientation" class="sub">8. Verify accessible voltages and header orientation</a>
+<a href="#9-test-a-longer-latch-pulse" class="sub">9. Test a longer latch pulse</a>
+<a href="#10-inspect-the-physical-boundary" class="sub">10. Inspect the physical boundary</a>
+<a href="#11-replace-the-panel" class="sub">11. Replace the panel</a>
+<a href="#measurement-record" class="section">Measurement record</a>
+<a href="#diagnostic-firmware-at-the-time-of-resolution" class="section">Diagnostic firmware at the time of resolution</a>
+<a href="#lessons-for-the-next-panel" class="section">Lessons for the next panel</a>
+<a href="#evidence-and-further-reading" class="section">Evidence and further reading</a></nav></details>
+<h1 id="archived-bring-up-report">Archived bring-up report</h1>
+<blockquote>
+<p><strong>Historical reference:</strong> this report describes the diagnostic firmware used before the showcase. Its eleven tests and <code>e</code>/<code>l</code>/pre-scroll commands are retired. For current setup and controls, use the <a href="PANEL_GUIDE.html">panel guide</a>.</p>
+</blockquote>
+<p><strong>Project:</strong> Red LED Panel 8×2 · <strong>Recorded outcome:</strong> 24 October 2026 · <strong>Controller:</strong> ESP32 DevKit · <strong>Display:</strong> single-colour red P3.75 HUB08, 64×16 pixels.</p>
+<h2 id="resolution">Resolution</h2>
+<p><strong>The original panel was faulty.</strong> After the owner replaced it with another panel described as exactly the same, the display worked with the existing setup. This was the decisive functional comparison.</p>
+<p>The investigation also found <strong>crossed GPIO 26/27 row-address wiring</strong>, which was corrected separately. A software B/C exchange introduced during diagnosis was removed after that correction. Adding an <strong>EzSBC LS1</strong> removed the observed flickering, but it did not remove the stuck section on the original panel.</p>
+<p>The exact defective trace, latch connection, shift register, buffer, or output stage inside the original panel was <strong>not established</strong>. A measured <code>OL</code> between U105 and U107 latch pins remains an observation, not a proven root cause. The proposed comparison measurements on other adjacent chips were not reported before the successful panel replacement.</p>
+<h2 id="the-starting-point">The starting point</h2>
+<p>The initial application already provided all-on, all-off, row-walk, and column-walk tests followed by scrolling text. Individual row/column logs used a verbose debug level, making it harder to compare the panel with serial output at the default settings.</p>
+<p>The application was expanded into an eleven-test sequence with explicit descriptions and per-step serial output at <strong>115200 baud</strong>. Controls were added to restart, pause, advance, and hold diagnostic states without stopping row refresh. Subsequent additions made a static letter pattern, the pre-scroll black state, runtime OE polarity, and LT-pulse width directly comparable.</p>
+<p>The rightmost <strong>three module columns by two module rows</strong> stayed lit during tests. This is a 24×16-pixel section, or <strong>384 LEDs</strong>; the responding left section covered five module columns. The physical left/right distinction later mattered when inspecting the board from behind.</p>
+<h2 id="investigation-chronology">Investigation chronology</h2>
+<h3 id="1-localised-constant-illumination-and-flicker">1. Localised constant illumination and flicker</h3>
+<p>The owner reported that tests partially worked while the right 3×2 modules remained on. Later clarification established that the visible flickering was confined to that section rather than the whole panel.</p>
+<p>The driver's column transmission covers all 64 bits on every row scan, including during a black frame. A different column orientation can rearrange content, but cannot turn a uniform black buffer into a solid lit block. A simple increase in shift-chain length was therefore not adopted as a fix: an intact continuously clocked chain would eventually fill with uniform OFF data.</p>
+<h3 id="2-separate-black-data-from-output-blanking">2. Separate black data from output blanking</h3>
+<p>The held serial commands made the distinction observable:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Command</th>
+<th style="text-align:left">Requested state</th>
+<th style="text-align:left">Original-panel observation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Black data, ordinary output timing</td>
+<td style="text-align:left">Right 3×2 stayed on, steadily</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">All pixels ON</td>
+<td style="text-align:left">Entire panel on, no flicker in the held state</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>b</code></td>
+<td style="text-align:left">All-one data with brightness 0 / OE disabled</td>
+<td style="text-align:left">Entire panel dark</td>
+</tr>
+</tbody>
+</table></div>
+<p>An early description that the section cleared “after Test 11” was ambiguous. Later the owner identified the exact line: <strong><code>brightness 0/255 (dark)</code></strong> in Test 11. That phase suppresses output through EN/OE. It does not show that the right section accepted black column data.</p>
+<h3 id="3-explicit-signal-and-refresh-timing">3. Explicit signal and refresh timing</h3>
+<p>The driver gained 1 µs data setup and clock high/low timing, plus latch settling intervals. Refresh was adjusted to blank before shifting, cancel old OE-off events, cap each light pulse to the remaining row time with a 50 µs margin, and skip overdue row callbacks rather than process a backlog in a burst.</p>
+<p>These changes addressed identifiable timing weaknesses in the software. They were not evidence of a repaired panel, and they did not eliminate the original section fault.</p>
+<h3 id="4-compare-both-black-frame-entry-paths">4. Compare both black-frame entry paths</h3>
+<p>The pre-scroll interval and <code>f</code> both request a zero-filled <strong>128-byte</strong> framebuffer at brightness <strong>90/255</strong>. The <code>s</code> command was added to hold the exact pre-scroll state, while <code>BLACK CHECK</code> logged its settings.</p>
+<p>The owner confirmed that <strong><code>f</code> and <code>s</code> behaved the same</strong>, with the right section remaining on. This resolved the apparent difference between black-data states. The pre-scroll black interval was also lengthened to three seconds for easy observation.</p>
+<p>A representative command report was:</p>
+<pre><code class="language-text">TEST 2/11: ALL OFF - every LED should be dark
+BLACK CHECK: frame=128 zero bytes, brightness=90/255,
+             OE_ACTIVE_LOW=true, DATA_ACTIVE_LOW=true
+R1 GPIO 23 should stay HIGH; each row still gets 64 SK clocks and one LT pulse.
+HELD: pattern continuously shifted and latched at normal brightness
+</code></pre>
+<p>Serial labels describe intended electrical/display states; there is no automatic readback or wiring-fault detector in the firmware.</p>
+<h3 id="5-add-a-level-shifter">5. Add a level shifter</h3>
+<p>The initial ESP32-to-panel connection was direct. After a level shifter was fitted, the owner reported <strong>no flickering</strong>, while the right section still failed to clear with black data.</p>
+<p>The specific device was subsequently identified as <strong>EzSBC.COM LS1</strong>. Earlier references to a possible HCT/AHCT buffer were therefore corrected in the documentation. LS1 uses a different design from the 74AHCT245 alternative described in the usage guide.</p>
+<p>The flicker improvement was a real observation. It did not establish the cause of the remaining fixed section fault. The later successful identical-panel replacement is stronger evidence for that remaining fault being in the original panel.</p>
+<h3 id="6-static-letters-reveal-a-second-independent-mapping-issue">6. Static letters reveal a second, independent mapping issue</h3>
+<p>The <code>t</code> mode displays one character per module:</p>
+<pre><code class="language-text">A B C D E F G H
+I J K L M N O P
+</code></pre>
+<p>The first photo showed letter-like content on the left, but in reversed order with displaced row strokes. The right section was fully lit. Comparing the glyph patterns with the installed GFX font suggested reversed columns, inverted row orientation, and an exchange of row bits B/C.</p>
+<p><a class="image-link" href="../images/01-static-before-mapping.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/01-static-before-mapping.jpg" alt="Original static-letter result before mapping correction" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><em>First static-letter photograph. The responding section has incorrect mapping; the right section remains solidly on.</em></p>
+<p>Configurable output mapping was introduced. A follow-up photo showed <strong>ABCDE above IJKLM</strong> on the responding left five columns, while the right three columns remained on.</p>
+<p><a class="image-link" href="../images/02-static-after-mapping.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/02-static-after-mapping.jpg" alt="Static letters with corrected responding-section placement but the right section still lit" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><em>Second static-letter photograph, taken before the wiring-error correction was completed. It shows successful placement on the left, not a working replacement panel.</em></p>
+<h3 id="7-find-and-correct-crossed-gpio-26-27">7. Find and correct crossed GPIO 26/27</h3>
+<p>The owner asked whether software was compensating for incorrect wiring. It could: a B/C permutation in code can hide crossed B/C wires.</p>
+<p>The connections were traced and <strong>GPIO 26 and 27 were found to be wrong</strong>. The intended wiring is <strong>26 → LB</strong> and <strong>27 → LC</strong> through the level shifter. The wiring was corrected, and <code>ROW_ADDRESS_Y_BITS</code> was restored to <strong><code>{0, 1, 2, 3}</code></strong>. Column reversal and full row-address inversion were retained as viewing-orientation settings.</p>
+<p>This was a separate fault from the right section remaining lit. Reordering rows or columns leaves a uniform zero buffer unchanged, so a mapping correction could not resolve that symptom.</p>
+<h3 id="8-verify-accessible-voltages-and-header-orientation">8. Verify accessible voltages and header orientation</h3>
+<p>R1 voltage was measured while <code>f</code> and <code>o</code> held their states indefinitely. The input levels matched the requested active-low column-data convention. Supply values and later output-header readings were also recorded in the table below.</p>
+<p>INPUT200 has no signal labels in the supplied image. OUTPUT201 does. The initial assumption of matching connector layout was treated as a hypothesis and the ground contacts were verified with all power disconnected. The owner confirmed continuity from the panel GND terminal to the proposed INPUT200 left contacts in rows 1, 2, 3, 7, and 8.</p>
+<p>That confirms the ground pattern/orientation check, not a complete independent schematic trace of every connector signal. The subsequent replacement-panel result confirms the corrected setup was practically usable.</p>
+<h3 id="9-test-a-longer-latch-pulse">9. Test a longer latch pulse</h3>
+<p>The <code>l</code> comparison changes <strong>only LT high time</strong>, between the normal <strong>1 µs</strong> and a <strong>20 µs</strong> diagnostic setting, while holding the current image. It leaves the requested brightness, column data, and row mapping unchanged; row-time limits still apply.</p>
+<p>The owner reported <strong>no change</strong>. Therefore a wider LT pulse by itself did not solve the original fault. This does not establish that every local latch/clock connection was intact, and no oscilloscope captures were supplied.</p>
+<h3 id="10-inspect-the-physical-boundary">10. Inspect the physical boundary</h3>
+<p>The full rear view established that front-right corresponds to rear-left. The suspect area is around <strong>U101/U103/U105</strong>, with the working/stuck transition near <strong>U105/U107</strong>.</p>
+<p>A close-up identified the SM74HC595D packages and the pin-1 orientation. Pin 12 is the storage/latch clock. With all power disconnected, resistance between <strong>U105 pin 12 and U107 pin 12</strong> was reported as <strong><code>OL</code></strong>.</p>
+<p><a class="image-link" href="../images/06-u105-u107-closeup.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/06-u105-u107-closeup.jpg" alt="Close-up of U105 and U107 at the working/stuck boundary" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><em>U105 at left and U107 at right. The image made package orientation readable for the resistance check. It does not establish an electrical break by itself.</em></p>
+<p>Comparison checks were proposed between U103/U105 and U107/U109 latch pins. No results for those comparisons were recorded. No jumper repair, trace repair, chip replacement, or reflow outcome was reported.</p>
+<h3 id="11-replace-the-panel">11. Replace the panel</h3>
+<p>The owner obtained another panel described as exactly the same and replaced the original. The replacement <strong>worked</strong>. The reported change was the panel replacement; the fault investigation did not proceed to a component-level repair of the original.</p>
+<p>The correct final diagnosis is therefore <strong>a faulty original panel</strong>, alongside a corrected external B/C wiring error and observed flicker improvement after adding level shifting. It is not a confirmed diagnosis of “U105 failed” or “the U105–U107 latch trace is broken.”</p>
+<h2 id="measurement-record">Measurement record</h2>
+<p>All values below are owner-reported readings from the original setup. They were taken at different points in the investigation; they are not a simultaneous power-distribution survey. The <code>f - 5.2v</code> / <code>o -0.3v</code> notation was interpreted in context as labels followed by approximately 5.2 V and 0.3 V.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Measurement</th>
+<th style="text-align:left">Held state / condition</th>
+<th style="text-align:left">Reported result</th>
+<th style="text-align:left">What it established</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">R1 at matrix input, relative to panel GND</td>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">4.7 V</td>
+<td style="text-align:left">HIGH DC data level reached the input measurement point</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at matrix input, relative to panel GND</td>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">0 V</td>
+<td style="text-align:left">LOW DC data level reached the input measurement point</td>
+</tr>
+<tr>
+<td style="text-align:left">LS1 VLo</td>
+<td style="text-align:left">Powered</td>
+<td style="text-align:left">3.31 V</td>
+<td style="text-align:left">Low-side supply reading</td>
+</tr>
+<tr>
+<td style="text-align:left">LS1 VHi</td>
+<td style="text-align:left">Powered</td>
+<td style="text-align:left">4.5 V</td>
+<td style="text-align:left">High-side supply reading; further supply-terminal comparisons were suggested but not reported</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at OUTPUT201, relative to panel GND</td>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Approximately 5.2 V</td>
+<td style="text-align:left">HIGH appeared at the output contact</td>
+</tr>
+<tr>
+<td style="text-align:left">R1 at OUTPUT201, relative to panel GND</td>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">Approximately 0.3 V</td>
+<td style="text-align:left">LOW appeared at the output contact</td>
+</tr>
+<tr>
+<td style="text-align:left">INPUT200 ground pattern</td>
+<td style="text-align:left">All power disconnected</td>
+<td style="text-align:left">Confirmed</td>
+<td style="text-align:left">Proposed left-hand ground contacts in rows 1/2/3/7/8 connected to panel GND</td>
+</tr>
+<tr>
+<td style="text-align:left">U105 pin 12 ↔ U107 pin 12</td>
+<td style="text-align:left">All power disconnected, resistance test</td>
+<td style="text-align:left"><code>OL</code></td>
+<td style="text-align:left">No measurable DC connection within the meter's selected range in that test</td>
+</tr>
+<tr>
+<td style="text-align:left">LT pulse comparison</td>
+<td style="text-align:left"><code>f</code>, then <code>l</code>: 1 µs versus 20 µs</td>
+<td style="text-align:left">No change</td>
+<td style="text-align:left">Widening LT alone did not resolve the symptom</td>
+</tr>
+<tr>
+<td style="text-align:left">Identical-panel replacement</td>
+<td style="text-align:left">Existing setup</td>
+<td style="text-align:left">Worked</td>
+<td style="text-align:left">Original panel was responsible for the remaining functional fault</td>
+</tr>
+</tbody>
+</table></div>
+<p>DC R1 readings cannot prove pulse widths, edge quality, every intermediate serial stage, or correct latched parallel outputs. Likewise, one <code>OL</code> result can reflect an open route, separate buffered paths, intervening components, contact/range problems, or an incorrect assumption about the net. Those alternatives were not fully distinguished before replacement.</p>
+<h2 id="diagnostic-firmware-at-the-time-of-resolution">Diagnostic firmware at the time of resolution</h2>
+<p>The following records the diagnostic build at resolution. The current showcase replaces these tests and runtime comparison modes:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Item</th>
+<th style="text-align:left">Final recorded state</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">GPIO B/C wiring</td>
+<td style="text-align:left">26 → LB; 27 → LC, corrected physically</td>
+</tr>
+<tr>
+<td style="text-align:left">Software B/C mapping</td>
+<td style="text-align:left">Normal <code>{0, 1, 2, 3}</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Column / row orientation</td>
+<td style="text-align:left">Reversed column stream; row XOR <code>0x0F</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Data / OE polarity</td>
+<td style="text-align:left">Active LOW / active LOW</td>
+</tr>
+<tr>
+<td style="text-align:left">Row timing</td>
+<td style="text-align:left">500 µs slots; nominal 125 Hz frames</td>
+</tr>
+<tr>
+<td style="text-align:left">Brightness on reset</td>
+<td style="text-align:left">90/255</td>
+</tr>
+<tr>
+<td style="text-align:left">LT on reset</td>
+<td style="text-align:left">Normal 1 µs; diagnostic 20 µs selectable with <code>l</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Tests and serial controls</td>
+<td style="text-align:left">Retained for future panels</td>
+</tr>
+<tr>
+<td style="text-align:left">Firmware revision banner</td>
+<td style="text-align:left"><code>latch-compare-1</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Runtime latch and OE toggles are not persisted through reset. The exact runtime latch setting at the moment of replacement was not separately recorded; normal 1 µs remains the reset default.</p>
+<h2 id="lessons-for-the-next-panel">Lessons for the next panel</h2>
+<ol>
+<li><strong>Compare a known-good panel early</strong> when a sharply bounded section remains faulty after basic input checks. The replacement was the decisive experiment here.</li>
+<li><strong>Verify wires before changing bit mappings.</strong> The temporary B/C compensation produced readable letters while hiding an external wiring error.</li>
+<li><strong>Distinguish pixel OFF from OE blanking.</strong> A section going dark only at brightness 0 does not show that it accepted black data.</li>
+<li><strong>Use a held, recognisable pattern.</strong> The sixteen static letters exposed mapping errors that moving text made difficult to interpret.</li>
+<li><strong>Treat electrical measurements as bounded evidence.</strong> Correct DC levels do not replace pulse measurements; one open-circuit reading does not identify a failed chip.</li>
+<li><strong>Keep observations separate from hypotheses.</strong> The record supports board replacement as the resolution without inventing a component-level cause.</li>
+</ol>
+<h2 id="evidence-and-further-reading">Evidence and further reading</h2>
+<p>The <a href="PHOTO_LOG.html">photo log</a> contains all six supplied images in order. No working-replacement photograph was supplied, so the visual archive is explicitly a record of the original faulty panel. Attachment files are copied without re-encoding at the resolution retained in the conversation.</p>
+<p>For current wiring, command instructions, and application examples, use the <a href="PANEL_GUIDE.html">panel guide</a>. Chip pin functions can be checked in the <a href="https://taoic.oss-cn-hangzhou.aliyuncs.com/6466/product/HZ6749_1623831323000.pdf">manufacturer-authored Sunmoon SM74HC595 datasheet</a>; the investigation's measurements and outcome come from the owner, not from that datasheet.</p>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#resolution" class="section">Resolution</a>
+<a href="#the-starting-point" class="section">The starting point</a>
+<a href="#investigation-chronology" class="section">Investigation chronology</a>
+<a href="#1-localised-constant-illumination-and-flicker" class="sub">1. Localised constant illumination and flicker</a>
+<a href="#2-separate-black-data-from-output-blanking" class="sub">2. Separate black data from output blanking</a>
+<a href="#3-explicit-signal-and-refresh-timing" class="sub">3. Explicit signal and refresh timing</a>
+<a href="#4-compare-both-black-frame-entry-paths" class="sub">4. Compare both black-frame entry paths</a>
+<a href="#5-add-a-level-shifter" class="sub">5. Add a level shifter</a>
+<a href="#6-static-letters-reveal-a-second-independent-mapping-issue" class="sub">6. Static letters reveal a second, independent mapping issue</a>
+<a href="#7-find-and-correct-crossed-gpio-26-27" class="sub">7. Find and correct crossed GPIO 26/27</a>
+<a href="#8-verify-accessible-voltages-and-header-orientation" class="sub">8. Verify accessible voltages and header orientation</a>
+<a href="#9-test-a-longer-latch-pulse" class="sub">9. Test a longer latch pulse</a>
+<a href="#10-inspect-the-physical-boundary" class="sub">10. Inspect the physical boundary</a>
+<a href="#11-replace-the-panel" class="sub">11. Replace the panel</a>
+<a href="#measurement-record" class="section">Measurement record</a>
+<a href="#diagnostic-firmware-at-the-time-of-resolution" class="section">Diagnostic firmware at the time of resolution</a>
+<a href="#lessons-for-the-next-panel" class="section">Lessons for the next panel</a>
+<a href="#evidence-and-further-reading" class="section">Evidence and further reading</a></aside></div>
+</main>
+</body>
+</html>

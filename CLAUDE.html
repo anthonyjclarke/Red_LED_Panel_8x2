@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Architecture, constraints, and evidence limits">
+<meta name="color-scheme" content="light">
+<title>Maintainer notes — Red LED Panel 8×2 · Red LED Panel 8×2</title>
+<link rel="stylesheet" href="docs/assets/docs.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to document</a>
+<aside class="sidebar">
+<a class="brand" href="index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<div class="nav-label">Documentation</div>
+<nav class="nav-links" aria-label="Documentation"><a href="README.html">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html">Changelog</a><a href="CLAUDE.html" aria-current="page">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+</aside>
+<main class="page" id="main">
+<div class="toolbar"><span class="eyebrow">Workshop reference / Maintainer notes</span><div class="tools"><a href="CLAUDE.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
+<div class="doc-grid"><article>
+<div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#target-and-configuration" class="section">Target and configuration</a>
+<a href="#showcase-application" class="section">Showcase application</a>
+<a href="#refresh-driver" class="section">Refresh driver</a>
+<a href="#documentation" class="section">Documentation</a></nav></details>
+<h1 id="maintainer-notes-red-led-panel-82">Maintainer notes — Red LED Panel 8×2</h1>
+<h2 id="target-and-configuration">Target and configuration</h2>
+<ul>
+<li>ESP32 DevKit, PlatformIO <code>esp32dev</code>, <code>espressif32@6.9.0</code>, Arduino framework.</li>
+<li>Red HUB08 64×16, eight by two 8×8 modules, 1/16 scan; Adafruit GFX drawing.</li>
+<li>GPIO 25/26/27/13 → LA/LB/LC/LD, 22 → EN, 23 → R1, 4 → LT, 18 → SK.</li>
+<li>Active-low data/OE. Reversed column stream, normal row-bit order <code>{0,1,2,3}</code>, row XOR <code>0x0F</code>.</li>
+<li>All configured GPIOs must be below 32 for direct register writes.</li>
+<li>The project folder's RGB name is historical; the firmware drives red only.</li>
+</ul>
+<h2 id="showcase-application">Showcase application</h2>
+<p><code>src/main.cpp</code> has an eleven-scene looping playlist: letters, checkerboard, balls, stars, rain, animated bars, Life, hearts, scrolling, Pong, and a simulated clock. Each scene has a frame count and interval; scrolling derives its count from text bounds. Animation timing uses unsigned millisecond subtraction, renders one frame at a time, and does not replay missed frames. Serial prints scene transitions and user commands, not individual animation frames.</p>
+<p><code>1</code>–<code>9</code>, <code>g</code> (Pong), and <code>c</code> (clock) select a scene; <code>n</code> advances; <code>p</code> pauses/resumes; <code>r</code> restarts. <code>t</code> holds letters; <code>s</code> selects scrolling. <code>f/o/b</code> hold off/on/blank; <code>p/r/n</code> return to the playlist. Brightness changes with <code>+/-</code> in steps of 15, bounded to 0–255; hearts modulate up to that requested level. Conway's Life uses packed buffers and wrapping neighbours. Bars are simulated, with no audio input.</p>
+<p>Pong uses quarter-pixel ball positions, bounded paddle tracking, collision/reflection rules, single-digit scores, and a serve delay. Update its state only in <code>stepPong()</code>, not rendering, so pause and brightness controls preserve gameplay. Clock derives simulated seconds from <code>CLOCK_START_SECONDS + frame / 2</code>, wraps at midnight, and renders 3×5 digits at scale 2 with a SIM label. It needs no network or RTC and restarts on scene entry.</p>
+<p>Retired diagnostics (<code>e</code> polarity, <code>l</code> latch width, pre-scroll black comparison, row/address walks) are absent from the current application and driver API. Keep the working wiring, polarity, and scan timing stable when adding scenes.</p>
+<h2 id="refresh-driver">Refresh driver</h2>
+<p><code>Hub08Panel</code> subclasses <code>Adafruit_GFX</code>. Draw into <code>drawBuf_</code>; <code>show()</code> copies 128 bytes to <code>showBuf_</code> under the same lock used for row reads. This is not a frame-boundary swap.</p>
+<p>A periodic <code>esp_timer</code> callback blanks output, cancels an old off event, shifts 64 bits, sets the row address, pulses LT, and enables a bounded light window. A one-shot timer blanks it. Keep the 500 µs row period, 1 µs signal phases, 50 µs guard, and overdue-event skipping. Nominal complete-frame rate is 125 Hz; animation frame rate is separate. Pausing application animation must leave scanning running.</p>
+<p>Framebuffer 1 means ON. Output mapping/polarity apply during scanning; GFX coordinates remain top-left. Brightness is a requested on-time, capped by remaining row time.</p>
+<h2 id="documentation">Documentation</h2>
+<p><a href="docs/PANEL_GUIDE.html">The guide</a> describes the current application. The archived <a href="docs/BRING_UP_REPORT.html">bring-up report</a> records the former diagnostic firmware and original faulty panel; its commands and settings are historical. All six photos are from that original board. An identical replacement worked; no specific failed chip or trace was confirmed.</p>
+<p>Rebuild HTML and the share ZIP with Python 3.10+ using <a href="tools/build_docs.py">tools/build_docs.py</a> and <a href="tools/docs-requirements.txt">tools/docs-requirements.txt</a>. Edit Markdown and the template/CSS, not generated HTML. The ZIP includes the current firmware source snapshot and original photo bytes.</p>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#target-and-configuration" class="section">Target and configuration</a>
+<a href="#showcase-application" class="section">Showcase application</a>
+<a href="#refresh-driver" class="section">Refresh driver</a>
+<a href="#documentation" class="section">Documentation</a></aside></div>
+</main>
+</body>
+</html>

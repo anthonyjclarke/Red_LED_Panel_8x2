@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Hardware, wiring, firmware, and daily use">
+<meta name="color-scheme" content="light">
+<title>Panel hardware and usage guide · Red LED Panel 8×2</title>
+<link rel="stylesheet" href="assets/docs.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to document</a>
+<aside class="sidebar">
+<a class="brand" href="../index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
+<div class="nav-label">Documentation</div>
+<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html" aria-current="page">Panel guide</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+</aside>
+<main class="page" id="main">
+<div class="toolbar"><span class="eyebrow">Workshop reference / Panel guide</span><div class="tools"><a href="PANEL_GUIDE.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
+<div class="doc-grid"><article>
+<div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#what-the-panel-can-do" class="section">What the panel can do</a>
+<a href="#power-and-level-shifting" class="section">Power and level shifting</a>
+<a href="#esp32-to-matrix-wiring" class="sub">ESP32-to-matrix wiring</a>
+<a href="#connector-reference" class="sub">Connector reference</a>
+<a href="#using-a-74ahct245" class="sub">Using a 74AHCT245</a>
+<a href="#build-and-run" class="section">Build and run</a>
+<a href="#the-showcase-playlist" class="section">The showcase playlist</a>
+<a href="#pong-and-clock-simulations" class="sub">Pong and clock simulations</a>
+<a href="#serial-controls" class="section">Serial controls</a>
+<a href="#customise-the-showcase" class="section">Customise the showcase</a>
+<a href="#orientation-and-scan-settings" class="sub">Orientation and scan settings</a>
+<a href="#draw-your-own-content" class="section">Draw your own content</a>
+<a href="#driver-api" class="sub">Driver API</a>
+<a href="#photographing-the-display" class="section">Photographing the display</a>
+<a href="#reference-material" class="section">Reference material</a></nav></details>
+<h1 id="panel-hardware-and-usage-guide">Panel hardware and usage guide</h1>
+<p>Build a compact animated display with an <strong>ESP32, a 5 V HUB08 panel, and Adafruit GFX</strong>. This guide covers the working setup and the eleven-scene showcase.</p>
+<h2 id="what-the-panel-can-do">What the panel can do</h2>
+<p>This red <strong>P3.75, 64×16</strong> panel contains sixteen 8×8 modules in an <strong>8×2 grid</strong>. Every pixel is individually addressable, making it suitable for text, icons, simple games, cellular automata, and motion effects. Pixels are on/off; brightness control applies to the whole display rather than to individual pixels.</p>
+<p>The driver scans one of sixteen rows at a time. Background refresh continues while your application draws or pauses. The configured 500 µs row period gives a nominal <strong>125 Hz complete refresh</strong>; scene animation runs separately, typically at 25 frames per second.</p>
+<p><a class="image-link" href="../images/03-panel-rear.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/03-panel-rear.jpg" alt="Rear view of the panel with INPUT200, OUTPUT201, drivers, and the power terminal" width="2048" height="559" loading="eager" decoding="sync" /></a></p>
+<p><em>Rear PCB: INPUT200 at left, OUTPUT201 at right, power near the centre. These reference photos come from the original bring-up board.</em></p>
+<h2 id="power-and-level-shifting">Power and level shifting</h2>
+<p>Use a <strong>regulated 5 V supply</strong> connected directly to the panel's <strong>VCC/GND screw terminal</strong>. A 2–3 A supply is a practical starting point, not a measured maximum panel rating. Keep power leads short and adequately sized. Join the panel, ESP32, and level-shifter grounds. Route LED-panel current through its power terminal rather than through the ESP32 or breadboard rails.</p>
+<p>Start at the default brightness <strong>90/255</strong>. Increasing brightness or the number of lit pixels increases the load. USB can power the ESP32 while the separate supply powers the matrix; their grounds must be common.</p>
+<p>Pass all eight control signals through a level shifter from ESP32 3.3 V logic to the panel's 5 V logic. The recorded setup uses an <strong>EzSBC LS1</strong>. Its VLo connects to 3.3 V, VHi to the panel logic supply, and each Lo channel pairs with the matching Hi channel. LS1 uses resistor pull-ups; a <strong>74AHCT245</strong> provides actively driven outputs and is another suitable interface. <a href="https://levelshifter.weebly.com/">EzSBC LS1 description</a>, <a href="https://news.ezsbc.com/new-level-shifter-buffer/">manufacturer design notes</a></p>
+<h3 id="esp32-to-matrix-wiring">ESP32-to-matrix wiring</h3>
+<p>These are <strong>ESP32 GPIO numbers</strong>, not development-board header positions. Connect to <strong>INPUT200</strong> beside U201.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">ESP32 GPIO</th>
+<th style="text-align:left">Matrix signal</th>
+<th style="text-align:left">Config name</th>
+<th style="text-align:left">Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">25</td>
+<td style="text-align:left">LA</td>
+<td style="text-align:left"><code>PIN_A</code></td>
+<td style="text-align:left">Row-address A</td>
+</tr>
+<tr>
+<td style="text-align:left">26</td>
+<td style="text-align:left">LB</td>
+<td style="text-align:left"><code>PIN_B</code></td>
+<td style="text-align:left">Row-address B</td>
+</tr>
+<tr>
+<td style="text-align:left">27</td>
+<td style="text-align:left">LC</td>
+<td style="text-align:left"><code>PIN_C</code></td>
+<td style="text-align:left">Row-address C</td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left">LD</td>
+<td style="text-align:left"><code>PIN_D</code></td>
+<td style="text-align:left">Row-address D</td>
+</tr>
+<tr>
+<td style="text-align:left">22</td>
+<td style="text-align:left">EN</td>
+<td style="text-align:left"><code>PIN_OE</code></td>
+<td style="text-align:left">Output enable</td>
+</tr>
+<tr>
+<td style="text-align:left">23</td>
+<td style="text-align:left">R1</td>
+<td style="text-align:left"><code>PIN_R1</code></td>
+<td style="text-align:left">Red pixel data</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">LT</td>
+<td style="text-align:left"><code>PIN_LAT</code></td>
+<td style="text-align:left">Column latch</td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left">SK</td>
+<td style="text-align:left"><code>PIN_CLK</code></td>
+<td style="text-align:left">Shift clock</td>
+</tr>
+<tr>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">GND</td>
+<td style="text-align:left">—</td>
+<td style="text-align:left">Common reference</td>
+</tr>
+</tbody>
+</table></div>
+<p>All eight signals travel <strong>ESP32 → low-side input → matching high-side output → matrix input</strong>. R2/G1/G2 are unused by this firmware. The configured pins are below 32, as required by the driver's direct GPIO writes.</p>
+<h3 id="connector-reference">Connector reference</h3>
+<p>The pictured board has an unmarked INPUT200 and labelled OUTPUT201. With the <strong>rear PCB text upright</strong>, OUTPUT201 reads as follows. Row numbers are descriptive, not official IDC pin numbers.</p>
+<pre><code class="language-text">                    LEFT       RIGHT
+Top, row 1          GND        LA
+     row 2          GND        LB
+     row 3          GND        LC
+     row 4          EN         LD
+     row 5          R1         G1
+     row 6          R2         G2
+     row 7          GND        LT
+Bottom, row 8       GND        SK
+</code></pre>
+<p>The matching INPUT200 ground positions in left rows 1/2/3/7/8 were verified on this board. Use this as the connector orientation reference for this panel, not a universal pinout for every HUB08 product. OUTPUT201 is for cascading onward; this firmware controls one 64×16 panel.</p>
+<p><a class="image-link" href="../images/04-output201-header.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/04-output201-header.jpg" alt="OUTPUT201 connector showing the labelled signal positions" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<h3 id="using-a-74ahct245">Using a 74AHCT245</h3>
+<p>For a standard 20-pin 74AHCT245, connect <strong>pin 20/VCC and pin 1/DIR to 5 V</strong>, and <strong>pin 10 (GND) and pin 19 (/OE) to ground</strong>. Add a 100 nF decoupling capacitor close to VCC/GND. This selects A-to-B direction. Verify the exact package pinout used. The chip's buffer-enable pin is separate from matrix EN. <a href="https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf">TI datasheet</a></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">GPIO</th>
+<th style="text-align:left">Buffer input</th>
+<th style="text-align:left">Buffer output</th>
+<th style="text-align:left">Matrix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">25</td>
+<td style="text-align:left">A1 / pin 2</td>
+<td style="text-align:left">B1 / pin 18</td>
+<td style="text-align:left">LA</td>
+</tr>
+<tr>
+<td style="text-align:left">26</td>
+<td style="text-align:left">A2 / pin 3</td>
+<td style="text-align:left">B2 / pin 17</td>
+<td style="text-align:left">LB</td>
+</tr>
+<tr>
+<td style="text-align:left">27</td>
+<td style="text-align:left">A3 / pin 4</td>
+<td style="text-align:left">B3 / pin 16</td>
+<td style="text-align:left">LC</td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left">A4 / pin 5</td>
+<td style="text-align:left">B4 / pin 15</td>
+<td style="text-align:left">LD</td>
+</tr>
+<tr>
+<td style="text-align:left">22</td>
+<td style="text-align:left">A5 / pin 6</td>
+<td style="text-align:left">B5 / pin 14</td>
+<td style="text-align:left">EN</td>
+</tr>
+<tr>
+<td style="text-align:left">23</td>
+<td style="text-align:left">A6 / pin 7</td>
+<td style="text-align:left">B6 / pin 13</td>
+<td style="text-align:left">R1</td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">A7 / pin 8</td>
+<td style="text-align:left">B7 / pin 12</td>
+<td style="text-align:left">LT</td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left">A8 / pin 9</td>
+<td style="text-align:left">B8 / pin 11</td>
+<td style="text-align:left">SK</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="build-and-run">Build and run</h2>
+<p>Open the project in <strong>VS Code with PlatformIO</strong>, select environment <strong>esp32dev</strong>, and use Build, Upload, then Serial Monitor. The project uses <code>espressif32@6.9.0</code>, Arduino, and Adafruit GFX. From the PlatformIO terminal:</p>
+<pre><code class="language-sh">pio run
+pio device list
+pio run --target upload
+pio device monitor --baud 115200
+</code></pre>
+<p>Choose the USB port for your ESP32 if several devices are connected. Close an existing monitor before uploading. Reset the board with Serial Monitor open to see the startup message.</p>
+<p>The display starts with letters, runs through all eleven scenes, then repeats. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.</p>
+<h2 id="the-showcase-playlist">The showcase playlist</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Key</th>
+<th style="text-align:left">Scene</th>
+<th style="text-align:left">Default time</th>
+<th style="text-align:left">What it demonstrates</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>1</code></td>
+<td style="text-align:left">Letters</td>
+<td style="text-align:left">2.5 s</td>
+<td style="text-align:left">A–H above I–P, one small letter in each module</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>2</code></td>
+<td style="text-align:left">Checkerboard</td>
+<td style="text-align:left">1.2 s</td>
+<td style="text-align:left">Six alternating pixel patterns</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>3</code></td>
+<td style="text-align:left">Bouncing balls</td>
+<td style="text-align:left">5.6 s</td>
+<td style="text-align:left">Three independent paths, filled and outlined circles</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>4</code></td>
+<td style="text-align:left">Starfield</td>
+<td style="text-align:left">5.6 s</td>
+<td style="text-align:left">Twenty-four stars, three speeds, short trails</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>5</code></td>
+<td style="text-align:left">Pixel rain</td>
+<td style="text-align:left">6 s</td>
+<td style="text-align:left">Staggered falling trails of different lengths</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>6</code></td>
+<td style="text-align:left">Animated bars</td>
+<td style="text-align:left">6.4 s</td>
+<td style="text-align:left">Eight smoothly interpolated bars and peak marks</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>7</code></td>
+<td style="text-align:left">Conway's Life</td>
+<td style="text-align:left">7.2 s</td>
+<td style="text-align:left">Gliders and blinkers with wrapping edges</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>8</code></td>
+<td style="text-align:left">Beating hearts</td>
+<td style="text-align:left">4 s</td>
+<td style="text-align:left">Three enlarged pixel-art hearts with pulsing brightness</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>9</code></td>
+<td style="text-align:left">Scrolling text</td>
+<td style="text-align:left">About 12.2 s</td>
+<td style="text-align:left">Size-2 text crossing the full screen</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>g</code></td>
+<td style="text-align:left">Pong</td>
+<td style="text-align:left">16 s</td>
+<td style="text-align:left">Automatic paddles, ball physics, goals, and a small scoreboard</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>c</code></td>
+<td style="text-align:left">Clock simulation</td>
+<td style="text-align:left">16 s</td>
+<td style="text-align:left">Large HH:MM:SS digits, blinking colons, and a seconds bar</td>
+</tr>
+</tbody>
+</table></div>
+<p>One cycle is approximately <strong>83 seconds</strong> with the default text. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.</p>
+<p>Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.</p>
+<h3 id="pong-and-clock-simulations">Pong and clock simulations</h3>
+<p><strong>Pong</strong> is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting <code>g</code> starts a fresh match. Use <code>p</code> to freeze or resume play.</p>
+<p><strong>Clock</strong> starts at <strong>23:59:55</strong>, advances through midnight, and shows <strong>HH:MM:SS</strong> in enlarged 3×5 digits. Colons blink every half second; the bottom bar fills with the seconds. The small <strong>SIM</strong> label identifies it as a demonstration, with no Wi-Fi, time service, or RTC. Selecting <code>c</code> resets the simulated time. Pausing freezes it; it resumes from that time rather than catching up to wall time.</p>
+<h2 id="serial-controls">Serial controls</h2>
+<p>Click inside the PlatformIO <strong>Serial Monitor terminal</strong> and type a key. <strong>No Enter or comma is required.</strong> Letter commands also accept uppercase. Local echo may be off; the firmware's printed response confirms receipt.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Key</th>
+<th style="text-align:left">Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>1</code>–<code>9</code></td>
+<td style="text-align:left">Start the chosen scene, then continue the playlist</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>g</code></td>
+<td style="text-align:left">Start a fresh Pong simulation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>c</code></td>
+<td style="text-align:left">Start the clock simulation at 23:59:55</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>n</code></td>
+<td style="text-align:left">Start the next scene; resumes if paused</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>p</code></td>
+<td style="text-align:left">Pause/resume the current scene; refresh continues</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>r</code></td>
+<td style="text-align:left">Restart the playlist at letters</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>t</code></td>
+<td style="text-align:left">Hold the static letters indefinitely; <code>p</code> resumes their timer</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>s</code></td>
+<td style="text-align:left">Jump directly to scrolling text, then continue the playlist</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>f</code></td>
+<td style="text-align:left">Hold all pixels OFF</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>o</code></td>
+<td style="text-align:left">Hold all pixels ON at the selected brightness</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>b</code></td>
+<td style="text-align:left">Blank the output at brightness zero</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>+</code> / <code>-</code></td>
+<td style="text-align:left">Change requested brightness by 15, bounded to 0–255; <code>=</code> also increases it</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>?</code> / <code>h</code></td>
+<td style="text-align:left">Print help, scene list, and selected brightness</td>
+</tr>
+</tbody>
+</table></div>
+<p>From held <code>f/o/b</code>, <strong><code>p</code>, <code>r</code>, or <code>n</code> starts the playlist at letters</strong>. Scene keys (<code>1</code>–<code>9</code>, <code>g</code>, <code>c</code>) also leave any held pattern. Changing brightness preserves the current frame and pause state; <code>b</code> remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the configured default when the ESP32 resets. Brightness zero remains dark until increased again.</p>
+<p>Requested brightness is an on-time setting, not a calibrated light percentage. At higher settings the driver caps it to the time remaining after shifting, so the upper end can saturate.</p>
+<p>For a clear placement reference, send <code>t</code>:</p>
+<pre><code class="language-text">A B C D E F G H
+I J K L M N O P
+</code></pre>
+<p>The rightmost three module columns should show F/G/H above N/O/P. Use <code>p</code> to continue from this held scene, or select another scene directly.</p>
+<h2 id="customise-the-showcase">Customise the showcase</h2>
+<p>Edit <a href="../include/config.h">include/config.h</a>, rebuild, and upload:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Setting</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>DEFAULT_BRIGHTNESS</code></td>
+<td style="text-align:left">90</td>
+<td style="text-align:left">Brightness selected after reset</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>SCROLL_TEXT</code></td>
+<td style="text-align:left"><code>ESP32 + HUB08 = FUN!</code></td>
+<td style="text-align:left">Message in scene 9</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>LETTER_HOLD_MS</code></td>
+<td style="text-align:left">2500</td>
+<td style="text-align:left">Time on the letter pattern</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CHECKER_STEP_MS</code></td>
+<td style="text-align:left">200</td>
+<td style="text-align:left">Time per checkerboard phase</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>ANIMATION_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Frame interval for balls, stars, bars, and hearts</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>RAIN_STEP_MS</code></td>
+<td style="text-align:left">50</td>
+<td style="text-align:left">Rain frame interval</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>LIFE_STEP_MS</code></td>
+<td style="text-align:left">100</td>
+<td style="text-align:left">Time per Life generation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>SCROLL_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Time per one-pixel scroll step</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>PONG_STEP_MS</code></td>
+<td style="text-align:left">40</td>
+<td style="text-align:left">Pong physics and drawing interval</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CLOCK_STEP_MS</code></td>
+<td style="text-align:left">500</td>
+<td style="text-align:left">Clock frame interval; two frames per simulated second</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>CLOCK_START_SECONDS</code></td>
+<td style="text-align:left">86395 (23:59:55)</td>
+<td style="text-align:left">Simulated starting time, seconds since midnight</td>
+</tr>
+</tbody>
+</table></div>
+<p>Scene frame counts are in the <code>scenes</code> table in <a href="../src/main.cpp">src/main.cpp</a>. Each render draws into the working buffer and calls <code>show()</code>. A scene's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. The simulated clock advances one second per two frames, so changing <code>CLOCK_STEP_MS</code> changes its demonstration speed.</p>
+<h3 id="orientation-and-scan-settings">Orientation and scan settings</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Setting</th>
+<th style="text-align:left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Geometry</td>
+<td style="text-align:left">64×16; 1/16 scan</td>
+</tr>
+<tr>
+<td style="text-align:left">Column stream</td>
+<td style="text-align:left"><code>REVERSE_SHIFT_COLUMNS = true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">A/B/C/D source bits</td>
+<td style="text-align:left"><code>ROW_ADDRESS_Y_BITS = {0, 1, 2, 3}</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Row-address inversion</td>
+<td style="text-align:left"><code>ROW_ADDRESS_XOR = 0x0F</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Data / output-enable polarity</td>
+<td style="text-align:left"><code>DATA_ACTIVE_LOW = true</code>, <code>OE_ACTIVE_LOW = true</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Row period / signal phase / guard</td>
+<td style="text-align:left">500 µs / 1 µs / 50 µs</td>
+</tr>
+</tbody>
+</table></div>
+<p>These values match the working panel orientation. Drawing coordinates remain <strong>(0,0) at top left</strong>. Changing geometry alone does not make the driver a generic multi-panel cascade driver.</p>
+<h2 id="draw-your-own-content">Draw your own content</h2>
+<p><code>Hub08Panel</code> derives from <code>Adafruit_GFX</code>. Colour <strong>0 is OFF</strong> and a nonzero colour is ON. Draw text or graphics, then call <strong><code>show()</code></strong>. For a permanent label, replace the demo application in <code>src/main.cpp</code> with:</p>
+<pre><code class="language-cpp">#include &lt;Arduino.h&gt;
+#include &quot;Hub08Panel.h&quot;
+
+Hub08Panel panel;
+
+void setup() {
+  Serial.begin(115200);
+  panel.begin();
+  panel.setBrightness(DEFAULT_BRIGHTNESS);
+  panel.setTextWrap(false);
+  panel.setTextSize(1);
+  panel.setTextColor(1);
+  panel.fillScreen(0);
+  panel.setCursor(1, 0);
+  panel.print(&quot;READY&quot;);
+  panel.setCursor(1, 8);
+  panel.print(&quot;ESP32&quot;);
+  panel.show();
+}
+
+void loop() {
+  delay(10);  // Background scanning keeps the label visible.
+}
+</code></pre>
+<p>Use this instead of the original <code>setup()</code>/<code>loop()</code>, rather than adding a second pair. To draw a border, line, and circle after initialisation:</p>
+<pre><code class="language-cpp">panel.fillScreen(0);
+panel.drawRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT, 1);
+panel.drawLine(0, 0, PANEL_WIDTH - 1, PANEL_HEIGHT - 1, 1);
+panel.drawCircle(32, 8, 5, 1);
+panel.show();
+</code></pre>
+<p>Size-1 text fits two rows of small characters. Size-2 text gives a single 14-pixel-tall line, as used by the scroller. <code>setTextWrap(false)</code> lets text move through the screen edges. GFX clips drawing to the framebuffer and honours <code>setRotation()</code>.</p>
+<h3 id="driver-api">Driver API</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align:left">Method</th>
+<th style="text-align:left">Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>begin()</code></td>
+<td style="text-align:left">Initialise pins and start background refresh; call once</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>drawPixel(x, y, colour)</code></td>
+<td style="text-align:left">Set a pixel, with clipping and GFX rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>fillScreen(colour)</code></td>
+<td style="text-align:left">Clear or fill the drawing buffer</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>show()</code></td>
+<td style="text-align:left">Copy the drawing buffer to the display buffer</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>setBrightness(level)</code></td>
+<td style="text-align:left">Set requested row on-time; zero blanks output</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>rowAddressFor(y)</code></td>
+<td style="text-align:left">Return the mapped hardware address for a logical row</td>
+</tr>
+</tbody>
+</table></div>
+<p>The two framebuffers each occupy <strong>128 bytes</strong>. Copying with <code>show()</code> is locked against row reads but is not a frame-boundary swap. Scanning shifts 64 bits, sets the address, latches, and enables a bounded row pulse. Both refresh callbacks run through <code>esp_timer</code>; animation can pause without stopping them. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html">ESP-IDF timer reference</a></p>
+<h2 id="photographing-the-display">Photographing the display</h2>
+<p>Send <code>t</code>, or pause an animation with <code>p</code>. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at <strong>1/25 second and low ISO</strong>, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. <a href="https://www.sony.com.au/electronics/support/articles/00122281">Sony guidance on LED banding</a></p>
+<h2 id="reference-material">Reference material</h2>
+<p>Open <a href="../index.html">index.html</a> for the HTML edition. The <a href="PHOTO_LOG.html">photo gallery</a> provides connector and component close-ups; <a href="../images/manifest.json">manifest.json</a> records the original attachment checksums. Rebuild HTML and the share ZIP using the instructions in <a href="../README.html">README.md</a>.</p>
+<p>Earlier diagnostic commands and electrical measurements are retained in the <a href="BRING_UP_REPORT.html">archived bring-up report</a>. That report describes the older test firmware, not the current showcase controls.</p>
+
+<footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#what-the-panel-can-do" class="section">What the panel can do</a>
+<a href="#power-and-level-shifting" class="section">Power and level shifting</a>
+<a href="#esp32-to-matrix-wiring" class="sub">ESP32-to-matrix wiring</a>
+<a href="#connector-reference" class="sub">Connector reference</a>
+<a href="#using-a-74ahct245" class="sub">Using a 74AHCT245</a>
+<a href="#build-and-run" class="section">Build and run</a>
+<a href="#the-showcase-playlist" class="section">The showcase playlist</a>
+<a href="#pong-and-clock-simulations" class="sub">Pong and clock simulations</a>
+<a href="#serial-controls" class="section">Serial controls</a>
+<a href="#customise-the-showcase" class="section">Customise the showcase</a>
+<a href="#orientation-and-scan-settings" class="sub">Orientation and scan settings</a>
+<a href="#draw-your-own-content" class="section">Draw your own content</a>
+<a href="#driver-api" class="sub">Driver API</a>
+<a href="#photographing-the-display" class="section">Photographing the display</a>
+<a href="#reference-material" class="section">Reference material</a></aside></div>
+</main>
+</body>
+</html>
