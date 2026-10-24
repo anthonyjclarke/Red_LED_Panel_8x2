@@ -2,7 +2,7 @@
 
 ## [1.3.0] 25-10-2026
 
-Built and host-tested; **not yet flashed**. OTA needs one USB upload before it can be used.
+Flashed over USB on the reference panel on 25 October 2026 and tagged `v1.3.0-flashed`. The panel reports v1.3.0 with OTA **ready**; the new settings UI and the optional page login (user `admin`) were confirmed working. A first Wi-Fi (OTA) upload had not yet been run when this was recorded.
 
 ### Added
 

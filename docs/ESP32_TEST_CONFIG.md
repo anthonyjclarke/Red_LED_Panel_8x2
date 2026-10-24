@@ -233,6 +233,12 @@ Counters are cumulative since reset. Compare the two readings: missed ticks and 
 
 The driver isolates refresh from the shared timer task and commits pictures between scans. The v1.2.0 overlapped SPI shift passed this check on the reference panel (below). Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons light for half of each second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
 
+## Recorded reference-panel result (v1.3.0) — 25 October 2026
+
+v1.3.0 was flashed over USB from the iMac with `SECRET_PANEL_PASSWORD` and `SECRET_OTA_PASSWORD` set. `/api/status` reported version **1.3.0**, `ota: ready` and synchronised time. Without credentials, `/`, `/panel` and `/api/status` returned **401**; with user `admin` and the page password they returned **200**. The user confirmed the new settings UI and login work in the browser. A first OTA upload had not yet been run when this was recorded; use the OTA rows of the acceptance table for that check.
+
+A local `secrets.h` copied from an older template lacked `SECRET_OTA_PASSWORD`, and the build stopped with `'SECRET_OTA_PASSWORD' was not declared`. Add the line from `include/secrets.example.h` to fix it.
+
 ## Recorded reference-panel result (v1.2.0) — 25 October 2026
 
 After flashing v1.2.0, the user reported **"Everything seems to be working"**. The serial log shows the new start-up line `Shift: VSPI 500000 Hz on SK=18 R1=23, overlapped with the lit row`, Wi-Fi association, NTP synchronisation (06:58:47 AEDT) and normal clock/demo progression. Checks covered held letters, all-on from 90 to 255/255 and back to 0, and serial brightness saving: 240, 255 and 105 were each saved five seconds after the last key press, and 105 was restored after a power-on reset.
