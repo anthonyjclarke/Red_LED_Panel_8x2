@@ -48,9 +48,9 @@ After connection, open **`http://<panel-IP>/panel`** using the address printed b
 
 The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled **HLD**, for up to 24 hours. Send **`w`** to reopen setup, **`i`** for status, and **`d`** to cycle debug levels.
 
-Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. From v1.2.0 the next row is shifted over hardware SPI while the current row is lit, so the full brightness range is usable; this change still needs a check on the reference panel. Send `i` for refresh timing counters; see the [flicker check](docs/ESP32_TEST_CONFIG.md#check-display-flicker) after uploading. Clock colons blink and hearts pulse deliberately.
+Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. From v1.2.0 the next row is shifted over hardware SPI while the current row is lit, so the full brightness range is usable. The reference panel ran v1.2.0 with zero missed or late rows. Send `i` for refresh timing counters; see the [flicker check](docs/ESP32_TEST_CONFIG.md#check-display-flicker) after uploading. Clock colons blink and hearts pulse deliberately.
 
-The v1.1.0 reference ESP32/panel check on **25 October 2026** confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.
+The reference ESP32/panel checks on **25 October 2026** (v1.1.0, then v1.2.0) confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.
 
 The [ESP32 reference test setup](docs/ESP32_TEST_CONFIG.md) contains every connection, buffer pin, network address, default setting and bench check. [Screen examples](docs/SCREEN_EXAMPLES.md) show rendered output for every demo and startup/clock state.
 

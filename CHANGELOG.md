@@ -2,7 +2,7 @@
 
 ## [1.2.0] 25-10-2026
 
-Built and host-tested; **not yet flashed or checked on the reference panel**.
+Flashed and checked on the reference panel on 25 October 2026: normal display through 255/255, zero missed ticks and late rows over more than 500,000 rows, peak wake 237 µs (v1.1.0: 491 µs), and serial brightness saved and restored after reset. Tagged `v1.2.0-flashed`.
 
 ### Changed
 

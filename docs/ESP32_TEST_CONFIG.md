@@ -227,11 +227,25 @@ Refresh: rows=..., missed ticks=..., late rows=..., max wake=... us, max scan=..
 
 Counters are cumulative since reset. Compare the two readings: missed ticks and late rows should stay unchanged during steady operation and normal page polling. Increasing values indicate missed refresh deadlines; record both reports and which action triggers them. Max wake/scan values are lifetime peaks, including startup or earlier flash saves, so reset for a fresh comparison. Saving settings or Wi-Fi credentials writes flash and can cause a brief disturbance; check that steady output resumes afterwards.
 
-The driver isolates refresh from the shared timer task and commits pictures between scans. **The v1.2.0 overlapped SPI shift is not yet confirmed on the reference panel; repeat this check after upgrading.** Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons light for half of each second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
+The driver isolates refresh from the shared timer task and commits pictures between scans. The v1.2.0 overlapped SPI shift passed this check on the reference panel (below). Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons light for half of each second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
 
-## Recorded reference-panel result — 25 October 2026
+## Recorded reference-panel result (v1.2.0) — 25 October 2026
 
-These readings are from **v1.1.0**, which shifted columns while the output was dark. They do not cover the v1.2.0 refresh change.
+After flashing v1.2.0, the user reported **"Everything seems to be working"**. The serial log shows the new start-up line `Shift: VSPI 500000 Hz on SK=18 R1=23, overlapped with the lit row`, Wi-Fi association, NTP synchronisation (06:58:47 AEDT) and normal clock/demo progression. Checks covered held letters, all-on from 90 to 255/255 and back to 0, and serial brightness saving: 240, 255 and 105 were each saved five seconds after the last key press, and 105 was restored after a power-on reset.
+
+| Refresh metric | Before reset | After reset |
+|:--|--:|--:|
+| Rows (latest reading) | 533,851 | 108,216 |
+| Missed ticks | 0 | 0 |
+| Late rows | 0 | 0 |
+| Maximum wake | 237 µs | 189 µs |
+| Maximum scan | 489 µs | 457 µs |
+
+Every reading in the session showed zero missed ticks and late rows, compared with 39 and 45 in the v1.1.0 totals below, and the peak wake delay roughly halved. Maximum scan now includes the 128 µs SPI shift that overlaps the lit row. One cold power-on printed `flash read err, 1000` from the ESP32 boot ROM and recovered by itself through an RTC watchdog reset. That happens before the firmware runs, so it points to power-up conditions (supply ramp or USB lead) rather than v1.2.0; note it if it repeats. This is a user-observed visual check plus serial evidence, not an oscilloscope measurement.
+
+## Recorded reference-panel result (v1.1.0) — 25 October 2026
+
+These readings are from **v1.1.0**, which shifted columns while the output was dark.
 
 The user reported **“All appears ok, no flicker”** after uploading the corrected interrupt-allocation build (`1.1.0-dev`, subsequently finalised as `1.1.0`). The supplied serial log confirms Wi-Fi connection, NTP synchronisation at **01:46:53 AEDT on 25 October 2026**, then clock → letters → clock → checkerboard. Letters were then held with `t` for two `i` status readings, at brightness **90/255**, with the standard GPIO mapping and 500 µs row period.
 

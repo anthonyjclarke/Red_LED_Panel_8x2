@@ -13,7 +13,7 @@
 - ISRs only blank OE / notify; no logging, shifting or allocation. Row work runs in a high-priority task on the setup core, never in `esp_timer`.
 - Per tick: blank → address → latch the columns shifted in the previous slot → arm OE-off → shift the next row while lit. Frames commit only when row 0 is prepared; brightness when row 0 latches.
 - Late ticks leave the row dark; skip backlogs. Keep 500 µs row, 1 µs latch phases, 50 µs guard. Unwind timers, interrupts, SPI and task on any init failure.
-- v1.1.0 (shift while dark) was confirmed flicker-free on 25 Oct 2026. The v1.2.0 overlapped 500 kHz SPI shift is untested on hardware.
+- v1.2.0 (overlapped 500 kHz SPI shift) confirmed on the reference panel 25 Oct 2026: 0 missed/late rows, peak wake 237 µs. v1.1.0 shifted while dark.
 
 ## Application rules
 

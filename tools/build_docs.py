@@ -145,7 +145,7 @@ def render_release_log() -> str:
     for tag in (git("tag", "--list") or "").split():
         commit = git("rev-list", "-n", "1", tag)
         if commit:
-            tags[tag.lstrip("v")] = (tag, commit[:7])
+            tags[tag.lstrip("v").removesuffix("-flashed")] = (tag, commit[:7])
     rows = []
     changelog = (ROOT / "CHANGELOG.md").read_text()
     for match in re.finditer(r"^## \[([^\]]+)\][ -]*(\S*)\s*$", changelog, re.M):
