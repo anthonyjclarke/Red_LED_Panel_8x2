@@ -13,14 +13,19 @@
 <aside class="sidebar">
 <a class="brand" href="index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
-<nav class="nav-links" aria-label="Documentation"><a href="README.html">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html" aria-current="page">Changelog</a><a href="CLAUDE.html">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<nav class="nav-links" aria-label="Documentation"><a href="README.html">Overview</a><a href="docs/PANEL_GUIDE.html">Panel guide</a><a href="docs/ESP32_TEST_CONFIG.html">ESP32 test setup</a><a href="docs/SCREEN_EXAMPLES.html">Screen examples</a><a href="docs/PHOTO_LOG.html">Hardware photos</a><a href="CHANGELOG.html" aria-current="page">Changelog</a><a href="CLAUDE.html">Maintainer notes</a><a href="images/README.html">Image archive</a><a href="docs/BRING_UP_REPORT.html">Archived bring-up</a></nav>
 <div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
 <div class="toolbar"><span class="eyebrow">Workshop reference / Changelog</span><div class="tools"><a href="CHANGELOG.md">Markdown source</a><button type="button" onclick="window.print()">Print</button></div></div>
 <div class="doc-grid"><article>
 <div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
-<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
+<details class="mobile-toc"><summary>On this page</summary><nav aria-label="Section navigation"><a href="#1-1-0-2026-10-25" class="section">[1.1.0] - 2026-10-25</a>
+<a href="#reference-panel-check-25-october-2026" class="sub">Reference-panel check — 25 October 2026</a>
+<a href="#blank-display-startup-fix" class="sub">Blank-display startup fix</a>
+<a href="#clock-led-cycle-and-refresh-timing" class="sub">Clock-led cycle and refresh timing</a>
+<a href="#wi-fi-real-time-and-configuration" class="sub">Wi-Fi, real time and configuration</a>
+<a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
 <a href="#pong-and-clock-demos" class="sub">Pong and clock demos</a>
 <a href="#showcase-and-everyday-use" class="sub">Showcase and everyday use</a>
 <a href="#confirmed-hardware-outcome-24-october-2026" class="sub">Confirmed hardware outcome — 24 October 2026</a>
@@ -30,6 +35,37 @@
 <a href="#0-1-0-23-10-2026" class="section">[0.1.0] 23-10-2026</a>
 <a href="#added-2" class="sub">Added</a></nav></details>
 <h1 id="changelog">Changelog</h1>
+<h2 id="1-1-0-2026-10-25">[1.1.0] - 2026-10-25</h2>
+<h3 id="reference-panel-check-25-october-2026">Reference-panel check — 25 October 2026</h3>
+<ul>
+<li>User confirmed the corrected pre-release build displayed normally with no visible flicker.</li>
+<li>Serial confirmed Wi-Fi association, NTP synchronisation in Sydney/AEDT, and clock → letters → clock → checkerboard progression.</li>
+<li>While letters were held, rows advanced from 67,642 to 77,988; missed ticks stayed at 39 and late rows at 45. No new missed/late events appeared between those snapshots. Recorded maximum wake/scan times were cumulative peaks, not a continuous latency measurement.</li>
+<li>Finalised the firmware version as 1.1.0 and refreshed the example gallery, HTML documentation and share bundle.</li>
+</ul>
+<h3 id="blank-display-startup-fix">Blank-display startup fix</h3>
+<ul>
+<li>Fixed <code>timer_isr_callback_add</code> failing with <code>ESP_ERR_NOT_FOUND</code>, which left OE blanked and refresh rows at zero. The two timers now request compatible shared IRAM interrupts at an available low/medium level instead of two exclusive level-3 vectors.</li>
+<li>Added stage-specific startup errors and cleanup of acquired timers, interrupts and the scan task if setup fails.</li>
+<li>Added a constrained-interrupt regression that reproduces the old failure, verifies shared allocation starts scanning, and checks failure cleanup. The corrected driver subsequently passed the reference-panel visual check.</li>
+</ul>
+<h3 id="clock-led-cycle-and-refresh-timing">Clock-led cycle and refresh timing</h3>
+<ul>
+<li>Start with the clock for 10 seconds, run one demo, then return to the clock before the next demo. <code>r</code> resets the demo cursor, while direct <code>c</code> and saved Clock mode remain clock-only.</li>
+<li>Preserve the clock visit deadline across pause/resume and handle delayed loops and millis rollover.</li>
+<li>Move refresh from shared <code>esp_timer</code> callbacks to hardware row/OE timers and a dedicated scan task on core 1. Late rows stay blank, and pending pictures/brightness apply at row zero to reduce tearing.</li>
+<li>Add serial <code>i</code> refresh counters and host driver regressions for pulse deadlines, late slots and complete-scan updates. Keep electrical mapping and scan timings unchanged. Reference-panel bench results are recorded below.</li>
+</ul>
+<h3 id="wi-fi-real-time-and-configuration">Wi-Fi, real time and configuration</h3>
+<ul>
+<li>Added WiFiManager 2.0.17 with a setup hotspot, saved-network retries and a LAN-accessible <code>/panel</code> configuration/status page.</li>
+<li>Replaced the clock simulation with NTP-synchronised local time, automatic daylight saving, honest waiting states and offline holdover. Selecting or pausing the clock no longer resets/freezes actual time.</li>
+<li>Added validated persistent location, time zone, startup brightness and startup-view settings. Sydney is the default. Credentials remain in device storage and are never logged.</li>
+<li>Added startup/version/settings cards and a full serial/web status report. Serial <code>w</code> opens setup, <code>i</code> prints status and <code>d</code> controls runtime verbosity.</li>
+<li>Applied the shared debug prefixes/runtime levels, two-space C++ formatting, <code>.clang-format</code> and <code>.editorconfig</code>.</li>
+<li>Added the complete ESP32 reference bench configuration and rendered screen examples for every demo, boot and clock state. Host regressions use the actual application/GFX and network application with hardware doubles.</li>
+<li>Regenerated the offline HTML and share bundle. The reference-board log confirms Wi-Fi connection, NTP sync and clock/demo alternation; the user reported no visible flicker. Captive-portal phone behaviour, persistence/reconnect scenarios and extended stress testing remain separate acceptance checks.</li>
+</ul>
 <h2 id="1-0-0-2026-10-24">[1.0.0] - 2026-10-24</h2>
 <p>Completed the working-panel bring-up and eleven-scene showcase, with setup instructions, historical measurements, photographs, and offline documentation.</p>
 <h3 id="pong-and-clock-demos">Pong and clock demos</h3>
@@ -87,7 +123,12 @@
 </ul>
 
 <footer class="footer">Red LED Panel 8×2 · Setup, scenes, and drawing.<br>Offline documentation generated with <code>tools/build_docs.py</code>. <a href="#top">Back to top</a></footer>
-</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
+</article><aside class="toc" aria-label="On this page"><div class="toc-title">On this page</div><a href="#1-1-0-2026-10-25" class="section">[1.1.0] - 2026-10-25</a>
+<a href="#reference-panel-check-25-october-2026" class="sub">Reference-panel check — 25 October 2026</a>
+<a href="#blank-display-startup-fix" class="sub">Blank-display startup fix</a>
+<a href="#clock-led-cycle-and-refresh-timing" class="sub">Clock-led cycle and refresh timing</a>
+<a href="#wi-fi-real-time-and-configuration" class="sub">Wi-Fi, real time and configuration</a>
+<a href="#1-0-0-2026-10-24" class="section">[1.0.0] - 2026-10-24</a>
 <a href="#pong-and-clock-demos" class="sub">Pong and clock demos</a>
 <a href="#showcase-and-everyday-use" class="sub">Showcase and everyday use</a>
 <a href="#confirmed-hardware-outcome-24-october-2026" class="sub">Confirmed hardware outcome — 24 October 2026</a>

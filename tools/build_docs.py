@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGES = [
     ("README.md", "Overview", "Project overview and quick start"),
     ("docs/PANEL_GUIDE.md", "Panel guide", "Hardware, wiring, firmware, and daily use"),
+    ("docs/ESP32_TEST_CONFIG.md", "ESP32 test setup", "Complete bench wiring, Wi-Fi and acceptance checks"),
+    ("docs/SCREEN_EXAMPLES.md", "Screen examples", "Rendered examples of every scene, boot and clock state"),
     ("docs/PHOTO_LOG.md", "Hardware photos", "Panel, connector, and component reference photos"),
     ("CHANGELOG.md", "Changelog", "Firmware and documentation changes"),
     ("CLAUDE.md", "Maintainer notes", "Architecture, constraints, and evidence limits"),
@@ -35,6 +37,8 @@ PAGES = [
 OUTPUTS = {ROOT / source: (ROOT / source).with_suffix(".html") for source, _, _ in PAGES}
 MANIFEST = json.loads((ROOT / "images/manifest.json").read_text())
 IMAGE_INFO = {ROOT / "images" / p["file"]: p for p in MANIFEST["photos"]}
+EXAMPLES = json.loads((ROOT / "images/demos/manifest.json").read_text())
+SCREEN_INFO = {ROOT / "images/demos" / item["file"]: item for item in EXAMPLES}
 ARCHIVE = ROOT / "Red_LED_Panel_8x2_Documentation.zip"
 
 
@@ -88,14 +92,14 @@ def render_page(source: Path, output: Path, label: str, description: str) -> str
         item = items[index]
         src = item.attrGet("src") or ""
         image_path = (output.parent / unquote(urlsplit(src).path)).resolve()
-        info = IMAGE_INFO.get(image_path)
+        info = IMAGE_INFO.get(image_path) or SCREEN_INFO.get(image_path)
         if info:
             item.attrSet("width", str(info["width"]))
             item.attrSet("height", str(info["height"]))
         item.attrSet("loading", "eager")
         item.attrSet("decoding", "sync")
         image = original_image(items, index, options, env)
-        return f'<a class="image-link" href="{html.escape(src, quote=True)}" target="_blank" rel="noopener" aria-label="Open photograph at available full size">{image}</a>'
+        return f'<a class="image-link" href="{html.escape(src, quote=True)}" target="_blank" rel="noopener" aria-label="Open image at available full size">{image}</a>'
     md.renderer.rules["image"] = image_rule
     md.renderer.rules["table_open"] = lambda *_: '<div class="table-wrap"><table>\n'
     md.renderer.rules["table_close"] = lambda *_: '</table></div>\n'
@@ -193,6 +197,9 @@ def main():
     for path, info in IMAGE_INFO.items():
         if hashlib.sha256(path.read_bytes()).hexdigest() != info["sha256"]:
             raise SystemExit(f"Photo checksum mismatch: {path.relative_to(ROOT)}")
+    for path, info in SCREEN_INFO.items():
+        if hashlib.sha256(path.read_bytes()).hexdigest() != info["sha256"]:
+            raise SystemExit(f"Screen example checksum mismatch: {path.relative_to(ROOT)}")
     pages = []
     for filename, label, description in PAGES:
         source = ROOT / filename
@@ -210,6 +217,11 @@ def main():
         ROOT / "src/main.cpp", ROOT / "src/Hub08Panel.cpp", ROOT / "src/Hub08Panel.h",
         ROOT / "include/config.h", ROOT / "include/debug.h", ROOT / "platformio.ini",
     }
+    for directory in ("src", "include", "web", "test_host", "tools", "images/demos"):
+        bundled |= {path for path in (ROOT / directory).rglob("*")
+                    if path.is_file() and "__pycache__" not in path.parts
+                    and path.suffix not in (".pyc",) and path.name != ".DS_Store"}
+    bundled |= {ROOT / ".clang-format", ROOT / ".editorconfig"}
     with zipfile.ZipFile(ARCHIVE, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(bundled):
             archive.write(path, "Red_LED_Panel_8x2_Documentation/" + path.relative_to(ROOT).as_posix())

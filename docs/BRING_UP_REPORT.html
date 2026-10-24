@@ -13,7 +13,7 @@
 <aside class="sidebar">
 <a class="brand" href="../index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
-<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html">Panel guide</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html" aria-current="page">Archived bring-up</a></nav>
+<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html">Panel guide</a><a href="ESP32_TEST_CONFIG.html">ESP32 test setup</a><a href="SCREEN_EXAMPLES.html">Screen examples</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html" aria-current="page">Archived bring-up</a></nav>
 <div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
@@ -108,10 +108,10 @@ HELD: pattern continuously shifted and latched at normal brightness
 I J K L M N O P
 </code></pre>
 <p>The first photo showed letter-like content on the left, but in reversed order with displaced row strokes. The right section was fully lit. Comparing the glyph patterns with the installed GFX font suggested reversed columns, inverted row orientation, and an exchange of row bits B/C.</p>
-<p><a class="image-link" href="../images/01-static-before-mapping.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/01-static-before-mapping.jpg" alt="Original static-letter result before mapping correction" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><a class="image-link" href="../images/01-static-before-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="../images/01-static-before-mapping.jpg" alt="Original static-letter result before mapping correction" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
 <p><em>First static-letter photograph. The responding section has incorrect mapping; the right section remains solidly on.</em></p>
 <p>Configurable output mapping was introduced. A follow-up photo showed <strong>ABCDE above IJKLM</strong> on the responding left five columns, while the right three columns remained on.</p>
-<p><a class="image-link" href="../images/02-static-after-mapping.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/02-static-after-mapping.jpg" alt="Static letters with corrected responding-section placement but the right section still lit" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><a class="image-link" href="../images/02-static-after-mapping.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="../images/02-static-after-mapping.jpg" alt="Static letters with corrected responding-section placement but the right section still lit" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
 <p><em>Second static-letter photograph, taken before the wiring-error correction was completed. It shows successful placement on the left, not a working replacement panel.</em></p>
 <h3 id="7-find-and-correct-crossed-gpio-26-27">7. Find and correct crossed GPIO 26/27</h3>
 <p>The owner asked whether software was compensating for incorrect wiring. It could: a B/C permutation in code can hide crossed B/C wires.</p>
@@ -127,7 +127,7 @@ I J K L M N O P
 <h3 id="10-inspect-the-physical-boundary">10. Inspect the physical boundary</h3>
 <p>The full rear view established that front-right corresponds to rear-left. The suspect area is around <strong>U101/U103/U105</strong>, with the working/stuck transition near <strong>U105/U107</strong>.</p>
 <p>A close-up identified the SM74HC595D packages and the pin-1 orientation. Pin 12 is the storage/latch clock. With all power disconnected, resistance between <strong>U105 pin 12 and U107 pin 12</strong> was reported as <strong><code>OL</code></strong>.</p>
-<p><a class="image-link" href="../images/06-u105-u107-closeup.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/06-u105-u107-closeup.jpg" alt="Close-up of U105 and U107 at the working/stuck boundary" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><a class="image-link" href="../images/06-u105-u107-closeup.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="../images/06-u105-u107-closeup.jpg" alt="Close-up of U105 and U107 at the working/stuck boundary" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
 <p><em>U105 at left and U107 at right. The image made package orientation readable for the resistance check. It does not establish an electrical break by itself.</em></p>
 <p>Comparison checks were proposed between U103/U105 and U107/U109 latch pins. No results for those comparisons were recorded. No jumper repair, trace repair, chip replacement, or reflow outcome was reported.</p>
 <h3 id="11-replace-the-panel">11. Replace the panel</h3>

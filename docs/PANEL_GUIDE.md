@@ -86,7 +86,17 @@ pio device monitor --baud 115200
 
 Choose the USB port for your ESP32 if several devices are connected. Close an existing monitor before uploading. Reset the board with Serial Monitor open to see the startup message.
 
-The display starts with letters, runs through all eleven scenes, then repeats. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.
+The display shows three startup cards, then enters the saved startup view: Clock + demos by default, or a held live clock. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.
+
+## Wi-Fi, location and startup status
+
+The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32**. Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
+
+Once connected, open the serial-reported **http://<panel-IP>/panel**. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. **`w`** reopens setup and **`i`** prints status.
+
+Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.
+
+Use the [complete ESP32 test configuration](ESP32_TEST_CONFIG.md) for exact buffer/header connections, provisioning, network services, persistence and acceptance checks. [Generated examples](SCREEN_EXAMPLES.md) show the expected output for all scenes and status states.
 
 ## The showcase playlist
 
@@ -102,17 +112,17 @@ The display starts with letters, runs through all eleven scenes, then repeats. S
 | `8` | Beating hearts | 4 s | Three enlarged pixel-art hearts with pulsing brightness |
 | `9` | Scrolling text | About 12.2 s | Size-2 text crossing the full screen |
 | `g` | Pong | 16 s | Automatic paddles, ball physics, goals, and a small scoreboard |
-| `c` | Clock simulation | 16 s | Large HH:MM:SS digits, blinking colons, and a seconds bar |
+| `c` | Live clock | 10 s between demos; held by `c` | NTP local time, large HH:MM:SS digits, blinking colons, seconds bar |
 
-One cycle is approximately **83 seconds** with the default text. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.
+**Clock (10 s) → letters → clock (10 s) → checkerboard → clock → balls**, and so on through Pong, then repeat. A complete rotation is approximately **2 minutes 47 seconds** with the default text. A directly selected demo returns to the clock, then advances to the following demo. `n` follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.
 
 Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.
 
-### Pong and clock simulations
+### Pong and live clock
 
 **Pong** is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting `g` starts a fresh match. Use `p` to freeze or resume play.
 
-**Clock** starts at **23:59:55**, advances through midnight, and shows **HH:MM:SS** in enlarged 3×5 digits. Colons blink every half second; the bottom bar fills with the seconds. The small **SIM** label identifies it as a demonstration, with no Wi-Fi, time service, or RTC. Selecting `c` resets the simulated time. Pausing freezes it; it resumes from that time rather than catching up to wall time.
+**Clock** displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows **NO WIFI / JOIN AP** or **SYNC TIME / WAIT NTP**. The lower label is **NTP** when connected, **HLD** while holding time offline. Selecting `c` holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.
 
 ## Serial controls
 
@@ -122,10 +132,13 @@ Click inside the PlatformIO **Serial Monitor terminal** and type a key. **No Ent
 |:--|:--|
 | `1`–`9` | Start the chosen scene, then continue the playlist |
 | `g` | Start a fresh Pong simulation |
-| `c` | Start the clock simulation at 23:59:55 |
+| `c` | Hold the live clock; does not reset the time |
+| `w` | Open the Wi-Fi setup hotspot without erasing settings |
+| `i` | Print the startup/settings status report |
+| `d` | Cycle runtime debug level 0–4 |
 | `n` | Start the next scene; resumes if paused |
-| `p` | Pause/resume the current scene; refresh continues |
-| `r` | Restart the playlist at letters |
+| `p` | Pause/resume the playlist; refresh and live clock continue |
+| `r` | Restart at the clock, with letters next |
 | `t` | Hold the static letters indefinitely; `p` resumes their timer |
 | `s` | Jump directly to scrolling text, then continue the playlist |
 | `f` | Hold all pixels OFF |
@@ -134,7 +147,7 @@ Click inside the PlatformIO **Serial Monitor terminal** and type a key. **No Ent
 | `+` / `-` | Change requested brightness by 15, bounded to 0–255; `=` also increases it |
 | `?` / `h` | Print help, scene list, and selected brightness |
 
-From held `f/o/b`, **`p`, `r`, or `n` starts the playlist at letters**. Scene keys (`1`–`9`, `g`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the configured default when the ESP32 resets. Brightness zero remains dark until increased again.
+From held `f/o/b`, **`p`, `r`, or `n` returns to the clock** (`r` also resets the next demo to letters). Scene keys (`1`–`9`, `g`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the saved web setting (or compiled default) when the ESP32 resets. Brightness zero remains dark until increased again.
 
 Requested brightness is an on-time setting, not a calibrated light percentage. At higher settings the driver caps it to the time remaining after shifting, so the upper end can saturate.
 
@@ -153,7 +166,7 @@ Edit [include/config.h](../include/config.h), rebuild, and upload:
 
 | Setting | Default | Purpose |
 |:--|:--|:--|
-| `DEFAULT_BRIGHTNESS` | 90 | Brightness selected after reset |
+| `DEFAULT_BRIGHTNESS` | 90 | Fallback brightness before any web setting is saved |
 | `SCROLL_TEXT` | `ESP32 + HUB08 = FUN!` | Message in scene 9 |
 | `LETTER_HOLD_MS` | 2500 | Time on the letter pattern |
 | `CHECKER_STEP_MS` | 200 | Time per checkerboard phase |
@@ -162,10 +175,12 @@ Edit [include/config.h](../include/config.h), rebuild, and upload:
 | `LIFE_STEP_MS` | 100 | Time per Life generation |
 | `SCROLL_STEP_MS` | 40 | Time per one-pixel scroll step |
 | `PONG_STEP_MS` | 40 | Pong physics and drawing interval |
-| `CLOCK_STEP_MS` | 500 | Clock frame interval; two frames per simulated second |
-| `CLOCK_START_SECONDS` | 86395 (23:59:55) | Simulated starting time, seconds since midnight |
+| `CLOCK_STEP_MS` | 250 | Live-clock redraw interval; time comes from NTP/system clock |
+| `CLOCK_HOLD_MS` | 10000 | Clock display time between demos |
+| `WIFI_CONNECT_TIMEOUT_MS` | 10000 | Saved connection attempt before setup hotspot |
+| `BOOT_CARD_MS` | 2000 | Time per startup card |
 
-Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp). Each render draws into the working buffer and calls `show()`. A scene's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. The simulated clock advances one second per two frames, so changing `CLOCK_STEP_MS` changes its demonstration speed.
+Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp). Each render draws into the working buffer and calls `show()`. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits use elapsed milliseconds and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.
 
 ### Orientation and scan settings
 
@@ -229,15 +244,26 @@ Size-1 text fits two rows of small characters. Size-2 text gives a single 14-pix
 | `begin()` | Initialise pins and start background refresh; call once |
 | `drawPixel(x, y, colour)` | Set a pixel, with clipping and GFX rotation |
 | `fillScreen(colour)` | Clear or fill the drawing buffer |
-| `show()` | Copy the drawing buffer to the display buffer |
+| `show()` | Queue the drawing buffer for the next complete scan |
 | `setBrightness(level)` | Set requested row on-time; zero blanks output |
 | `rowAddressFor(y)` | Return the mapped hardware address for a logical row |
+| `refreshStats()` | Snapshot cumulative rows/deadlines and maximum wake/scan times |
 
-The two framebuffers each occupy **128 bytes**. Copying with `show()` is locked against row reads but is not a frame-boundary swap. Scanning shifts 64 bits, sets the address, latches, and enables a bounded row pulse. Both refresh callbacks run through `esp_timer`; animation can pause without stopping them. [ESP-IDF timer reference](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html)
+The working, pending and active framebuffers each occupy **128 bytes**. `show()` copies to the pending buffer; refresh applies it only before row zero, so one complete scan uses one picture. Brightness also changes at that boundary.
+
+Hardware timer **TG0/T0** sets the 500 µs row cadence and blanks output. A dedicated high-priority task on core 1 shifts the 64 bits, sets the address and latches. **TG0/T1** ends the brightness pulse in a short interrupt; the row interrupt supplies a second blanking deadline. Late rows remain dark and missed ticks are skipped. These two timers are reserved for the panel. Their IRAM handlers use shared interrupts at an available level 1–3, avoiding the two exclusive level-3 allocations that caused a blank display during startup. [ESP-IDF interrupt allocation](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/intr_alloc.html) Interrupts do not shift data or print logs. This removes row work from the shared `esp_timer` task that Wi-Fi activity can delay. The pin map, polarity, 1 µs signal phases and nominal 125 Hz refresh remain the same. [ESP-IDF hardware timer reference](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/timer.html), [ESP timer dispatch limitations](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html)
+
+This addresses possible timing jitter and frame tearing. On 25 October 2026 the user confirmed no visible flicker on the reference panel; two held-letter readings showed increasing rows and unchanged missed/late counters. See the [recorded result](ESP32_TEST_CONFIG.md#recorded-reference-panel-result-25-october-2026) for the measurements and scope. Flash writes can still pause the scan task briefly. See the [bench flicker check](ESP32_TEST_CONFIG.md#check-display-flicker); camera banding is a separate exposure effect.
 
 ## Photographing the display
 
 Send `t`, or pause an animation with `p`. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at **1/25 second and low ISO**, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. [Sony guidance on LED banding](https://www.sony.com.au/electronics/support/articles/00122281)
+
+## Debug and formatting
+
+Logs use the shared runtime levels: 0 Off, 1 Error `[ERR ]`, 2 Warn `[WARN]`, 3 Info `[INFO]`, and 4 Verbose `[VERB]`. `DEBUG_LEVEL` in PlatformIO sets the boot level, and serial `d` cycles it. INFO prints startup settings and scene/network transitions; frequent details use VERBOSE. Wi-Fi passwords are not logged.
+
+C++ follows two-space indentation, attached braces and a 100-column limit in [.clang-format](../.clang-format). See the [test setup](ESP32_TEST_CONFIG.md#boot-status-and-debug-conventions) for formatting and host-check commands.
 
 ## Reference material
 

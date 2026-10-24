@@ -1,0 +1,202 @@
+[
+  {
+    "file": "01-boot-1.gif",
+    "name": "Boot 1",
+    "key": "!",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "14967d319be33ae22b0320551e9db6b920d67d69e7bd141ab407d639f87e26da"
+  },
+  {
+    "file": "02-boot-2.gif",
+    "name": "Boot 2",
+    "key": "!",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "f659ac05dbe0a931f4234cc832010120315a3d90c89367b66d6b902e7dd329de"
+  },
+  {
+    "file": "03-boot-3.gif",
+    "name": "Boot 3",
+    "key": "!",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "1afdebde37a453dd2fefddee476122c5bdc95dafbb185925f077dc470c48d9e3"
+  },
+  {
+    "file": "04-letters.gif",
+    "name": "LETTERS",
+    "key": "1",
+    "frames": 1,
+    "intervalMs": 2500,
+    "width": 640,
+    "height": 160,
+    "sha256": "0430784d3691a60e7869eb2ac889f6883ba2f2505a78d5d8e9c600b40e9c2bd6"
+  },
+  {
+    "file": "05-checkerboard.gif",
+    "name": "CHECKERBOARD",
+    "key": "2",
+    "frames": 6,
+    "intervalMs": 200,
+    "width": 640,
+    "height": 160,
+    "sha256": "dd64cfadb6837d2feebf709306534d43184f625e340f3665901ec9942d6ff3a1"
+  },
+  {
+    "file": "06-bouncing-balls.gif",
+    "name": "BOUNCING BALLS",
+    "key": "3",
+    "frames": 70,
+    "intervalMs": 80,
+    "width": 640,
+    "height": 160,
+    "sha256": "ad1cf0f8aaea70681b771b3dc0d93054fc0660e58b1496bfd8079bb7ed52533a"
+  },
+  {
+    "file": "07-starfield.gif",
+    "name": "STARFIELD",
+    "key": "4",
+    "frames": 70,
+    "intervalMs": 80,
+    "width": 640,
+    "height": 160,
+    "sha256": "26e543bdc7b7a59add8b95070daa28018c598a1e941b7364ce71752734126b9f"
+  },
+  {
+    "file": "08-pixel-rain.gif",
+    "name": "PIXEL RAIN",
+    "key": "5",
+    "frames": 60,
+    "intervalMs": 100,
+    "width": 640,
+    "height": 160,
+    "sha256": "6cdc6a00ab610b29351fd6116780868e5b0f097855b6040950dd72e0bc81a652"
+  },
+  {
+    "file": "09-animated-bars.gif",
+    "name": "ANIMATED BARS",
+    "key": "6",
+    "frames": 54,
+    "intervalMs": 120,
+    "width": 640,
+    "height": 160,
+    "sha256": "07881b1783c342f6e02449357b286bf0633ec182858fb55a23b79a3249c8b72a"
+  },
+  {
+    "file": "10-conway-s-life.gif",
+    "name": "CONWAY'S LIFE",
+    "key": "7",
+    "frames": 72,
+    "intervalMs": 100,
+    "width": 640,
+    "height": 160,
+    "sha256": "8ae950dca765f1de825327a81291023e43729e9d241ff61e05cf1c16c4c871f8"
+  },
+  {
+    "file": "11-beating-hearts.gif",
+    "name": "BEATING HEARTS",
+    "key": "8",
+    "frames": 50,
+    "intervalMs": 80,
+    "width": 640,
+    "height": 160,
+    "sha256": "da2cbbf2c001470e20b77adfc37bac474a996c9bfe90b8f528b5ecf70abe5b47"
+  },
+  {
+    "file": "12-scrolling-text.gif",
+    "name": "SCROLLING TEXT",
+    "key": "9",
+    "frames": 51,
+    "intervalMs": 240,
+    "width": 640,
+    "height": 160,
+    "sha256": "a04ff98a66c82ed3a7396c6150d969d7865486e0033d88c4d06eb1d7b093bddf"
+  },
+  {
+    "file": "13-pong.gif",
+    "name": "PONG",
+    "key": "g",
+    "frames": 50,
+    "intervalMs": 320,
+    "width": 640,
+    "height": 160,
+    "sha256": "5591d6148738c7d448e3a806b003e8a92b2da9c97a8588f91addddc2ae4d2af3"
+  },
+  {
+    "file": "14-clock.gif",
+    "name": "CLOCK",
+    "key": "c",
+    "frames": 40,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "22a7883820ee1a0e2696e5ffdb042248d7e23df5d85156142e69eabc13f27776"
+  },
+  {
+    "file": "15-all-pixels-off.gif",
+    "name": "All pixels off",
+    "key": "f",
+    "frames": 1,
+    "intervalMs": 1000,
+    "width": 640,
+    "height": 160,
+    "sha256": "44f2505b77d65db2f5f110747b3e1cdd761473b859574321f57935ff7329da69"
+  },
+  {
+    "file": "16-all-pixels-on.gif",
+    "name": "All pixels on",
+    "key": "o",
+    "frames": 1,
+    "intervalMs": 1000,
+    "width": 640,
+    "height": 160,
+    "sha256": "73e21cbf8fc86ba167577f357947796145d82a8480e6d2ff6d7fc8e9197ceac0"
+  },
+  {
+    "file": "17-output-blanked.gif",
+    "name": "Output blanked",
+    "key": "b",
+    "frames": 1,
+    "intervalMs": 1000,
+    "width": 640,
+    "height": 160,
+    "sha256": "44f2505b77d65db2f5f110747b3e1cdd761473b859574321f57935ff7329da69"
+  },
+  {
+    "file": "18-clock-offline-holdover.gif",
+    "name": "Clock offline holdover",
+    "key": "c",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "401d6d9c80e37471376846a568016bad1f7b8329caef2d934f2bf107464ca811"
+  },
+  {
+    "file": "19-clock-waiting-for-wi-fi.gif",
+    "name": "Clock waiting for Wi-Fi",
+    "key": "c",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "c456689fda52a3e026f024f3c23b9f33e789e75ae43da875656e96fa784e596b"
+  },
+  {
+    "file": "20-clock-waiting-for-ntp.gif",
+    "name": "Clock waiting for NTP",
+    "key": "c",
+    "frames": 1,
+    "intervalMs": 250,
+    "width": 640,
+    "height": 160,
+    "sha256": "51b12dcdd838442885a7af8e35b3e56ac02e0541809d7260d0b1f2ddc62910cd"
+  }
+]

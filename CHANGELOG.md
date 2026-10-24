@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.1.0] - 2026-10-25
+
+### Reference-panel check — 25 October 2026
+
+- User confirmed the corrected pre-release build displayed normally with no visible flicker.
+- Serial confirmed Wi-Fi association, NTP synchronisation in Sydney/AEDT, and clock → letters → clock → checkerboard progression.
+- While letters were held, rows advanced from 67,642 to 77,988; missed ticks stayed at 39 and late rows at 45. No new missed/late events appeared between those snapshots. Recorded maximum wake/scan times were cumulative peaks, not a continuous latency measurement.
+- Finalised the firmware version as 1.1.0 and refreshed the example gallery, HTML documentation and share bundle.
+
+### Blank-display startup fix
+
+- Fixed `timer_isr_callback_add` failing with `ESP_ERR_NOT_FOUND`, which left OE blanked and refresh rows at zero. The two timers now request compatible shared IRAM interrupts at an available low/medium level instead of two exclusive level-3 vectors.
+- Added stage-specific startup errors and cleanup of acquired timers, interrupts and the scan task if setup fails.
+- Added a constrained-interrupt regression that reproduces the old failure, verifies shared allocation starts scanning, and checks failure cleanup. The corrected driver subsequently passed the reference-panel visual check.
+
+### Clock-led cycle and refresh timing
+
+- Start with the clock for 10 seconds, run one demo, then return to the clock before the next demo. `r` resets the demo cursor, while direct `c` and saved Clock mode remain clock-only.
+- Preserve the clock visit deadline across pause/resume and handle delayed loops and millis rollover.
+- Move refresh from shared `esp_timer` callbacks to hardware row/OE timers and a dedicated scan task on core 1. Late rows stay blank, and pending pictures/brightness apply at row zero to reduce tearing.
+- Add serial `i` refresh counters and host driver regressions for pulse deadlines, late slots and complete-scan updates. Keep electrical mapping and scan timings unchanged. Reference-panel bench results are recorded below.
+
+### Wi-Fi, real time and configuration
+- Added WiFiManager 2.0.17 with a setup hotspot, saved-network retries and a LAN-accessible `/panel` configuration/status page.
+- Replaced the clock simulation with NTP-synchronised local time, automatic daylight saving, honest waiting states and offline holdover. Selecting or pausing the clock no longer resets/freezes actual time.
+- Added validated persistent location, time zone, startup brightness and startup-view settings. Sydney is the default. Credentials remain in device storage and are never logged.
+- Added startup/version/settings cards and a full serial/web status report. Serial `w` opens setup, `i` prints status and `d` controls runtime verbosity.
+- Applied the shared debug prefixes/runtime levels, two-space C++ formatting, `.clang-format` and `.editorconfig`.
+- Added the complete ESP32 reference bench configuration and rendered screen examples for every demo, boot and clock state. Host regressions use the actual application/GFX and network application with hardware doubles.
+- Regenerated the offline HTML and share bundle. The reference-board log confirms Wi-Fi connection, NTP sync and clock/demo alternation; the user reported no visible flicker. Captive-portal phone behaviour, persistence/reconnect scenarios and extended stress testing remain separate acceptance checks.
+
 ## [1.0.0] - 2026-10-24
 
 Completed the working-panel bring-up and eleven-scene showcase, with setup instructions, historical measurements, photographs, and offline documentation.

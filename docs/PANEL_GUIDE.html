@@ -13,7 +13,7 @@
 <aside class="sidebar">
 <a class="brand" href="../index.html"><div class="led-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
-<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html" aria-current="page">Panel guide</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html">Archived bring-up</a></nav>
+<nav class="nav-links" aria-label="Documentation"><a href="../README.html">Overview</a><a href="PANEL_GUIDE.html" aria-current="page">Panel guide</a><a href="ESP32_TEST_CONFIG.html">ESP32 test setup</a><a href="SCREEN_EXAMPLES.html">Screen examples</a><a href="PHOTO_LOG.html">Hardware photos</a><a href="../CHANGELOG.html">Changelog</a><a href="../CLAUDE.html">Maintainer notes</a><a href="../images/README.html">Image archive</a><a href="BRING_UP_REPORT.html">Archived bring-up</a></nav>
 <div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
@@ -26,21 +26,23 @@
 <a href="#connector-reference" class="sub">Connector reference</a>
 <a href="#using-a-74ahct245" class="sub">Using a 74AHCT245</a>
 <a href="#build-and-run" class="section">Build and run</a>
+<a href="#wi-fi-location-and-startup-status" class="section">Wi-Fi, location and startup status</a>
 <a href="#the-showcase-playlist" class="section">The showcase playlist</a>
-<a href="#pong-and-clock-simulations" class="sub">Pong and clock simulations</a>
+<a href="#pong-and-live-clock" class="sub">Pong and live clock</a>
 <a href="#serial-controls" class="section">Serial controls</a>
 <a href="#customise-the-showcase" class="section">Customise the showcase</a>
 <a href="#orientation-and-scan-settings" class="sub">Orientation and scan settings</a>
 <a href="#draw-your-own-content" class="section">Draw your own content</a>
 <a href="#driver-api" class="sub">Driver API</a>
 <a href="#photographing-the-display" class="section">Photographing the display</a>
+<a href="#debug-and-formatting" class="section">Debug and formatting</a>
 <a href="#reference-material" class="section">Reference material</a></nav></details>
 <h1 id="panel-hardware-and-usage-guide">Panel hardware and usage guide</h1>
 <p>Build a compact animated display with an <strong>ESP32, a 5 V HUB08 panel, and Adafruit GFX</strong>. This guide covers the working setup and the eleven-scene showcase.</p>
 <h2 id="what-the-panel-can-do">What the panel can do</h2>
 <p>This red <strong>P3.75, 64×16</strong> panel contains sixteen 8×8 modules in an <strong>8×2 grid</strong>. Every pixel is individually addressable, making it suitable for text, icons, simple games, cellular automata, and motion effects. Pixels are on/off; brightness control applies to the whole display rather than to individual pixels.</p>
 <p>The driver scans one of sixteen rows at a time. Background refresh continues while your application draws or pauses. The configured 500 µs row period gives a nominal <strong>125 Hz complete refresh</strong>; scene animation runs separately, typically at 25 frames per second.</p>
-<p><a class="image-link" href="../images/03-panel-rear.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/03-panel-rear.jpg" alt="Rear view of the panel with INPUT200, OUTPUT201, drivers, and the power terminal" width="2048" height="559" loading="eager" decoding="sync" /></a></p>
+<p><a class="image-link" href="../images/03-panel-rear.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="../images/03-panel-rear.jpg" alt="Rear view of the panel with INPUT200, OUTPUT201, drivers, and the power terminal" width="2048" height="559" loading="eager" decoding="sync" /></a></p>
 <p><em>Rear PCB: INPUT200 at left, OUTPUT201 at right, power near the centre. These reference photos come from the original bring-up board.</em></p>
 <h2 id="power-and-level-shifting">Power and level shifting</h2>
 <p>Use a <strong>regulated 5 V supply</strong> connected directly to the panel's <strong>VCC/GND screw terminal</strong>. A 2–3 A supply is a practical starting point, not a measured maximum panel rating. Keep power leads short and adequately sized. Join the panel, ESP32, and level-shifter grounds. Route LED-panel current through its power terminal rather than through the ESP32 or breadboard rails.</p>
@@ -128,7 +130,7 @@ Top, row 1          GND        LA
 Bottom, row 8       GND        SK
 </code></pre>
 <p>The matching INPUT200 ground positions in left rows 1/2/3/7/8 were verified on this board. Use this as the connector orientation reference for this panel, not a universal pinout for every HUB08 product. OUTPUT201 is for cascading onward; this firmware controls one 64×16 panel.</p>
-<p><a class="image-link" href="../images/04-output201-header.jpg" target="_blank" rel="noopener" aria-label="Open photograph at available full size"><img src="../images/04-output201-header.jpg" alt="OUTPUT201 connector showing the labelled signal positions" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
+<p><a class="image-link" href="../images/04-output201-header.jpg" target="_blank" rel="noopener" aria-label="Open image at available full size"><img src="../images/04-output201-header.jpg" alt="OUTPUT201 connector showing the labelled signal positions" width="1824" height="1368" loading="eager" decoding="sync" /></a></p>
 <h3 id="using-a-74ahct245">Using a 74AHCT245</h3>
 <p>For a standard 20-pin 74AHCT245, connect <strong>pin 20/VCC and pin 1/DIR to 5 V</strong>, and <strong>pin 10 (GND) and pin 19 (/OE) to ground</strong>. Add a 100 nF decoupling capacitor close to VCC/GND. This selects A-to-B direction. Verify the exact package pinout used. The chip's buffer-enable pin is separate from matrix EN. <a href="https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf">TI datasheet</a></p>
 <div class="table-wrap"><table>
@@ -199,7 +201,12 @@ pio run --target upload
 pio device monitor --baud 115200
 </code></pre>
 <p>Choose the USB port for your ESP32 if several devices are connected. Close an existing monitor before uploading. Reset the board with Serial Monitor open to see the startup message.</p>
-<p>The display starts with letters, runs through all eleven scenes, then repeats. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.</p>
+<p>The display shows three startup cards, then enters the saved startup view: Clock + demos by default, or a held live clock. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.</p>
+<h2 id="wi-fi-location-and-startup-status">Wi-Fi, location and startup status</h2>
+<p>The firmware includes <strong>WiFiManager 2.0.17</strong>, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens <strong>RedPanel-XXXXXX</strong> with setup password <strong>PanelSetup32</strong>. Join it and open <strong>http://192.168.4.1/</strong> to select a 2.4 GHz network.</p>
+<p>Once connected, open the serial-reported <strong>http://&lt;panel-IP&gt;/panel</strong>. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. <strong><code>w</code></strong> reopens setup and <strong><code>i</code></strong> prints status.</p>
+<p>Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.</p>
+<p>Use the <a href="ESP32_TEST_CONFIG.html">complete ESP32 test configuration</a> for exact buffer/header connections, provisioning, network services, persistence and acceptance checks. <a href="SCREEN_EXAMPLES.html">Generated examples</a> show the expected output for all scenes and status states.</p>
 <h2 id="the-showcase-playlist">The showcase playlist</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -273,17 +280,17 @@ pio device monitor --baud 115200
 </tr>
 <tr>
 <td style="text-align:left"><code>c</code></td>
-<td style="text-align:left">Clock simulation</td>
-<td style="text-align:left">16 s</td>
-<td style="text-align:left">Large HH:MM:SS digits, blinking colons, and a seconds bar</td>
+<td style="text-align:left">Live clock</td>
+<td style="text-align:left">10 s between demos; held by <code>c</code></td>
+<td style="text-align:left">NTP local time, large HH:MM:SS digits, blinking colons, seconds bar</td>
 </tr>
 </tbody>
 </table></div>
-<p>One cycle is approximately <strong>83 seconds</strong> with the default text. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.</p>
+<p><strong>Clock (10 s) → letters → clock (10 s) → checkerboard → clock → balls</strong>, and so on through Pong, then repeat. A complete rotation is approximately <strong>2 minutes 47 seconds</strong> with the default text. A directly selected demo returns to the clock, then advances to the following demo. <code>n</code> follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.</p>
 <p>Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.</p>
-<h3 id="pong-and-clock-simulations">Pong and clock simulations</h3>
+<h3 id="pong-and-live-clock">Pong and live clock</h3>
 <p><strong>Pong</strong> is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting <code>g</code> starts a fresh match. Use <code>p</code> to freeze or resume play.</p>
-<p><strong>Clock</strong> starts at <strong>23:59:55</strong>, advances through midnight, and shows <strong>HH:MM:SS</strong> in enlarged 3×5 digits. Colons blink every half second; the bottom bar fills with the seconds. The small <strong>SIM</strong> label identifies it as a demonstration, with no Wi-Fi, time service, or RTC. Selecting <code>c</code> resets the simulated time. Pausing freezes it; it resumes from that time rather than catching up to wall time.</p>
+<p><strong>Clock</strong> displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows <strong>NO WIFI / JOIN AP</strong> or <strong>SYNC TIME / WAIT NTP</strong>. The lower label is <strong>NTP</strong> when connected, <strong>HLD</strong> while holding time offline. Selecting <code>c</code> holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.</p>
 <h2 id="serial-controls">Serial controls</h2>
 <p>Click inside the PlatformIO <strong>Serial Monitor terminal</strong> and type a key. <strong>No Enter or comma is required.</strong> Letter commands also accept uppercase. Local echo may be off; the firmware's printed response confirms receipt.</p>
 <div class="table-wrap"><table>
@@ -304,7 +311,19 @@ pio device monitor --baud 115200
 </tr>
 <tr>
 <td style="text-align:left"><code>c</code></td>
-<td style="text-align:left">Start the clock simulation at 23:59:55</td>
+<td style="text-align:left">Hold the live clock; does not reset the time</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>w</code></td>
+<td style="text-align:left">Open the Wi-Fi setup hotspot without erasing settings</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>i</code></td>
+<td style="text-align:left">Print the startup/settings status report</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>d</code></td>
+<td style="text-align:left">Cycle runtime debug level 0–4</td>
 </tr>
 <tr>
 <td style="text-align:left"><code>n</code></td>
@@ -312,11 +331,11 @@ pio device monitor --baud 115200
 </tr>
 <tr>
 <td style="text-align:left"><code>p</code></td>
-<td style="text-align:left">Pause/resume the current scene; refresh continues</td>
+<td style="text-align:left">Pause/resume the playlist; refresh and live clock continue</td>
 </tr>
 <tr>
 <td style="text-align:left"><code>r</code></td>
-<td style="text-align:left">Restart the playlist at letters</td>
+<td style="text-align:left">Restart at the clock, with letters next</td>
 </tr>
 <tr>
 <td style="text-align:left"><code>t</code></td>
@@ -348,7 +367,7 @@ pio device monitor --baud 115200
 </tr>
 </tbody>
 </table></div>
-<p>From held <code>f/o/b</code>, <strong><code>p</code>, <code>r</code>, or <code>n</code> starts the playlist at letters</strong>. Scene keys (<code>1</code>–<code>9</code>, <code>g</code>, <code>c</code>) also leave any held pattern. Changing brightness preserves the current frame and pause state; <code>b</code> remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the configured default when the ESP32 resets. Brightness zero remains dark until increased again.</p>
+<p>From held <code>f/o/b</code>, <strong><code>p</code>, <code>r</code>, or <code>n</code> returns to the clock</strong> (<code>r</code> also resets the next demo to letters). Scene keys (<code>1</code>–<code>9</code>, <code>g</code>, <code>c</code>) also leave any held pattern. Changing brightness preserves the current frame and pause state; <code>b</code> remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the saved web setting (or compiled default) when the ESP32 resets. Brightness zero remains dark until increased again.</p>
 <p>Requested brightness is an on-time setting, not a calibrated light percentage. At higher settings the driver caps it to the time remaining after shifting, so the upper end can saturate.</p>
 <p>For a clear placement reference, send <code>t</code>:</p>
 <pre><code class="language-text">A B C D E F G H
@@ -369,7 +388,7 @@ I J K L M N O P
 <tr>
 <td style="text-align:left"><code>DEFAULT_BRIGHTNESS</code></td>
 <td style="text-align:left">90</td>
-<td style="text-align:left">Brightness selected after reset</td>
+<td style="text-align:left">Fallback brightness before any web setting is saved</td>
 </tr>
 <tr>
 <td style="text-align:left"><code>SCROLL_TEXT</code></td>
@@ -413,17 +432,27 @@ I J K L M N O P
 </tr>
 <tr>
 <td style="text-align:left"><code>CLOCK_STEP_MS</code></td>
-<td style="text-align:left">500</td>
-<td style="text-align:left">Clock frame interval; two frames per simulated second</td>
+<td style="text-align:left">250</td>
+<td style="text-align:left">Live-clock redraw interval; time comes from NTP/system clock</td>
 </tr>
 <tr>
-<td style="text-align:left"><code>CLOCK_START_SECONDS</code></td>
-<td style="text-align:left">86395 (23:59:55)</td>
-<td style="text-align:left">Simulated starting time, seconds since midnight</td>
+<td style="text-align:left"><code>CLOCK_HOLD_MS</code></td>
+<td style="text-align:left">10000</td>
+<td style="text-align:left">Clock display time between demos</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>WIFI_CONNECT_TIMEOUT_MS</code></td>
+<td style="text-align:left">10000</td>
+<td style="text-align:left">Saved connection attempt before setup hotspot</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>BOOT_CARD_MS</code></td>
+<td style="text-align:left">2000</td>
+<td style="text-align:left">Time per startup card</td>
 </tr>
 </tbody>
 </table></div>
-<p>Scene frame counts are in the <code>scenes</code> table in <a href="../src/main.cpp">src/main.cpp</a>. Each render draws into the working buffer and calls <code>show()</code>. A scene's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. The simulated clock advances one second per two frames, so changing <code>CLOCK_STEP_MS</code> changes its demonstration speed.</p>
+<p>Scene frame counts are in the <code>scenes</code> table in <a href="../src/main.cpp">src/main.cpp</a>. Each render draws into the working buffer and calls <code>show()</code>. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits use elapsed milliseconds and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.</p>
 <h3 id="orientation-and-scan-settings">Orientation and scan settings</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -517,7 +546,7 @@ panel.show();
 </tr>
 <tr>
 <td style="text-align:left"><code>show()</code></td>
-<td style="text-align:left">Copy the drawing buffer to the display buffer</td>
+<td style="text-align:left">Queue the drawing buffer for the next complete scan</td>
 </tr>
 <tr>
 <td style="text-align:left"><code>setBrightness(level)</code></td>
@@ -527,11 +556,20 @@ panel.show();
 <td style="text-align:left"><code>rowAddressFor(y)</code></td>
 <td style="text-align:left">Return the mapped hardware address for a logical row</td>
 </tr>
+<tr>
+<td style="text-align:left"><code>refreshStats()</code></td>
+<td style="text-align:left">Snapshot cumulative rows/deadlines and maximum wake/scan times</td>
+</tr>
 </tbody>
 </table></div>
-<p>The two framebuffers each occupy <strong>128 bytes</strong>. Copying with <code>show()</code> is locked against row reads but is not a frame-boundary swap. Scanning shifts 64 bits, sets the address, latches, and enables a bounded row pulse. Both refresh callbacks run through <code>esp_timer</code>; animation can pause without stopping them. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html">ESP-IDF timer reference</a></p>
+<p>The working, pending and active framebuffers each occupy <strong>128 bytes</strong>. <code>show()</code> copies to the pending buffer; refresh applies it only before row zero, so one complete scan uses one picture. Brightness also changes at that boundary.</p>
+<p>Hardware timer <strong>TG0/T0</strong> sets the 500 µs row cadence and blanks output. A dedicated high-priority task on core 1 shifts the 64 bits, sets the address and latches. <strong>TG0/T1</strong> ends the brightness pulse in a short interrupt; the row interrupt supplies a second blanking deadline. Late rows remain dark and missed ticks are skipped. These two timers are reserved for the panel. Their IRAM handlers use shared interrupts at an available level 1–3, avoiding the two exclusive level-3 allocations that caused a blank display during startup. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/intr_alloc.html">ESP-IDF interrupt allocation</a> Interrupts do not shift data or print logs. This removes row work from the shared <code>esp_timer</code> task that Wi-Fi activity can delay. The pin map, polarity, 1 µs signal phases and nominal 125 Hz refresh remain the same. <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/timer.html">ESP-IDF hardware timer reference</a>, <a href="https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html">ESP timer dispatch limitations</a></p>
+<p>This addresses possible timing jitter and frame tearing. On 25 October 2026 the user confirmed no visible flicker on the reference panel; two held-letter readings showed increasing rows and unchanged missed/late counters. See the <a href="ESP32_TEST_CONFIG.html#recorded-reference-panel-result-25-october-2026">recorded result</a> for the measurements and scope. Flash writes can still pause the scan task briefly. See the <a href="ESP32_TEST_CONFIG.html#check-display-flicker">bench flicker check</a>; camera banding is a separate exposure effect.</p>
 <h2 id="photographing-the-display">Photographing the display</h2>
 <p>Send <code>t</code>, or pause an animation with <code>p</code>. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at <strong>1/25 second and low ISO</strong>, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. <a href="https://www.sony.com.au/electronics/support/articles/00122281">Sony guidance on LED banding</a></p>
+<h2 id="debug-and-formatting">Debug and formatting</h2>
+<p>Logs use the shared runtime levels: 0 Off, 1 Error <code>[ERR ]</code>, 2 Warn <code>[WARN]</code>, 3 Info <code>[INFO]</code>, and 4 Verbose <code>[VERB]</code>. <code>DEBUG_LEVEL</code> in PlatformIO sets the boot level, and serial <code>d</code> cycles it. INFO prints startup settings and scene/network transitions; frequent details use VERBOSE. Wi-Fi passwords are not logged.</p>
+<p>C++ follows two-space indentation, attached braces and a 100-column limit in <a href="../.clang-format">.clang-format</a>. See the <a href="ESP32_TEST_CONFIG.html#boot-status-and-debug-conventions">test setup</a> for formatting and host-check commands.</p>
 <h2 id="reference-material">Reference material</h2>
 <p>Open <a href="../index.html">index.html</a> for the HTML edition. The <a href="PHOTO_LOG.html">photo gallery</a> provides connector and component close-ups; <a href="../images/manifest.json">manifest.json</a> records the original attachment checksums. Rebuild HTML and the share ZIP using the instructions in <a href="../README.html">README.md</a>.</p>
 <p>Earlier diagnostic commands and electrical measurements are retained in the <a href="BRING_UP_REPORT.html">archived bring-up report</a>. That report describes the older test firmware, not the current showcase controls.</p>
@@ -543,14 +581,16 @@ panel.show();
 <a href="#connector-reference" class="sub">Connector reference</a>
 <a href="#using-a-74ahct245" class="sub">Using a 74AHCT245</a>
 <a href="#build-and-run" class="section">Build and run</a>
+<a href="#wi-fi-location-and-startup-status" class="section">Wi-Fi, location and startup status</a>
 <a href="#the-showcase-playlist" class="section">The showcase playlist</a>
-<a href="#pong-and-clock-simulations" class="sub">Pong and clock simulations</a>
+<a href="#pong-and-live-clock" class="sub">Pong and live clock</a>
 <a href="#serial-controls" class="section">Serial controls</a>
 <a href="#customise-the-showcase" class="section">Customise the showcase</a>
 <a href="#orientation-and-scan-settings" class="sub">Orientation and scan settings</a>
 <a href="#draw-your-own-content" class="section">Draw your own content</a>
 <a href="#driver-api" class="sub">Driver API</a>
 <a href="#photographing-the-display" class="section">Photographing the display</a>
+<a href="#debug-and-formatting" class="section">Debug and formatting</a>
 <a href="#reference-material" class="section">Reference material</a></aside></div>
 </main>
 </body>

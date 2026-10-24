@@ -14,3 +14,7 @@ These six JPEG files were supplied by the project owner during the bring-up inve
 The available conversation attachment bytes were copied without image re-encoding. Original camera-resolution files were not independently available; the conversation copies include resizing. Exact dimensions and SHA-256 checksums are in [manifest.json](manifest.json).
 
 See the [photo log](../docs/PHOTO_LOG.md) for the full illustrated gallery and the [bring-up report](../docs/BRING_UP_REPORT.md) for the outcome. No replacement-panel photograph was supplied.
+
+## Generated screen examples
+
+The separate `demos/` folder contains generated examples of the firmware framebuffer, including animated GIFs. They are illustrations from host fixtures, not photographs or proof of physical output. See [screen examples](../docs/SCREEN_EXAMPLES.md) for provenance and regeneration.

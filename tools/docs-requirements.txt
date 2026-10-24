@@ -1,1 +1,2 @@
 markdown-it-py==4.2.0
+Pillow==11.3.0
