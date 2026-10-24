@@ -414,6 +414,7 @@ static void printHelp() {
       "Commands: 1-9/g = select demo, c = live clock, n = next, p = pause/resume, r = restart");
   DBG_INFO("t = hold letters, s = scroll, f = all off, o = all on, b = blank display");
   DBG_INFO("w = Wi-Fi setup, i = status, d = debug level, +/- = brightness, ?/h = help");
+  DBG_INFO("Firmware upload over Wi-Fi: pio run -e esp32dev_ota -t upload (needs OTA password)");
   DBG_INFO("Clock keeps real time while the playlist is paused. No Enter is needed.");
   DBG_INFO("Playlist: clock 10s, one demo, clock 10s, next demo; r starts from the clock.");
   for (uint8_t i = 0; i < SCENE_COUNT; ++i)
@@ -465,6 +466,27 @@ static void renderBootCard(uint8_t card) {
     panel.setCursor(2, 8);
     panel.print(network.timeValid() ? "NTP OK" : "WAIT NTP");
   }
+  panel.setBrightness(brightness);
+  panel.show();
+}
+
+// Network upload progress. Flash writes briefly pause row scanning, so the
+// panel can flicker while this shows; it restarts on success.
+static void showOtaProgress(int percent) {
+  if (percent < 0) {
+    renderFrame(); // Upload failed: return to the current scene.
+    return;
+  }
+  panel.fillScreen(0);
+  panel.setTextSize(1);
+  panel.setCursor(2, 0);
+  panel.print("OTA");
+  char text[6];
+  snprintf(text, sizeof(text), "%d%%", percent);
+  panel.setCursor(26, 0);
+  panel.print(text);
+  panel.drawRect(2, 10, 60, 5, 1);
+  panel.fillRect(3, 11, percent * 58 / 100, 3, 1);
   panel.setBrightness(brightness);
   panel.show();
 }
@@ -590,6 +612,7 @@ void setup() {
   panel.getTextBounds(SCROLL_TEXT, 0, 0, &x1, &y1, &w, &h);
   textWidth = w;
   network.begin();
+  network.onOtaProgress(showOtaProgress);
   brightness = network.settings().brightness;
   renderBootCard(0);
   bootStarted = millis();

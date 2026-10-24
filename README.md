@@ -1,6 +1,6 @@
 # Red LED Panel 8×2
 
-**Version 1.2.0** — Wi-Fi setup, live local time, an eleven-scene showcase, and a faster refresh driver.
+**Version 1.3.0** — Wi-Fi setup, live local time, an eleven-scene showcase, a faster refresh driver, and firmware upload over Wi-Fi.
 
 An animated showcase for an **ESP32 and a red 64×16 HUB08 panel**: bouncing balls, a starfield, pixel rain, animated bars, Conway's Life, beating hearts, scrolling text, Pong, and a network-synchronised clock. Two simple patterns make it easy to check placement and pixel detail.
 
@@ -17,6 +17,7 @@ pio run --target upload
 pio device monitor --baud 115200
 ```
 
+   After the first USB upload, set `SECRET_OTA_PASSWORD` in `include/secrets.h` to upload over Wi-Fi with `pio run -e esp32dev_ota --target upload`; see [Upload over Wi-Fi](docs/PANEL_GUIDE.md#upload-over-wi-fi-ota).
 3. Three boot cards show the header, display settings, and network state, then the clock starts the cycle. Serial Monitor prints the full startup/settings report and each scene.
 4. Type **`1`–`9`**, **`g`** (Pong), or **`c`** (clock) to select a scene, **`n`** for next, **`p`** to pause/resume, or **`+` / `-`** to change brightness. No Enter is needed.
 

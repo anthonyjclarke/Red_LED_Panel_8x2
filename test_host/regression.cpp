@@ -355,6 +355,13 @@ int main(int argc, char** argv) {
   assert(parseBrightness("0", level) && level == 0);
   assert(!parseBrightness("-1", level) && !parseBrightness("256", level) &&
          !parseBrightness("99999999999999999999", level));
+  // OTA progress replaces the picture; a failed upload restores the scene.
+  key("t");
+  const auto letters = pixels();
+  network.otaProgress(40);
+  assert(pixels() != letters && panel.level == brightness);
+  network.otaProgress(-1);
+  assert(pixels() == letters);
   // Return to a normal frame before testing unchanged help/unknown commands.
   key("3");
   // Help and retired/unknown keys must not alter a paused picture.

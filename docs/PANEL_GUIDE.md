@@ -77,6 +77,22 @@ Choose the USB port for your ESP32 if several devices are connected. Close an ex
 
 The display shows three startup cards, then enters the saved startup view: Clock + demos by default, or a held live clock. Serial prints each scene's number, name, and short description. There is no long blank interval between scenes.
 
+### Upload over Wi-Fi (OTA)
+
+After one USB upload of v1.3.0 or later, new firmware can be sent over the local network, for example from a laptop while the panel stays connected elsewhere.
+
+1. Copy `include/secrets.example.h` to `include/secrets.h` (gitignored) and set `SECRET_OTA_PASSWORD`. An empty password disables network uploads.
+2. Upload once over USB with `pio run --target upload`. Serial then prints `[ota] Ready: red-panel-xxxxxx.local port 3232` after Wi-Fi connects.
+3. On the other computer, use the same `include/secrets.h` (it is not in git) and run:
+
+```sh
+PANEL_OTA_PASSWORD='your-ota-password' pio run -e esp32dev_ota --target upload
+```
+
+The `esp32dev_ota` environment in `platformio.ini` targets this panel's mDNS name, `red-panel-a4ae30.local`. For another panel, change `upload_port` or add `--upload-port <IP>`. The default `esp32dev` partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.
+
+The panel shows **OTA** with a percentage and progress bar, then restarts on success. If an upload fails, the current firmware keeps running and the scene returns. Flash writes pause row scanning briefly, so the progress display can flicker. The upload needs the computer and panel on the same network; macOS may ask to allow incoming connections for Python, which espota uses for the transfer. From outside your home network, use a VPN into it rather than exposing port 3232.
+
 ## Wi-Fi, location and startup status
 
 The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32** (the default from `include/secrets.example.h`; set your own in a gitignored `include/secrets.h`). Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
@@ -171,6 +187,7 @@ Edit [include/config.h](../include/config.h), rebuild, and upload:
 | `WIFI_CONNECT_TIMEOUT_MS` | 10000 | Saved connection attempt before setup hotspot |
 | `WIFI_SAVE_CONNECT_TIMEOUT_MS` | 8000 | Association window after saving new credentials |
 | `SHIFT_CLOCK_HZ` | 500000 | SPI clock for column data; raise only after a hardware check |
+| `OTA_PORT` | 3232 | Network upload port; must match `platformio.ini` |
 | `BOOT_CARD_MS` | 2000 | Time per startup card |
 
 Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp). Each render draws into the working buffer and calls `show()`. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits end by elapsed milliseconds only and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.

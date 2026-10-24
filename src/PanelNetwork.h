@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <Preferences.h>
 #include <WiFiManager.h>
+#include <functional>
 #include <time.h>
 
 #include "ClockSettings.h"
@@ -21,6 +22,8 @@ public:
   bool takeSettingsChanged();
   // Persist a new startup brightness without signalling a settings change.
   bool saveBrightness(uint8_t level);
+  // Called with 0-100 during a network firmware upload, or -1 if it fails.
+  void onOtaProgress(std::function<void(int)> handler);
   String address() const;
   const char* hostname() const { return hostname_; }
   const char* apName() const { return apName_; }
@@ -33,6 +36,7 @@ private:
   void saveSettings();
   void configureTime();
   bool authorised();
+  void startOta();
 
   WiFiManager manager_;
   Preferences preferences_;
@@ -46,6 +50,9 @@ private:
   bool portalRequested_ = false;
   bool settingsChanged_ = false;
   bool reconnectAttempt_ = false;
+  bool otaStarted_ = false;
+  int otaPercent_ = -1;
+  std::function<void(int)> otaProgress_;
   uint32_t connectStarted_ = 0;
   uint32_t lastRetry_ = 0;
   uint32_t lastNtpRequest_ = 0;

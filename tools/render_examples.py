@@ -35,18 +35,26 @@ def main():
                         '-o', str(executable)], check=True)
         subprocess.run([str(executable), str(capture)], check=True)
         scenes = json.loads(capture.read_text())
-        network = temporary / 'network'
-        network.mkdir()
-        for name in ('PanelNetwork.cpp', 'PanelNetwork.h'):
-            shutil.copyfile(ROOT / 'src' / name, network / name)
-        network_test = network / 'regression'
-        network_status = network / 'status.json'
-        subprocess.run([compiler, '-std=c++17', '-fsanitize=address,undefined',
-                        '-fno-omit-frame-pointer', '-I' + str(network),
-                        '-I' + str(ROOT / 'test_host/network_stubs'), '-I' + str(ROOT / 'include'),
-                        str(ROOT / 'test_host/network_regression.cpp'), str(network / 'PanelNetwork.cpp'),
-                        str(ROOT / 'src/debug.cpp'), '-o', str(network_test)], check=True)
-        subprocess.run([str(network_test), str(network_status)], check=True)
+        # Two fixed secrets.h variants (the copied source's own folder wins the include
+        # search): defaults with OTA/login disabled, then both passwords set.
+        variants = {'network': ('PanelSetup32', '', ''), 'network-secured': ('PanelSetup32', 'pagepass', 'otapass')}
+        for folder, (ap, page, ota) in variants.items():
+            network = temporary / folder
+            network.mkdir()
+            for name in ('PanelNetwork.cpp', 'PanelNetwork.h'):
+                shutil.copyfile(ROOT / 'src' / name, network / name)
+            (network / 'secrets.h').write_text(
+                f'#pragma once\n#define SECRET_AP_PASSWORD "{ap}"\n#define SECRET_PANEL_PASSWORD "{page}"\n'
+                f'#define SECRET_OTA_PASSWORD "{ota}"\n')
+            network_test = network / 'regression'
+            network_status = network / 'status.json'
+            subprocess.run([compiler, '-std=c++17', '-fsanitize=address,undefined',
+                            '-fno-omit-frame-pointer', '-I' + str(network),
+                            '-I' + str(ROOT / 'test_host/network_stubs'), '-I' + str(ROOT / 'include'),
+                            str(ROOT / 'test_host/network_regression.cpp'), str(network / 'PanelNetwork.cpp'),
+                            str(ROOT / 'src/debug.cpp'), '-o', str(network_test)], check=True)
+            subprocess.run([str(network_test), str(network_status)], check=True)
+        network_status = temporary / 'network/status.json'
         status = json.loads(network_status.read_text())
         assert status['location'] == 'Workshop' and status['zone'] == 'Etc/UTC'
         assert status['timeValid'] and status['connected'] and status['time']

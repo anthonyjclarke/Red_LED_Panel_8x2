@@ -7,6 +7,7 @@ inline void sntp_set_time_sync_notification_cb(void (*callback)(timeval*)) {
 }
 inline void configTzTime(const char* zone, const char*, const char*) {
   ++ntpRequests;
+  ++fakeMillis; // Real requests take time; exposes retry checks against a stale `now`.
   setenv("TZ", zone, 1);
   tzset();
 }

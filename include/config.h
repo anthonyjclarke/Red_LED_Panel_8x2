@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-constexpr const char* FIRMWARE_VERSION = "1.2.0";
+constexpr const char* FIRMWARE_VERSION = "1.3.0";
 
 // ---------------------------------------------------------------------------
 // Panel geometry — 8 x 2 modules of 8x8 LEDs = 64 x 16 pixels, 1/16 scan
@@ -77,6 +77,7 @@ constexpr const char* SCROLL_TEXT = "ESP32 + HUB08 = FUN!";
 // include/secrets.h (gitignored); see include/secrets.example.h.
 constexpr const char* WIFI_AP_PREFIX = "RedPanel-";
 constexpr const char* PANEL_ADMIN_USER = "admin"; // Login name when a page password is set.
+constexpr uint16_t OTA_PORT = 3232; // ArduinoOTA / espota default; matches platformio.ini.
 constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 10000;
 constexpr uint32_t WIFI_SAVE_CONNECT_TIMEOUT_MS = 8000; // After new credentials are saved.
 constexpr uint32_t WIFI_RETRY_MS = 30000;

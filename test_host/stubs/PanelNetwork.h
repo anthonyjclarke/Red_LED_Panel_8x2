@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "ClockSettings.h"
 #include "config.h"
+#include <functional>
 #include <time.h>
 
 // Host fixture only: networking/NVS are not simulated as physical hardware.
@@ -27,6 +28,8 @@ public:
     changed = false;
     return value;
   }
+  std::function<void(int)> otaProgress;
+  void onOtaProgress(std::function<void(int)> handler) { otaProgress = handler; }
   bool saveBrightness(uint8_t level) {
     values.brightness = level;
     ++brightnessSaves;

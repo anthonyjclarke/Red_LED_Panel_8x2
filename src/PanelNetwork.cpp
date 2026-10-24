@@ -1,5 +1,6 @@
 #include "PanelNetwork.h"
 
+#include <ArduinoOTA.h>
 #include <ESPmDNS.h>
 #include <atomic>
 #include <esp_sntp.h>
@@ -93,6 +94,8 @@ void PanelNetwork::begin() {
   reconnectAttempt_ = true;
   DBG_INFO("[wifi] Connecting to saved network; setup hotspot opens after %lu seconds if needed",
            static_cast<unsigned long>(WIFI_CONNECT_TIMEOUT_MS / 1000));
+  if (!*SECRET_OTA_PASSWORD)
+    DBG_INFO("[ota] Disabled: set SECRET_OTA_PASSWORD in include/secrets.h");
 }
 
 bool PanelNetwork::connected() const {
@@ -133,6 +136,41 @@ bool PanelNetwork::saveBrightness(uint8_t level) {
   settings_ = next;
   DBG_INFO("[settings] Startup brightness saved: %u/255", level);
   return true;
+}
+
+void PanelNetwork::onOtaProgress(std::function<void(int)> handler) {
+  otaProgress_ = handler;
+}
+
+void PanelNetwork::startOta() {
+  // Network uploads are only accepted with a password from secrets.h.
+  if (otaStarted_ || !*SECRET_OTA_PASSWORD) return;
+  ArduinoOTA.setHostname(hostname_);
+  ArduinoOTA.setPort(OTA_PORT);
+  ArduinoOTA.setPassword(SECRET_OTA_PASSWORD);
+  ArduinoOTA.setMdnsEnabled(false); // mDNS is owned by loop() so it survives reconnects.
+  ArduinoOTA.onStart([this]() {
+    otaPercent_ = -1;
+    DBG_INFO("[ota] Firmware upload started");
+    if (otaProgress_) otaProgress_(0);
+  });
+  ArduinoOTA.onProgress([this](unsigned int done, unsigned int total) {
+    const int percent = total ? static_cast<int>(100ULL * done / total) : 0;
+    if (percent == otaPercent_) return;
+    otaPercent_ = percent;
+    if (percent % 10 == 0) DBG_VERBOSE("[ota] %d%%", percent);
+    if (otaProgress_) otaProgress_(percent);
+  });
+  ArduinoOTA.onEnd([]() { DBG_INFO("[ota] Upload complete; restarting"); });
+  ArduinoOTA.onError([this](ota_error_t error) {
+    DBG_ERROR("[ota] Upload failed (error %u); continuing with current firmware",
+              static_cast<unsigned>(error));
+    if (otaProgress_) otaProgress_(-1);
+  });
+  ArduinoOTA.begin();
+  MDNS.enableArduino(OTA_PORT, true);
+  otaStarted_ = true;
+  DBG_INFO("[ota] Ready: %s.local port %u (password required)", hostname_, OTA_PORT);
 }
 
 bool PanelNetwork::authorised() {
@@ -176,10 +214,13 @@ void PanelNetwork::loop() {
       if (manager_.getConfigPortalActive()) manager_.stopConfigPortal();
       DBG_INFO("[wifi] Connected: SSID=%s IP=%s RSSI=%d dBm", WiFi.SSID().c_str(),
                WiFi.localIP().toString().c_str(), WiFi.RSSI());
-      if (MDNS.begin(hostname_))
+      if (MDNS.begin(hostname_)) {
         MDNS.addService("http", "tcp", 80);
-      else
+        if (otaStarted_) MDNS.enableArduino(OTA_PORT, true);
+      } else {
         DBG_WARN("[wifi] mDNS unavailable; use the IP address");
+      }
+      startOta();
       DBG_INFO("[web] Settings: http://%s/panel or http://%s.local/panel", address().c_str(),
                hostname_);
       configureTime();
@@ -187,7 +228,8 @@ void PanelNetwork::loop() {
     reconnectAttempt_ = false;
     if (!manager_.getConfigPortalActive() && !manager_.getWebPortalActive())
       manager_.startWebPortal();
-    if (!timeValid_ && now - lastNtpRequest_ >= NTP_RETRY_MS) configureTime();
+    // Fresh millis(): a request made above, after `now` was read, must not wrap to a retry.
+    if (!timeValid_ && millis() - lastNtpRequest_ >= NTP_RETRY_MS) configureTime();
   } else {
     if (previousConnected_) {
       DBG_WARN("[wifi] Disconnected; %s",
@@ -207,6 +249,7 @@ void PanelNetwork::loop() {
     }
   }
   previousConnected_ = online;
+  if (otaStarted_) ArduinoOTA.handle(); // Blocks for the duration of an accepted upload.
   if (syncPending.exchange(false)) {
     lastSync_ = time(nullptr);
     lastSyncMs_ = now;
@@ -365,6 +408,9 @@ void PanelNetwork::printStatus() const {
   } else {
     DBG_INFO("[web] Waiting for network; setup hotspot=%s at http://192.168.4.1/", apName_);
   }
+  DBG_INFO("[ota] %s", otaStarted_            ? "Ready for network uploads (port 3232)"
+                       : *SECRET_OTA_PASSWORD ? "Starts when Wi-Fi connects"
+                                              : "Disabled; no SECRET_OTA_PASSWORD");
   DBG_INFO("[clock] State=%s NTP=%s / %s",
            timeValid_ ? "synchronised / holding time" : "waiting for first sync", NTP_SERVER_1,
            NTP_SERVER_2);

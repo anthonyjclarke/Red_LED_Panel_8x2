@@ -1,4 +1,5 @@
 #include "PanelNetwork.h"
+#include <ArduinoOTA.h>
 #include "config.h"
 #if __has_include("secrets.h")
 #include "secrets.h"
@@ -17,6 +18,7 @@ std::vector<uint8_t> nvs;
 bool nvsWritable = true;
 std::function<void(timeval*)> syncCallback;
 unsigned ntpRequests = 0;
+ArduinoOTAPort ArduinoOTA;
 static std::string token() {
   activeServer->dispatch("/api/status");
   const auto first = activeServer->body.find("\"token\":\"") + 9;
@@ -66,7 +68,23 @@ int main(int argc, char** argv) {
   assert(activeServer->code == 409);
   WiFi.state = WL_CONNECTED;
   network.loop();
-  assert(!network.portalActive() && activeServer && ntpRequests == 1);
+  assert(!network.portalActive() && activeServer && ntpRequests == 1); // One request per connect.
+  // OTA starts once, on connection, and only when a password is configured.
+  assert(ArduinoOTA.begins == (*SECRET_OTA_PASSWORD ? 1u : 0u));
+  if (*SECRET_OTA_PASSWORD) {
+    assert(ArduinoOTA.port == OTA_PORT && !ArduinoOTA.mdns);
+    assert(ArduinoOTA.password == SECRET_OTA_PASSWORD && ArduinoOTA.hostname == network.hostname());
+    std::vector<int> seen;
+    network.onOtaProgress([&](int percent) { seen.push_back(percent); });
+    ArduinoOTA.start();
+    ArduinoOTA.progress(50, 100);
+    ArduinoOTA.progress(50, 100); // Repeated percentages are not redrawn.
+    ArduinoOTA.error(1);
+    assert((seen == std::vector<int>{0, 50, -1}));
+    const auto handles = ArduinoOTA.handles;
+    network.loop();
+    assert(ArduinoOTA.handles == handles + 1);
+  }
   assert(!network.timeValid());
   timeval value = {};
   syncCallback(&value);
@@ -114,6 +132,7 @@ int main(int argc, char** argv) {
   // Serial brightness persistence writes the record without a settings event.
   assert(network.saveBrightness(120) && network.settings().brightness == 120);
   assert(!network.takeSettingsChanged());
+  assert(ArduinoOTA.begins == (*SECRET_OTA_PASSWORD ? 1u : 0u)); // Reconnects reuse it.
   // Saved settings reload as one validated record; damaged records use defaults.
   PanelNetwork reloaded;
   reloaded.begin();

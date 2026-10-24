@@ -3,7 +3,7 @@
 ## Target
 
 - ESP32 DevKit (`esp32dev`), `espressif32@6.9.0` = Arduino core 2.0.17 / IDF 4.4. Keep pinned: the driver uses legacy `driver/timer.h` (no `gptimer` before IDF 5).
-- Red HUB08 64×16 (8×2 modules), 1/16 scan, Adafruit GFX, WiFiManager 2.0.17. Firmware v1.2.0.
+- Red HUB08 64×16 (8×2 modules), 1/16 scan, Adafruit GFX, WiFiManager 2.0.17. Firmware v1.3.0.
 - GPIO 25/26/27/13 → LA/LB/LC/LD, 22 → EN, 4 → LT direct register writes (all GPIO must be < 32). 23 → R1 and 18 → SK are VSPI (SPI HAL `spiWriteNL`, MSB first).
 - Active-low data and OE; reversed column stream (bit-reversed bytes in software), row bits `{0,1,2,3}`, row XOR `0x0F`.
 
@@ -25,7 +25,8 @@
 
 - NVS namespace `redpanel`, key `clock`: one `ClockSettings` record (schema 1). Validate before use; a failed write must not change active settings. NVS writes can stall the scan task briefly.
 - Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches. POSTs need the boot-local token.
-- `secrets.h` (gitignored) supplies `SECRET_AP_PASSWORD` and optional `SECRET_PANEL_PASSWORD`; `secrets.example.h` is the fallback. Never log credentials.
+- `secrets.h` (gitignored) supplies `SECRET_AP_PASSWORD`, optional `SECRET_PANEL_PASSWORD` and `SECRET_OTA_PASSWORD` (empty = OTA off); `secrets.example.h` is the fallback. Never log credentials.
+- ArduinoOTA starts on first Wi-Fi connect with its own mDNS disabled; `loop()` owns mDNS and re-adds the `arduino` service on reconnect. `ArduinoOTA.handle()` blocks during an upload, so progress drawing runs from its callbacks. `default_envs = esp32dev` keeps plain uploads on USB.
 - `include/ConfigPage.h` is generated from `web/index.html` by `tools/embed_web.py` (pre-build hook). Edit the HTML, not the header.
 
 ## Checks and docs

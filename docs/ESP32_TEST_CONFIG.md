@@ -50,7 +50,7 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 
 | Setting | Value / behaviour |
 |:--|:--|
-| Firmware | `1.2.0`: overlapped SPI refresh and settings/clock refinements after v1.1.0 |
+| Firmware | `1.3.0`: Wi-Fi firmware upload (OTA) after the v1.2.0 refresh driver |
 | LA/LB/LC/LD | GPIO 25/26/27/13; normal A/B/C/D bit order |
 | EN/R1/LT/SK | GPIO 22/23/4/18 |
 | Geometry and scan | 64×16, 1/16 scan; 500 µs per row, nominal 125 Hz complete refresh |
@@ -119,6 +119,7 @@ mDNS depends on the client/network; the printed IP works without it. The router'
 | Router DHCP / DNS | ESP32 receives its address and resolves the NTP hosts |
 | Network time | ESP32 → NTP servers, UDP port 123 |
 | mDNS | Local hostname discovery, UDP port 5353 |
+| Firmware upload (OTA) | Computer → panel UDP 3232 invitation, then panel → computer TCP transfer; password required |
 
 Internet access is used for network time, not for storing or reading your local settings. Network restrictions on DNS or UDP 123 can leave the clock waiting even when Wi-Fi is connected.
 
@@ -159,7 +160,7 @@ Serial **`i`** repeats the startup/settings report. A representative header is:
 
 ```text
 [INFO] ============================================================
-[INFO] Red LED Panel 8x2 v1.2.0 | ESP32 DevKit / esp32dev
+[INFO] Red LED Panel 8x2 v1.3.0 | ESP32 DevKit / esp32dev
 [INFO] Panel=64x16, 1/16 scan, brightness=90/255, debug=3
 [INFO] GPIO LA=25 LB=26 LC=27 LD=13 EN=22 R1=23 LT=4 SK=18
 [INFO] Scan=500 us/row, signal=1 us, guard=50 us, nominal frame=125 Hz
@@ -198,6 +199,8 @@ python3 -m venv .venv-docs
 | `1`–`9`, `g`, `p`, `n`, `r`, `f/o/b` | Demo and held-pattern controls retain their documented behaviour |
 | `o`, then `+` to 255 (v1.2.0) | Noticeably brighter than 135/255; no ghosting in unlit rows; `i` counters steady |
 | `+` then wait 5 s, reset | New brightness restored at boot |
+| OTA upload with the right password (v1.3.0) | Panel shows OTA progress, restarts, serial reports the new version |
+| OTA upload with a wrong password | Upload refused; current firmware keeps running |
 
 See [screen examples](SCREEN_EXAMPLES.md) for generated output from every scene, boot cards and clock states. The reference-panel results below confirm observed Wi-Fi association, NTP sync, scene progression and a visually steady display. Use the acceptance table to check the remaining scenarios on your own installation.
 

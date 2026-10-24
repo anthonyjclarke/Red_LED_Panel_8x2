@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0] 25-10-2026
+
+Built and host-tested; **not yet flashed**. OTA needs one USB upload before it can be used.
+
+### Added
+
+- Firmware upload over Wi-Fi with ArduinoOTA. It is enabled only when `SECRET_OTA_PASSWORD` is set in `include/secrets.h`, starts on the first Wi-Fi connection on port 3232 (`OTA_PORT`), and advertises itself over mDNS.
+- `esp32dev_ota` PlatformIO environment: `PANEL_OTA_PASSWORD=… pio run -e esp32dev_ota -t upload`. The password comes from an environment variable, so it never enters `platformio.ini`.
+- Panel shows **OTA** with a percentage and progress bar during an upload. A failed upload returns to the current scene; success restarts.
+- `[ota]` status in boot and `i` reports, and a help line for network uploads.
+- Host regressions: OTA disabled without a password, configured once with one, progress and error callbacks, a second network test build with page and OTA passwords set, and the progress display in the app test.
+
+### Fixed
+
+- Connecting to Wi-Fi sent two NTP requests. The retry check compared a stale `now` with the time of the request just made, so the unsigned difference wrapped. The host fixture now advances time during a request to cover this.
+- `default_envs = esp32dev` keeps plain `pio run -t upload` on USB now that a second environment exists.
+
 ## [1.2.0] 25-10-2026
 
 Flashed and checked on the reference panel on 25 October 2026: normal display through 255/255, zero missed ticks and late rows over more than 500,000 rows, peak wake 237 µs (v1.1.0: 491 µs), and serial brightness saved and restored after reset. Tagged `v1.2.0-flashed`.
