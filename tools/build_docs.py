@@ -2,8 +2,8 @@
 """Build the single-page HTML documentation and ZIP from the tracked Markdown sources.
 
 Requires Python 3.10+ and tools/docs-requirements.txt. Run from any directory.
-Every Markdown document becomes one section of index.html; the stylesheet is
-inlined and images stay local. The firmware is read for the share bundle, never modified.
+Every Markdown document becomes one section of index.html, plus a release and
+version log from CHANGELOG.md and git; the stylesheet is inlined and images stay local. The firmware is read for the share bundle, never modified.
 """
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ import html
 import json
 import os
 import re
+import subprocess
 import unicodedata
+from datetime import date
 import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
@@ -128,6 +130,66 @@ def render_section(source: Path, label: str, description: str) -> tuple[str, str
     return f'<section class="doc-section" aria-labelledby="{section}">\n{body}</section>\n', title, headings
 
 
+def git(*args: str) -> str | None:
+    try:
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,
+                              check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def render_release_log() -> str:
+    """Release table from CHANGELOG.md headings plus git tags and commit history."""
+    version = re.search(r'FIRMWARE_VERSION = "([^"]+)"', (ROOT / "include/config.h").read_text()).group(1)
+    tags = {}
+    for tag in (git("tag", "--list") or "").split():
+        commit = git("rev-list", "-n", "1", tag)
+        if commit:
+            tags[tag.lstrip("v")] = (tag, commit[:7])
+    rows = []
+    changelog = (ROOT / "CHANGELOG.md").read_text()
+    for match in re.finditer(r"^## \[([^\]]+)\][ -]*(\S*)\s*$", changelog, re.M):
+        name, when = match.groups()
+        body = changelog[match.end():].split("\n## ", 1)[0]
+        groups = re.findall(r"^### (.+)$", body, re.M)
+        tag, commit = tags.get(name, ("", ""))
+        if tag:
+            status = f'<span class="tag resolved">Tagged {html.escape(tag)}</span> <code>{commit}</code>'
+        elif name == version:
+            status = '<span class="tag">Current source, untagged</span>'
+        else:
+            status = "Pre-release"
+        rows.append(f"<tr><td><strong>{html.escape(name)}</strong></td><td>{html.escape(when or '—')}</td>"
+                    f"<td>{status}</td><td>{html.escape(', '.join(groups) or '—')}</td></tr>")
+    head = git("rev-parse", "--short", "HEAD")
+    dirty = bool(git("status", "--porcelain"))
+    build = (f"source commit <code>{html.escape(head)}</code>{' plus uncommitted changes' if dirty else ''}"
+             if head else "source outside a git checkout")
+    log = git("log", "--date=short", "--pretty=%h%x1f%ad%x1f%s%x1f%D") or ""
+    commits = []
+    for line in log.splitlines():
+        short, when, subject, *rest = line.split("\x1f")  # strip() can remove an empty refs field
+        refs = rest[0] if rest else ""
+        labels = " ".join(f'<span class="tag">{html.escape(r.removeprefix("tag: "))}</span>'
+                          for r in refs.split(", ") if r.startswith("tag: "))
+        commits.append(f"<tr><td><code>{short}</code></td><td>{when}</td>"
+                       f"<td>{html.escape(subject)} {labels}</td></tr>")
+    history = ("<div class=\"table-wrap\"><table><thead><tr><th>Commit</th><th>Date</th><th>Change</th></tr>"
+               f"</thead><tbody>{''.join(commits)}</tbody></table></div>" if commits
+               else "<p>No git history was available when this page was built.</p>")
+    return f'''<section class="doc-section" aria-labelledby="release-log">
+<h2 id="release-log" class="doc-title">Release and version log</h2>
+<p class="doc-meta"><span class="eyebrow">Releases</span> · Generated from CHANGELOG.md and git · built {date.today().strftime("%d-%m-%Y")} from {build}</p>
+<p>Firmware in this source tree reports <strong>v{html.escape(version)}</strong> (<code>FIRMWARE_VERSION</code> in <code>include/config.h</code>). Tagged versions are the releases flashed to the reference panel; details of each change are in the <a href="#changelog">changelog</a>.</p>
+<h3 id="release-log--releases">Releases</h3>
+<div class="table-wrap"><table><thead><tr><th>Version</th><th>Date</th><th>Status</th><th>Change groups</th></tr></thead>
+<tbody>{''.join(rows)}</tbody></table></div>
+<h3 id="release-log--commit-history">Commit history</h3>
+{history}
+</section>
+'''
+
+
 def render_page() -> str:
     sections = []
     nav = []
@@ -143,6 +205,13 @@ def render_page() -> str:
                    if headings else f'<a class="nav-single" href="#{section}">{html.escape(label)}</a>')
         contents.append(f'<a href="#{section}"><strong>{html.escape(label)}</strong>'
                         f'<span>{html.escape(description)}</span></a>')
+        if filename == "README.md":
+            sections.append(render_release_log())
+            nav.append('<details class="nav-group"><summary><a href="#release-log">Release log</a></summary>'
+                       '<nav aria-label="Release log sections"><a href="#release-log--releases">Releases</a>'
+                       '<a href="#release-log--commit-history">Commit history</a></nav></details>')
+            contents.append('<a href="#release-log"><strong>Release log</strong>'
+                            '<span>Versions, tags and commit history</span></a>')
     led_dots = '<i></i>' * 16
     css = STYLESHEET.read_text()
     return f'''<!doctype html>
@@ -170,7 +239,7 @@ def render_page() -> str:
 <header class="cover">
 <div class="status-line"><span class="tag resolved">ESP32 showcase</span><span class="tag">Text · pixels · animation</span></div>
 <h1>Red LED Panel 8×2 documentation</h1>
-<p>Everything for the ESP32 and red 64×16 HUB08 panel in one page: setup, wiring, controls, examples, history and maintainer notes.</p>
+<p>Everything for the ESP32 and red 64×16 HUB08 panel in one page: setup, wiring, controls, examples, releases, history and maintainer notes.</p>
 <nav class="contents" aria-label="Contents">{''.join(contents)}</nav>
 </header>
 {''.join(sections)}

@@ -13,11 +13,14 @@ public:
   void loop();
   void requestPortal();
   void printStatus() const;
-  bool localTime(tm& result) const;
+  // Optional milliseconds within the current second, for second-aligned effects.
+  bool localTime(tm& result, uint16_t* milliseconds = nullptr) const;
   bool connected() const;
   bool portalActive();
   bool timeValid() const { return timeValid_; }
   bool takeSettingsChanged();
+  // Persist a new startup brightness without signalling a settings change.
+  bool saveBrightness(uint8_t level);
   String address() const;
   const char* hostname() const { return hostname_; }
   const char* apName() const { return apName_; }
@@ -29,6 +32,7 @@ private:
   void sendStatus();
   void saveSettings();
   void configureTime();
+  bool authorised();
 
   WiFiManager manager_;
   Preferences preferences_;
@@ -46,4 +50,5 @@ private:
   uint32_t lastRetry_ = 0;
   uint32_t lastNtpRequest_ = 0;
   time_t lastSync_ = 0;
+  uint32_t lastSyncMs_ = 0;
 };

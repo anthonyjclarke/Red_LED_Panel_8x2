@@ -9,7 +9,8 @@
 // Single-colour HUB08 panel (74HC595 columns, 74HC138 row decode, 1/16 scan).
 // Draw with any Adafruit_GFX call (colour 0 = off, non-zero = on), then call
 // show() queues a complete frame for the next scan boundary. Hardware timer
-// interrupts blank OE; a dedicated task shifts rows on the Arduino core.
+// interrupts blank OE; a dedicated task latches each row, then shifts the next
+// row over hardware SPI while the current one is lit.
 class Hub08Panel : public Adafruit_GFX {
 public:
   Hub08Panel();
@@ -33,6 +34,7 @@ private:
   static bool IRAM_ATTR oeOffTimerCb(void* arg);
   static void refreshTask(void* arg);
   void scanRow(uint32_t tick);
+  void shiftRow(const uint8_t* rowData);
   void IRAM_ATTR setOE(bool on);
 
   uint8_t drawBuf_[PANEL_HEIGHT][BYTES_PER_ROW];

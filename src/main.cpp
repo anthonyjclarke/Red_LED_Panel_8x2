@@ -45,6 +45,7 @@ static const SceneInfo scenes[] = {
     {'8', "BEATING HEARTS", "Three hearts with a gentle brightness pulse", 100, ANIMATION_STEP_MS},
     {'9', "SCROLLING TEXT", SCROLL_TEXT, 0, SCROLL_STEP_MS},
     {'g', "PONG", "Automatic paddles, rebounds, and scoring", 400, PONG_STEP_MS},
+    // Clock visits end by elapsed CLOCK_HOLD_MS; frames is the nominal sample count.
     {'c', "CLOCK", "Network time in the configured local time zone", CLOCK_HOLD_MS / CLOCK_STEP_MS,
      CLOCK_STEP_MS},
 };
@@ -65,6 +66,9 @@ static uint32_t lastClockDraw = 0;
 static uint32_t bootStarted = 0;
 static uint32_t lastBootDraw = 0;
 static bool bootFinished = false;
+static uint8_t appliedStartClock = 0;
+static bool brightnessDirty = false;
+static uint32_t brightnessChangedAt = 0;
 
 static constexpr int16_t PONG_SCALE = 4; // Quarter-pixel ball positions.
 static constexpr int16_t PADDLE_HEIGHT = 5;
@@ -175,7 +179,8 @@ static void stepPong() {
 
 static void renderClock() {
   tm local = {};
-  if (!network.localTime(local)) {
+  uint16_t milliseconds = 0;
+  if (!network.localTime(local, &milliseconds)) {
     panel.setTextSize(1);
     panel.setCursor(2, 0);
     panel.print(network.connected() ? "SYNC TIME" : "NO WIFI");
@@ -192,7 +197,7 @@ static void renderClock() {
   const uint8_t positions[] = {5, 13, 25, 33, 45, 53};
   for (uint8_t i = 0; i < 6; ++i)
     drawDigit(positions[i], 0, digits[i], 2);
-  if ((millis() / 500 & 1) == 0) {
+  if (milliseconds < 500) { // Colons lit for the first half of each real second.
     for (uint8_t x : {21, 41}) {
       panel.fillRect(x, 2, 2, 2, 1);
       panel.fillRect(x, 6, 2, 2, 1);
@@ -466,6 +471,7 @@ static void renderBootCard(uint8_t card) {
 
 static void startConfiguredView() {
   nextDemo = 0;
+  appliedStartClock = network.settings().startClock;
   enterScene(Scene::Clock, network.settings().startClock);
 }
 
@@ -491,35 +497,28 @@ static void handleSerial() {
       break;
     case 'd':
       debugLevel = (debugLevel + 1) % 5;
-      Serial.printf("[INFO] Debug level=%u (0=off 1=error 2=warn 3=info 4=verbose)\n", debugLevel);
+      DBG_ALWAYS("Debug level=%u (0=off 1=error 2=warn 3=info 4=verbose)", debugLevel);
       break;
     case 'r':
-    case 'R':
       nextDemo = 0;
       enterScene(Scene::Clock);
       break;
     case 'n':
-    case 'N':
       nextScene();
       break;
     case 't':
-    case 'T':
       enterScene(Scene::Letters, true);
       break;
     case 's':
-    case 'S':
       enterScene(Scene::Scroll);
       break;
     case 'f':
-    case 'F':
       enterScene(Scene::AllOff, true);
       break;
     case 'o':
-    case 'O':
       enterScene(Scene::AllOn, true);
       break;
     case 'b':
-    case 'B':
       enterScene(Scene::Blank, true);
       break;
     case '+':
@@ -528,10 +527,11 @@ static void handleSerial() {
       brightness = key == '-' ? (brightness > 15 ? brightness - 15 : 0)
                               : (brightness < 240 ? brightness + 15 : 255);
       renderFrame();
+      brightnessDirty = true;
+      brightnessChangedAt = millis();
       DBG_INFO("[display] Brightness=%u/255", brightness);
       break;
     case 'p':
-    case 'P':
       if (!inPlaylist())
         enterScene(Scene::Clock);
       else if (paused) {
@@ -547,7 +547,6 @@ static void handleSerial() {
       break;
     case '?':
     case 'h':
-    case 'H':
       printHelp();
       break;
     default:
@@ -570,7 +569,7 @@ static void updateDemo() {
     return;
   }
   if (now - lastStep < scenes[static_cast<uint8_t>(scene)].intervalMs) return;
-  if (++frame >= frameCount()) {
+  if (scene != Scene::Clock && ++frame >= frameCount()) {
     nextScene();
     return;
   }
@@ -601,8 +600,17 @@ void setup() {
 void loop() {
   network.loop();
   if (network.takeSettingsChanged()) {
+    // Brightness applies at once; the view restarts only if the startup view changed.
     brightness = network.settings().brightness;
-    if (bootFinished) startConfiguredView();
+    brightnessDirty = false;
+    if (bootFinished && network.settings().startClock != appliedStartClock)
+      startConfiguredView();
+    else if (bootFinished)
+      renderFrame();
+  }
+  if (brightnessDirty && millis() - brightnessChangedAt >= BRIGHTNESS_SAVE_DELAY_MS) {
+    brightnessDirty = false;
+    network.saveBrightness(brightness);
   }
   if (!bootFinished && Serial.available()) {
     bootFinished = true;
@@ -621,5 +629,4 @@ void loop() {
   } else {
     updateDemo();
   }
-  delay(1);
 }

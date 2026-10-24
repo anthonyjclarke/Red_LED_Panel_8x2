@@ -300,6 +300,24 @@ int main(int argc, char** argv) {
   network.changed = true;
   loop();
   assert(scene == Scene::Clock && paused && brightness == 45);
+  // A brightness-only save applies live and keeps the current scene.
+  key("3");
+  network.values.brightness = 60;
+  network.changed = true;
+  loop();
+  assert(scene == Scene::Bounce && brightness == 60 && panel.level == 60);
+  // Serial brightness is saved once, after a quiet period, as the startup level.
+  const auto saves = network.brightnessSaves;
+  key("+");
+  key("+");
+  fakeMillis += BRIGHTNESS_SAVE_DELAY_MS - 1;
+  loop();
+  assert(network.brightnessSaves == saves);
+  ++fakeMillis;
+  loop();
+  assert(network.brightnessSaves == saves + 1 && network.values.brightness == 90);
+  loop();
+  assert(network.brightnessSaves == saves + 1);
   key("w");
   assert(network.portal);
   // Time zone conversion including both Sydney daylight-saving boundaries.

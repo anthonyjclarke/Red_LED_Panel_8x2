@@ -12,6 +12,7 @@ public:
   bool synced = true;
   bool portal = false;
   bool changed = false;
+  unsigned brightnessSaves = 0;
   ClockSettings values = defaultClockSettings(DEFAULT_BRIGHTNESS);
   void begin() {}
   void loop() {}
@@ -26,8 +27,14 @@ public:
     changed = false;
     return value;
   }
-  bool localTime(tm& result) const {
+  bool saveBrightness(uint8_t level) {
+    values.brightness = level;
+    ++brightnessSaves;
+    return true;
+  }
+  bool localTime(tm& result, uint16_t* milliseconds = nullptr) const {
     if (!synced) return false;
+    if (milliseconds) *milliseconds = fakeMillis % 1000;
     const time_t now = fixtureEpoch + fakeMillis / 1000;
     return localtime_r(&now, &result) != nullptr;
   }

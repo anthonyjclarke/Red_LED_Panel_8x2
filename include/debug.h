@@ -21,4 +21,6 @@ extern uint8_t debugLevel;
 #define DBG_WARN(fmt, ...)    do { if (debugLevel >= DBG_LEVEL_WARN)    Serial.printf("[WARN] " fmt "\n", ##__VA_ARGS__); } while (0)
 #define DBG_INFO(fmt, ...)    do { if (debugLevel >= DBG_LEVEL_INFO)    Serial.printf("[INFO] " fmt "\n", ##__VA_ARGS__); } while (0)
 #define DBG_VERBOSE(fmt, ...) do { if (debugLevel >= DBG_LEVEL_VERBOSE) Serial.printf("[VERB] " fmt "\n", ##__VA_ARGS__); } while (0)
+// Printed at every level, including 0: confirmations of user commands only.
+#define DBG_ALWAYS(fmt, ...)  Serial.printf("[INFO] " fmt "\n", ##__VA_ARGS__)
 // clang-format on

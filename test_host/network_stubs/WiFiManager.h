@@ -53,6 +53,9 @@ public:
     body = text;
   }
   String arg(const char* key) { return args[key]; }
+  bool authenticated = true; // Credentials the fixture client presents are correct.
+  bool authenticate(const char*, const char*) { return authenticated; }
+  void requestAuthentication() { code = 401; }
   void dispatch(const char* path, int method = HTTP_GET) {
     routes.at(std::to_string(method) + path)();
   }

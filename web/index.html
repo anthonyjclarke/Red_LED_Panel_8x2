@@ -64,10 +64,10 @@
         <small>Daylight saving follows the selected region automatically.</small>
         <label for="brightness">Startup brightness</label>
         <input id="brightness" name="brightness" type="number" min="0" max="255" step="1" required value="90">
-        <small>0 blanks the display. 90 is the default; higher settings can reach the refresh limit.</small>
+        <small>0 blanks the display. 90 is the default; about 228 and above look the same.</small>
         <label for="view">Startup view</label>
         <select id="view" name="view"><option value="playlist">Clock + demos</option><option value="clock">Real-time clock</option></select>
-        <small>The cycle shows the clock for 10 seconds between demos. Real-time clock keeps it on screen.</small>
+        <small>The cycle shows the clock for 10 seconds between demos. Real-time clock keeps it on screen. The display restarts only when this changes.</small>
         <button class="primary" id="save" disabled>Save and apply</button>
       </form>
       <p id="message" role="status" aria-live="polite"></p>

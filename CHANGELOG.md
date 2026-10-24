@@ -1,10 +1,36 @@
 # Changelog
 
-## [Unreleased]
+## [1.2.0] 25-10-2026
+
+Built and host-tested; **not yet flashed or checked on the reference panel**.
 
 ### Changed
 
-- Documentation is now one self-contained `index.html` built from all Markdown sources, with per-document sections, a collapsible section sidebar and a print layout. The nine per-document HTML files were removed; `tools/build_docs.py` and the share ZIP were updated to match.
+- Refresh driver shifts the next row while the current row is lit, so only the address/latch step and the 50 µs guard are dark. Full brightness now lights each row for about 445 µs of 500 µs (about 250 µs before), so the whole 0–255 range is usable. Peak panel current at 255/255 rises by roughly 1.8 times.
+- Column data now goes out over the VSPI hardware SPI peripheral at `SHIFT_CLOCK_HZ` (500 kHz, matching the former 1 µs clock and setup timing) instead of bit-banged GPIO with busy-wait delays. Shifting takes about 128 µs per row instead of at least 195 µs, which frees time on core 1. Blank data is preloaded into the 74HC595s at start-up.
+- Saving web settings applies brightness at once and restarts the display only when the startup view changed.
+- Serial `+`/`-` brightness is saved as the startup brightness after a 5-second quiet period (`BRIGHTNESS_SAVE_DELAY_MS`), so key bursts write flash once.
+- Clock colons now light for the first half of each real second instead of following `millis()`.
+- Clock holdover ends after 24 hours without an NTP sync (`CLOCK_HOLDOVER_MAX_MS`); the clock then shows its waiting state instead of drifted time.
+- The setup-hotspot password moved from `config.h` to a gitignored `include/secrets.h` (`SECRET_AP_PASSWORD`), with `include/secrets.example.h` as the template and fallback. The default is still `PanelSetup32`.
+- WiFiManager timeouts now come from `WIFI_CONNECT_TIMEOUT_MS` and the new `WIFI_SAVE_CONNECT_TIMEOUT_MS`.
+- Documentation is now one self-contained `index.html` built from all Markdown sources, with per-document sections, a collapsible sidebar, a print layout and a generated release and version log. The nine per-document HTML files were removed.
+- Rewrote `CLAUDE.md` as a short maintainer primer. README links to the guide for the pin map, and the guide links to the test configuration for buffer pins, so they are no longer repeated.
+
+### Added
+
+- Optional login for `/panel` and `/api/*`: set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require HTTP Basic login (user `admin`). Empty, the default, keeps the previous open behaviour.
+- `DBG_ALWAYS` debug macro for command confirmations that must print at every level (used by `d`).
+- Host regressions for overlapped shifting, SPI column order and polarity, the full-brightness light window, SPI start-up failure cleanup, holdover expiry, brightness persistence and brightness-only settings saves.
+
+### Fixed
+
+- Removed `delay(1)` from `loop()`; the application is fully `millis()`-driven.
+- Removed duplicated assignments in `PanelNetwork::startPortal()` and dead upper-case `switch` cases (input is already lower-cased).
+- Clock visits now end only on elapsed time, not on a second, redundant frame counter.
+- Screen-example headings use sentence case (for example "Conway's life", "Clock waiting for NTP") instead of `str.title()` output.
+- The `platformio.ini` header comment no longer uses the old RGB project name.
+- The test configuration now names the EzSBC LS1 as the reference panel's level shifter, matching the guide.
 
 ## [1.1.0] 25-10-2026
 

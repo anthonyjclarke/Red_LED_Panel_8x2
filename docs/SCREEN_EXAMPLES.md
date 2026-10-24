@@ -36,7 +36,7 @@ Key 2: alternating single-pixel phases.
 
 ![Rendered CHECKERBOARD output](../images/demos/05-checkerboard.gif)
 
-## 06 — Bouncing Balls
+## 06 — Bouncing balls
 
 Key 3: independent moving circles, filled and outlined.
 
@@ -48,31 +48,31 @@ Key 4: several speeds and short horizontal star trails.
 
 ![Rendered STARFIELD output](../images/demos/07-starfield.gif)
 
-## 08 — Pixel Rain
+## 08 — Pixel rain
 
 Key 5: staggered falling trails.
 
 ![Rendered PIXEL RAIN output](../images/demos/08-pixel-rain.gif)
 
-## 09 — Animated Bars
+## 09 — Animated bars
 
 Key 6: simulated equalizer bars; no audio input.
 
 ![Rendered ANIMATED BARS output](../images/demos/09-animated-bars.gif)
 
-## 10 — Conway'S Life
+## 10 — Conway's life
 
 Key 7: actual glider/blinker updates on wrapping edges.
 
 ![Rendered CONWAY'S LIFE output](../images/demos/10-conway-s-life.gif)
 
-## 11 — Beating Hearts
+## 11 — Beating hearts
 
 Key 8: enlarged pixel art with whole-display brightness modulation.
 
 ![Rendered BEATING HEARTS output](../images/demos/11-beating-hearts.gif)
 
-## 12 — Scrolling Text
+## 12 — Scrolling text
 
 Key 9 or s: full-height text crossing the screen.
 
@@ -90,37 +90,37 @@ Starts the cycle and returns for 10 seconds between demos. Key c holds it indefi
 
 ![Rendered CLOCK output](../images/demos/14-clock.gif)
 
-## 15 — All Pixels Off
+## 15 — All pixels off
 
 Key f: an empty pixel buffer at the selected brightness.
 
 ![Rendered All pixels off output](../images/demos/15-all-pixels-off.gif)
 
-## 16 — All Pixels On
+## 16 — All pixels on
 
 Key o: every pixel on at the selected brightness.
 
 ![Rendered All pixels on output](../images/demos/16-all-pixels-on.gif)
 
-## 17 — Output Blanked
+## 17 — Output blanked
 
 Key b: output disabled. Visually dark like f; it uses zero output on-time.
 
 ![Rendered Output blanked output](../images/demos/17-output-blanked.gif)
 
-## 18 — Clock Offline Holdover
+## 18 — Clock offline holdover
 
 Time continues from its last sync; HLD replaces the NTP label.
 
 ![Rendered Clock offline holdover output](../images/demos/18-clock-offline-holdover.gif)
 
-## 19 — Clock Waiting For Wi-Fi
+## 19 — Clock waiting for Wi-Fi
 
 No valid time yet: NO WIFI / JOIN AP. No sample epoch is displayed.
 
 ![Rendered Clock waiting for Wi-Fi output](../images/demos/19-clock-waiting-for-wi-fi.gif)
 
-## 20 — Clock Waiting For Ntp
+## 20 — Clock waiting for NTP
 
 Wi-Fi is connected, but time has not arrived: SYNC TIME / WAIT NTP.
 

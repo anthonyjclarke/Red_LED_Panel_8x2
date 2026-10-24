@@ -1,6 +1,6 @@
 # Red LED Panel 8×2
 
-**Version 1.1.0** — Wi-Fi setup, live local time, and an eleven-scene showcase.
+**Version 1.2.0** — Wi-Fi setup, live local time, an eleven-scene showcase, and a faster refresh driver.
 
 An animated showcase for an **ESP32 and a red 64×16 HUB08 panel**: bouncing balls, a starfield, pixel rain, animated bars, Conway's Life, beating hearts, scrolling text, Pong, and a network-synchronised clock. Two simple patterns make it easy to check placement and pixel detail.
 
@@ -42,15 +42,15 @@ Pong plays automatically; no controllers are required. **`c` holds the live cloc
 
 ## Connect Wi-Fi and set your location
 
-If a saved network is unavailable after 10 seconds, join **`RedPanel-XXXXXX`** using **`PanelSetup32`**, then open **`http://192.168.4.1/`**. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.
+If a saved network is unavailable after 10 seconds, join **`RedPanel-XXXXXX`** using **`PanelSetup32`** (change it in a gitignored `include/secrets.h`, copied from `include/secrets.example.h`), then open **`http://192.168.4.1/`**. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.
 
-After connection, open **`http://<panel-IP>/panel`** using the address printed by serial. Set the location, time zone, startup brightness and startup view. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, and **Clock + demos**. Daylight saving follows the selected zone automatically.
+After connection, open **`http://<panel-IP>/panel`** using the address printed by serial. Set the location, time zone, startup brightness and startup view. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, and **Clock + demos**. Daylight saving follows the selected zone automatically. An optional `SECRET_PANEL_PASSWORD` adds a login to the settings page.
 
-The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled **HLD**. Send **`w`** to reopen setup, **`i`** for status, and **`d`** to cycle debug levels.
+The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync, labelled **HLD**, for up to 24 hours. Send **`w`** to reopen setup, **`i`** for status, and **`d`** to cycle debug levels.
 
-Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. Send `i` for refresh timing counters; see the [flicker check](docs/ESP32_TEST_CONFIG.md#check-display-flicker) after uploading. Clock colons blink and hearts pulse deliberately.
+Display refresh uses hardware-timed blanking and a dedicated scan task, with complete-frame updates to reduce tearing. From v1.2.0 the next row is shifted over hardware SPI while the current row is lit, so the full brightness range is usable; this change still needs a check on the reference panel. Send `i` for refresh timing counters; see the [flicker check](docs/ESP32_TEST_CONFIG.md#check-display-flicker) after uploading. Clock colons blink and hearts pulse deliberately.
 
-The reference ESP32/panel check on **25 October 2026** confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.
+The v1.1.0 reference ESP32/panel check on **25 October 2026** confirmed Wi-Fi connection, NTP time and clock/demo progression. The user observed no visible flicker, with no increase in missed/late refresh counters between two held-letter readings.
 
 The [ESP32 reference test setup](docs/ESP32_TEST_CONFIG.md) contains every connection, buffer pin, network address, default setting and bench check. [Screen examples](docs/SCREEN_EXAMPLES.md) show rendered output for every demo and startup/clock state.
 
@@ -58,7 +58,7 @@ The [ESP32 reference test setup](docs/ESP32_TEST_CONFIG.md) contains every conne
 
 Change **`SCROLL_TEXT`**, **`DEFAULT_BRIGHTNESS`**, and animation timing in [include/config.h](include/config.h). Scene lengths and drawing routines are in [src/main.cpp](src/main.cpp). The [panel guide](docs/PANEL_GUIDE.md) includes the complete control reference, power and wiring details, and examples for drawing your own text and graphics.
 
-The default ESP32 pin map is **25 → LA, 26 → LB, 27 → LC, 13 → LD, 22 → EN, 23 → R1, 4 → LT, 18 → SK**. Monitor speed is **115200 baud**. The configured panel orientation uses reversed columns and row-address XOR `0x0F`; row bits are in normal A/B/C/D order.
+The pin map, orientation and timing settings are in the [panel guide](docs/PANEL_GUIDE.md#esp32-to-matrix-wiring). Monitor speed is **115200 baud**.
 
 ## Documentation and sharing
 

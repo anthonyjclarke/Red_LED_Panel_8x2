@@ -112,7 +112,8 @@ def main():
         'Use the [panel guide](PANEL_GUIDE.md) for controls and the [ESP32 test configuration](ESP32_TEST_CONFIG.md) for wiring, Wi-Fi and bench checks.',
     ]
     for index, item in enumerate(manifest, 1):
-        gallery.extend([f'## {index:02d} — {item["name"].title()}',
+        title = item['name'].capitalize() if item['name'].isupper() else item['name']
+        gallery.extend([f'## {index:02d} — {title}',
                         descriptions[item['name']],
                         f'![Rendered {item["name"]} output](../images/demos/{item["file"]})'])
     gallery.extend(['## Regenerate and verify',

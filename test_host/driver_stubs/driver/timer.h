@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 using esp_err_t = int;
-constexpr int ESP_OK = 0, ESP_ERR_NO_MEM = 1, ESP_ERR_NOT_FOUND = 2;
+constexpr int ESP_FAIL = -1, ESP_OK = 0, ESP_ERR_NO_MEM = 1, ESP_ERR_NOT_FOUND = 2;
 inline const char* esp_err_to_name(esp_err_t) {
   return "fixture error";
 }

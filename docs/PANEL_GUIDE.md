@@ -16,7 +16,7 @@ The driver scans one of sixteen rows at a time. Background refresh continues whi
 
 Use a **regulated 5 V supply** connected directly to the panel's **VCC/GND screw terminal**. A 2–3 A supply is a practical starting point, not a measured maximum panel rating. Keep power leads short and adequately sized. Join the panel, ESP32, and level-shifter grounds. Route LED-panel current through its power terminal rather than through the ESP32 or breadboard rails.
 
-Start at the default brightness **90/255**. Increasing brightness or the number of lit pixels increases the load. USB can power the ESP32 while the separate supply powers the matrix; their grounds must be common.
+Start at the default brightness **90/255**. Increasing brightness or the number of lit pixels increases the load. Since v1.2.0 the top of the brightness range is usable: full brightness lights each row for about 89% of its slot (previously about 50%), so peak current at 255/255 is roughly 1.8 times the v1.1.0 figure. Size the supply accordingly. USB can power the ESP32 while the separate supply powers the matrix; their grounds must be common.
 
 Pass all eight control signals through a level shifter from ESP32 3.3 V logic to the panel's 5 V logic. The recorded setup uses an **EzSBC LS1**. Its VLo connects to 3.3 V, VHi to the panel logic supply, and each Lo channel pairs with the matching Hi channel. LS1 uses resistor pull-ups; a **74AHCT245** provides actively driven outputs and is another suitable interface. [EzSBC LS1 description](https://levelshifter.weebly.com/), [manufacturer design notes](https://news.ezsbc.com/new-level-shifter-buffer/)
 
@@ -36,7 +36,7 @@ These are **ESP32 GPIO numbers**, not development-board header positions. Connec
 | 18 | SK | `PIN_CLK` | Shift clock |
 | GND | GND | — | Common reference |
 
-All eight signals travel **ESP32 → low-side input → matching high-side output → matrix input**. R2/G1/G2 are unused by this firmware. The configured pins are below 32, as required by the driver's direct GPIO writes.
+All eight signals travel **ESP32 → low-side input → matching high-side output → matrix input**. R2/G1/G2 are unused by this firmware. The configured pins are below 32, as required by the driver's direct GPIO writes. **R1 and SK** are driven by the ESP32's VSPI hardware SPI peripheral at `SHIFT_CLOCK_HZ` (500 kHz), routed to GPIO 23/18 through the GPIO matrix.
 
 ### Connector reference
 
@@ -60,18 +60,7 @@ The matching INPUT200 ground positions in left rows 1/2/3/7/8 were verified on t
 
 ### Using a 74AHCT245
 
-For a standard 20-pin 74AHCT245, connect **pin 20/VCC and pin 1/DIR to 5 V**, and **pin 10 (GND) and pin 19 (/OE) to ground**. Add a 100 nF decoupling capacitor close to VCC/GND. This selects A-to-B direction. Verify the exact package pinout used. The chip's buffer-enable pin is separate from matrix EN. [TI datasheet](https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf)
-
-| GPIO | Buffer input | Buffer output | Matrix |
-|:--|:--|:--|:--|
-| 25 | A1 / pin 2 | B1 / pin 18 | LA |
-| 26 | A2 / pin 3 | B2 / pin 17 | LB |
-| 27 | A3 / pin 4 | B3 / pin 16 | LC |
-| 13 | A4 / pin 5 | B4 / pin 15 | LD |
-| 22 | A5 / pin 6 | B5 / pin 14 | EN |
-| 23 | A6 / pin 7 | B6 / pin 13 | R1 |
-| 4 | A7 / pin 8 | B7 / pin 12 | LT |
-| 18 | A8 / pin 9 | B8 / pin 11 | SK |
+For a standard 20-pin 74AHCT245, connect **pin 20/VCC and pin 1/DIR to 5 V**, and **pin 10 (GND) and pin 19 (/OE) to ground**. Add a 100 nF decoupling capacitor close to VCC/GND. This selects A-to-B direction. Verify the exact package pinout used. The chip's buffer-enable pin is separate from matrix EN. The per-signal buffer pin table is in the [ESP32 test configuration](ESP32_TEST_CONFIG.md#exact-electrical-connections). [TI datasheet](https://www.ti.com/lit/ds/symlink/sn74ahct245.pdf)
 
 ## Build and run
 
@@ -90,9 +79,9 @@ The display shows three startup cards, then enters the saved startup view: Clock
 
 ## Wi-Fi, location and startup status
 
-The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32**. Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
+The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32** (the default from `include/secrets.example.h`; set your own in a gitignored `include/secrets.h`). Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
 
-Once connected, open the serial-reported **http://<panel-IP>/panel**. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. **`w`** reopens setup and **`i`** prints status.
+Once connected, open the serial-reported **http://<panel-IP>/panel**. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
 
 Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.
 
@@ -122,7 +111,7 @@ Hearts vary the whole-panel requested brightness from about one fifth of your se
 
 **Pong** is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting `g` starts a fresh match. Use `p` to freeze or resume play.
 
-**Clock** displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows **NO WIFI / JOIN AP** or **SYNC TIME / WAIT NTP**. The lower label is **NTP** when connected, **HLD** while holding time offline. Selecting `c` holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.
+**Clock** displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows **NO WIFI / JOIN AP** or **SYNC TIME / WAIT NTP**. The lower label is **NTP** when connected, **HLD** while holding time offline. Colons light for the first half of each real second. Without a fresh sync for 24 hours (`CLOCK_HOLDOVER_MAX_MS`) the clock returns to its waiting display rather than showing drifted time. Selecting `c` holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.
 
 ## Serial controls
 
@@ -147,9 +136,9 @@ Click inside the PlatformIO **Serial Monitor terminal** and type a key. **No Ent
 | `+` / `-` | Change requested brightness by 15, bounded to 0–255; `=` also increases it |
 | `?` / `h` | Print help, scene list, and selected brightness |
 
-From held `f/o/b`, **`p`, `r`, or `n` returns to the clock** (`r` also resets the next demo to letters). Scene keys (`1`–`9`, `g`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes and resets to the saved web setting (or compiled default) when the ESP32 resets. Brightness zero remains dark until increased again.
+From held `f/o/b`, **`p`, `r`, or `n` returns to the clock** (`r` also resets the next demo to letters). Scene keys (`1`–`9`, `g`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes. Five seconds after the last `+`/`-` (`BRIGHTNESS_SAVE_DELAY_MS`) it is saved as the startup brightness, so a burst of key presses writes flash once. Brightness zero remains dark until increased again.
 
-Requested brightness is an on-time setting, not a calibrated light percentage. At higher settings the driver caps it to the time remaining after shifting, so the upper end can saturate.
+Requested brightness is an on-time setting (`level × 500 µs / 255`), not a calibrated light percentage. The next row is shifted while the current row is lit, so only the latch and a 50 µs guard are dark; the on-time caps at about 445 µs, so roughly 228–255 look the same.
 
 For a clear placement reference, send `t`:
 
@@ -177,10 +166,14 @@ Edit [include/config.h](../include/config.h), rebuild, and upload:
 | `PONG_STEP_MS` | 40 | Pong physics and drawing interval |
 | `CLOCK_STEP_MS` | 250 | Live-clock redraw interval; time comes from NTP/system clock |
 | `CLOCK_HOLD_MS` | 10000 | Clock display time between demos |
+| `CLOCK_HOLDOVER_MAX_MS` | 86400000 | Offline time before the clock stops claiming valid time |
+| `BRIGHTNESS_SAVE_DELAY_MS` | 5000 | Quiet period before serial brightness is saved |
 | `WIFI_CONNECT_TIMEOUT_MS` | 10000 | Saved connection attempt before setup hotspot |
+| `WIFI_SAVE_CONNECT_TIMEOUT_MS` | 8000 | Association window after saving new credentials |
+| `SHIFT_CLOCK_HZ` | 500000 | SPI clock for column data; raise only after a hardware check |
 | `BOOT_CARD_MS` | 2000 | Time per startup card |
 
-Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp). Each render draws into the working buffer and calls `show()`. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits use elapsed milliseconds and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.
+Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp). Each render draws into the working buffer and calls `show()`. A demo's duration is its frame count multiplied by its interval; scrolling derives its frame count from the message width. If the application is delayed, it advances one frame rather than replaying a backlog. Clock visits end by elapsed milliseconds only and preserve their remaining time across pauses. The clock redraw interval changes animation cadence only; it does not change the speed of time.
 
 ### Orientation and scan settings
 
@@ -192,6 +185,7 @@ Scene frame counts are in the `scenes` table in [src/main.cpp](../src/main.cpp).
 | Row-address inversion | `ROW_ADDRESS_XOR = 0x0F` |
 | Data / output-enable polarity | `DATA_ACTIVE_LOW = true`, `OE_ACTIVE_LOW = true` |
 | Row period / signal phase / guard | 500 µs / 1 µs / 50 µs |
+| Column shift | VSPI at 500 kHz, overlapped with the lit row |
 
 These values match the working panel orientation. Drawing coordinates remain **(0,0) at top left**. Changing geometry alone does not make the driver a generic multi-panel cascade driver.
 
@@ -241,7 +235,7 @@ Size-1 text fits two rows of small characters. Size-2 text gives a single 14-pix
 
 | Method | Use |
 |:--|:--|
-| `begin()` | Initialise pins and start background refresh; call once |
+| `begin()` | Initialise pins and SPI, preload blank data, start background refresh; call once |
 | `drawPixel(x, y, colour)` | Set a pixel, with clipping and GFX rotation |
 | `fillScreen(colour)` | Clear or fill the drawing buffer |
 | `show()` | Queue the drawing buffer for the next complete scan |
@@ -249,9 +243,9 @@ Size-1 text fits two rows of small characters. Size-2 text gives a single 14-pix
 | `rowAddressFor(y)` | Return the mapped hardware address for a logical row |
 | `refreshStats()` | Snapshot cumulative rows/deadlines and maximum wake/scan times |
 
-The working, pending and active framebuffers each occupy **128 bytes**. `show()` copies to the pending buffer; refresh applies it only before row zero, so one complete scan uses one picture. Brightness also changes at that boundary.
+The working, pending and active framebuffers each occupy **128 bytes**. `show()` copies to the pending buffer; refresh applies it only when row zero of the next scan is prepared, so one complete scan uses one picture. Brightness changes as row zero is latched.
 
-Hardware timer **TG0/T0** sets the 500 µs row cadence and blanks output. A dedicated high-priority task on core 1 shifts the 64 bits, sets the address and latches. **TG0/T1** ends the brightness pulse in a short interrupt; the row interrupt supplies a second blanking deadline. Late rows remain dark and missed ticks are skipped. These two timers are reserved for the panel. Their IRAM handlers use shared interrupts at an available level 1–3, avoiding the two exclusive level-3 allocations that caused a blank display during startup. [ESP-IDF interrupt allocation](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/intr_alloc.html) Interrupts do not shift data or print logs. This removes row work from the shared `esp_timer` task that Wi-Fi activity can delay. The pin map, polarity, 1 µs signal phases and nominal 125 Hz refresh remain the same. [ESP-IDF hardware timer reference](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/timer.html), [ESP timer dispatch limitations](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html)
+Hardware timer **TG0/T0** sets the 500 µs row cadence and blanks output. A dedicated high-priority task on core 1 then sets the address and latches the columns that were shifted during the previous slot, lights the row, and shifts the following row's 64 bits over hardware SPI while this one is lit. The 74HC595 outputs only change on LT, so shifting does not disturb the lit row. **TG0/T1** ends the brightness pulse in a short interrupt; the row interrupt supplies a second blanking deadline. Late rows remain dark and missed ticks are skipped. These two timers are reserved for the panel. Their IRAM handlers use shared interrupts at an available level 1–3, avoiding the two exclusive level-3 allocations that caused a blank display during startup. [ESP-IDF interrupt allocation](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/intr_alloc.html) Interrupts do not shift data or print logs. This removes row work from the shared `esp_timer` task that Wi-Fi activity can delay. The pin map, polarity, 1 µs address/latch phases and nominal 125 Hz refresh are unchanged from v1.1.0. **The v1.2.0 overlapped SPI shift has passed host tests and a firmware build, but has not yet been checked on the reference panel**; if output ghosts or misplaces columns, try a lower `SHIFT_CLOCK_HZ` and report the `i` refresh counters. [ESP-IDF hardware timer reference](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/peripherals/timer.html), [ESP timer dispatch limitations](https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32/api-reference/system/esp_timer.html)
 
 This addresses possible timing jitter and frame tearing. On 25 October 2026 the user confirmed no visible flicker on the reference panel; two held-letter readings showed increasing rows and unchanged missed/late counters. See the [recorded result](ESP32_TEST_CONFIG.md#recorded-reference-panel-result-25-october-2026) for the measurements and scope. Flash writes can still pause the scan task briefly. See the [bench flicker check](ESP32_TEST_CONFIG.md#check-display-flicker); camera banding is a separate exposure effect.
 
@@ -261,7 +255,7 @@ Send `t`, or pause an animation with `p`. A camera can record bands because its 
 
 ## Debug and formatting
 
-Logs use the shared runtime levels: 0 Off, 1 Error `[ERR ]`, 2 Warn `[WARN]`, 3 Info `[INFO]`, and 4 Verbose `[VERB]`. `DEBUG_LEVEL` in PlatformIO sets the boot level, and serial `d` cycles it. INFO prints startup settings and scene/network transitions; frequent details use VERBOSE. Wi-Fi passwords are not logged.
+Logs use the shared runtime levels: 0 Off, 1 Error `[ERR ]`, 2 Warn `[WARN]`, 3 Info `[INFO]`, and 4 Verbose `[VERB]`. `DEBUG_LEVEL` in PlatformIO sets the boot level, and serial `d` cycles it; its confirmation prints at every level through `DBG_ALWAYS`. INFO prints startup settings and scene/network transitions; frequent details use VERBOSE. Wi-Fi passwords are not logged.
 
 C++ follows two-space indentation, attached braces and a 100-column limit in [.clang-format](../.clang-format). See the [test setup](ESP32_TEST_CONFIG.md#boot-status-and-debug-conventions) for formatting and host-check commands.
 

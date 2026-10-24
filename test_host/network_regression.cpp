@@ -1,5 +1,10 @@
 #include "PanelNetwork.h"
 #include "config.h"
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+#include "secrets.example.h"
+#endif
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -68,6 +73,13 @@ int main(int argc, char** argv) {
   network.loop();
   tm local = {};
   assert(network.timeValid() && network.localTime(local));
+  if (*SECRET_PANEL_PASSWORD) {
+    // With a page password configured, unauthenticated clients are challenged.
+    activeServer->authenticated = false;
+    activeServer->dispatch("/api/status");
+    assert(activeServer->code == 401);
+    activeServer->authenticated = true;
+  }
   activeServer->dispatch("/api/status");
   std::ofstream(argv[1]) << activeServer->body;
   assert(activeServer->body.find("Workshop") != std::string::npos &&
@@ -94,10 +106,18 @@ int main(int argc, char** argv) {
   fakeMillis += WIFI_RETRY_MS;
   network.loop();
   assert(WiFi.begins == attempts + 2);
+  // Holdover ends after the configured period without a fresh sync.
+  assert(network.timeValid());
+  fakeMillis += CLOCK_HOLDOVER_MAX_MS;
+  network.loop();
+  assert(!network.timeValid() && !network.localTime(local));
+  // Serial brightness persistence writes the record without a settings event.
+  assert(network.saveBrightness(120) && network.settings().brightness == 120);
+  assert(!network.takeSettingsChanged());
   // Saved settings reload as one validated record; damaged records use defaults.
   PanelNetwork reloaded;
   reloaded.begin();
-  assert(reloaded.settings().brightness == 75 && reloaded.settings().startClock);
+  assert(reloaded.settings().brightness == 120 && reloaded.settings().startClock);
   nvs[0] = 99;
   PanelNetwork damaged;
   damaged.begin();

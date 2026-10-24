@@ -3,10 +3,16 @@
 #include <ESPmDNS.h>
 #include <atomic>
 #include <esp_sntp.h>
+#include <sys/time.h>
 
 #include "ConfigPage.h"
 #include "config.h"
 #include "debug.h"
+#if __has_include("secrets.h")
+#include "secrets.h"
+#else
+#include "secrets.example.h" // Shared default setup password; no page login.
+#endif
 
 namespace {
 std::atomic<bool> syncPending{false};
@@ -63,8 +69,8 @@ void PanelNetwork::begin() {
   manager_.setDebugOutput(false); // Library debug can include Wi-Fi passwords.
   manager_.setConfigPortalBlocking(false);
   manager_.setConfigPortalTimeout(0);
-  manager_.setConnectTimeout(10);
-  manager_.setSaveConnectTimeout(8);
+  manager_.setConnectTimeout(WIFI_CONNECT_TIMEOUT_MS / 1000);
+  manager_.setSaveConnectTimeout(WIFI_SAVE_CONNECT_TIMEOUT_MS / 1000);
   manager_.setWiFiAutoReconnect(true);
   manager_.setTitle("Red LED Panel");
   std::vector<const char*> menu = {"wifi", "custom", "info", "exit"};
@@ -101,16 +107,41 @@ String PanelNetwork::address() const {
   return connected() ? WiFi.localIP().toString() : WiFi.softAPIP().toString();
 }
 
-bool PanelNetwork::localTime(tm& result) const {
+bool PanelNetwork::localTime(tm& result, uint16_t* milliseconds) const {
   if (!timeValid_) return false;
-  const time_t now = time(nullptr);
-  return now >= 1704067200 && localtime_r(&now, &result) != nullptr;
+  timeval now = {};
+  gettimeofday(&now, nullptr);
+  if (milliseconds) *milliseconds = now.tv_usec / 1000;
+  const time_t seconds = now.tv_sec;
+  return seconds >= 1704067200 && localtime_r(&seconds, &result) != nullptr;
 }
 
 bool PanelNetwork::takeSettingsChanged() {
   const bool changed = settingsChanged_;
   settingsChanged_ = false;
   return changed;
+}
+
+bool PanelNetwork::saveBrightness(uint8_t level) {
+  if (level == settings_.brightness) return true;
+  ClockSettings next = settings_;
+  next.brightness = level;
+  if (!preferencesReady_ || preferences_.putBytes("clock", &next, sizeof(next)) != sizeof(next)) {
+    DBG_ERROR("[settings] Could not save startup brightness to NVS");
+    return false;
+  }
+  settings_ = next;
+  DBG_INFO("[settings] Startup brightness saved: %u/255", level);
+  return true;
+}
+
+bool PanelNetwork::authorised() {
+  // Optional HTTP Basic login for the panel page and API. WiFiManager's own
+  // pages are unaffected; the setup hotspot is protected by its own password.
+  if (!*SECRET_PANEL_PASSWORD) return true;
+  if (manager_.server->authenticate(PANEL_ADMIN_USER, SECRET_PANEL_PASSWORD)) return true;
+  manager_.server->requestAuthentication();
+  return false;
 }
 
 void PanelNetwork::configureTime() {
@@ -129,9 +160,7 @@ void PanelNetwork::startPortal() {
   lastRetry_ = millis();
   if (manager_.getConfigPortalActive()) return;
   if (manager_.getWebPortalActive()) manager_.stopWebPortal();
-  manager_.startConfigPortal(apName_, WIFI_AP_PASSWORD);
-  reconnectAttempt_ = false;
-  lastRetry_ = millis();
+  manager_.startConfigPortal(apName_, SECRET_AP_PASSWORD);
 }
 
 void PanelNetwork::loop() {
@@ -180,6 +209,7 @@ void PanelNetwork::loop() {
   previousConnected_ = online;
   if (syncPending.exchange(false)) {
     lastSync_ = time(nullptr);
+    lastSyncMs_ = now;
     timeValid_ = lastSync_ >= 1704067200;
     if (timeValid_) {
       tm local = {};
@@ -188,18 +218,28 @@ void PanelNetwork::loop() {
       strftime(text, sizeof(text), "%d-%b-%Y %H:%M:%S %Z", &local);
       DBG_INFO("[clock] Synchronised: %s", text);
     }
+  } else if (timeValid_ && now - lastSyncMs_ >= CLOCK_HOLDOVER_MAX_MS) {
+    timeValid_ = false;
+    DBG_WARN("[clock] No NTP sync for %lu hours; holdover ended, waiting for network time",
+             static_cast<unsigned long>(CLOCK_HOLDOVER_MAX_MS / 3600000UL));
   }
 }
 
 void PanelNetwork::registerRoutes() {
   auto& server = *manager_.server;
   server.on("/panel", HTTP_GET, [this]() {
+    if (!authorised()) return;
     manager_.server->sendHeader("Cache-Control", "no-store");
     manager_.server->send_P(200, "text/html; charset=utf-8", CONFIG_PAGE);
   });
-  server.on("/api/status", HTTP_GET, [this]() { sendStatus(); });
-  server.on("/api/settings", HTTP_POST, [this]() { saveSettings(); });
+  server.on("/api/status", HTTP_GET, [this]() {
+    if (authorised()) sendStatus();
+  });
+  server.on("/api/settings", HTTP_POST, [this]() {
+    if (authorised()) saveSettings();
+  });
   server.on("/api/sync", HTTP_POST, [this]() {
+    if (!authorised()) return;
     if (manager_.server->arg("token") != formToken_) {
       reply(*manager_.server, 403, "Reload the settings page and try again.");
       return;
@@ -212,6 +252,7 @@ void PanelNetwork::registerRoutes() {
     reply(*manager_.server, 200, "Network time requested.");
   });
   server.on("/api/wifi", HTTP_POST, [this]() {
+    if (!authorised()) return;
     if (manager_.server->arg("token") != formToken_) {
       reply(*manager_.server, 403, "Reload the settings page and try again.");
       return;

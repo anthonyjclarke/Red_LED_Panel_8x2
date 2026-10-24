@@ -8,7 +8,7 @@ A complete bench setup for the **64×16 red HUB08 panel**, with Wi-Fi provisioni
 |:--|:--|
 | Controller | Classic ESP32 DevKit with ESP-WROOM-32, 4 MB flash; PlatformIO `esp32dev` |
 | Panel | Red P3.75 HUB08, 64×16 pixels, sixteen 8×8 modules, 1/16 scan |
-| Logic interface | 5 V 74AHCT245 with 100 nF decoupling; EzSBC LS1 is the previously used alternative |
+| Logic interface | EzSBC LS1 on the reference panel; a 5 V 74AHCT245 with 100 nF decoupling is the actively driven alternative |
 | Panel power | Regulated 5 V through VCC/GND screw terminal; a 2–3 A supply is a starting recommendation, not a measured maximum rating |
 | ESP32 power | USB data cable; common ground with panel and buffer |
 | Network | 2.4 GHz Wi-Fi, for example a WPA2-Personal test SSID; DHCP enabled |
@@ -50,11 +50,12 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 
 | Setting | Value / behaviour |
 |:--|:--|
-| Firmware | `1.1.0`, network-clock update after the v1.0.0 showcase |
+| Firmware | `1.2.0`: overlapped SPI refresh and settings/clock refinements after v1.1.0 |
 | LA/LB/LC/LD | GPIO 25/26/27/13; normal A/B/C/D bit order |
 | EN/R1/LT/SK | GPIO 22/23/4/18 |
 | Geometry and scan | 64×16, 1/16 scan; 500 µs per row, nominal 125 Hz complete refresh |
-| Signal phase / row guard | 1 µs / 50 µs |
+| Signal phase / row guard | 1 µs address/latch phases / 50 µs |
+| Column shift | VSPI hardware SPI, 500 kHz, while the previous row is lit |
 | Data / EN polarity | Active LOW / active LOW |
 | Orientation | Reversed column stream, row XOR `0x0F` |
 | Default location | **Sydney** |
@@ -66,6 +67,7 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 | Refresh scheduling | Hardware TG0/T0 row cadence + TG0/T1 OE deadline; dedicated scan task on core 1 |
 | NTP servers | `pool.ntp.org`, `time.cloudflare.com` |
 | Unsynchronised NTP retry | Every 60 seconds while Wi-Fi is connected |
+| Clock holdover limit | 24 hours without a sync, then the waiting display |
 | Wi-Fi connection window | 10 seconds before opening the setup hotspot |
 | Saved-network retry | Every 30 seconds while offline, with no client on the setup hotspot |
 | Serial debug default | Level 3 / INFO; `d` cycles runtime levels 0–4 |
@@ -91,7 +93,7 @@ With no usable saved network, wait about 10 seconds, then join:
 | Connection item | Value |
 |:--|:--|
 | Setup SSID | **`RedPanel-ABCDEF`** — ABCDEF is an example; use the suffix printed by your ESP32 |
-| Setup password | **`PanelSetup32`** — configurable as `WIFI_AP_PASSWORD` |
+| Setup password | **`PanelSetup32`** — default `SECRET_AP_PASSWORD`; override in gitignored `include/secrets.h` |
 | Captive portal / Wi-Fi selection | **`http://192.168.4.1/`** |
 | Panel settings on the hotspot | **`http://192.168.4.1/panel`** |
 | Example router SSID | **`Panel-Test-2G`** — create or substitute your own network |
@@ -106,7 +108,7 @@ http://192.168.1.80/panel          Example DHCP address only: use the actual ser
 http://red-panel-abcdef.local/panel  Example mDNS name: use your actual chip suffix.
 ```
 
-mDNS depends on the client/network; the printed IP works without it. The router's DHCP address is not hard-coded. A router reservation can keep it stable. Use a trusted local network for this plain HTTP configuration page.
+mDNS depends on the client/network; the printed IP works without it. The router's DHCP address is not hard-coded. A router reservation can keep it stable. Use a trusted local network for this plain HTTP configuration page. To require a login, copy `include/secrets.example.h` to `include/secrets.h` and set `SECRET_PANEL_PASSWORD`; `/panel` and `/api/*` then ask for user **`admin`** and that password (HTTP Basic, not encrypted). WiFiManager's own `/wifi` pages are not covered by this login.
 
 ### Network services
 
@@ -130,10 +132,10 @@ At **`/panel`**, set:
 
 1. **Location name:** 1–32 UTF-8 bytes; defaults to Sydney.
 2. **Time zone:** choose a listed region. Australian zones, Auckland, UTC and several international zones are included.
-3. **Startup brightness:** 0–255; default 90. This is the requested on-time and can saturate at the upper end.
+3. **Startup brightness:** 0–255; default 90. This is the requested on-time; roughly 228–255 look the same.
 4. **Startup view:** Clock + demos or Real-time clock. Clock + demos starts with 10 seconds of clock, runs one demo, returns to the clock for 10 seconds, then runs the following demo.
 
-Choose **Save and apply**. The ESP32 validates the complete form, saves one record, changes the local time zone and brightness, and enters the selected view. Settings survive reset. A failed flash write leaves the previous settings active. Changing brightness by serial remains temporary; it does not continuously write flash.
+Choose **Save and apply**. The ESP32 validates the complete form, saves one record, and changes the local time zone and brightness at once. The display restarts only when the startup view changed. Settings survive reset. A failed flash write leaves the previous settings active. Serial `+`/`-` changes are saved as the startup brightness once, five seconds after the last key press.
 
 The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age and hardware settings. Its clock is read from the **panel**, not from the browser. **Sync time** requests another NTP update. **Wi-Fi network** opens WiFiManager's network form. **Open setup hotspot**, or serial **`w`**, opens provisioning again without erasing saved settings.
 
@@ -144,8 +146,8 @@ Status requests are read-only. Panel settings/sync/setup API mutations carry a b
 Send **`c`** to keep the live clock on screen. **`p`** resumes the playlist's clock-scene timer; **`n`** moves to the next demo (letters immediately after a fresh boot/restart). With clock selected as the startup view, it remains visible after boot.
 
 - Before the first valid NTP response: **NO WIFI / JOIN AP**, or **SYNC TIME / WAIT NTP**.
-- After sync: local **HH:MM:SS**, blinking colons, seconds bar and **NTP** label.
-- After losing Wi-Fi: time continues from the ESP32's last sync, with **HLD** (holdover). Accuracy can drift until reconnection.
+- After sync: local **HH:MM:SS**, colons lit for the first half of each second, seconds bar and **NTP** label.
+- After losing Wi-Fi: time continues from the ESP32's last sync, with **HLD** (holdover). Accuracy can drift until reconnection; after 24 hours without a sync the clock returns to the waiting display.
 - After reset or power loss: this firmware waits for a new network sync; it does not invent a sample time.
 - Pausing the playlist **does not freeze the clock**. Resuming or reselecting `c` does not reset the actual time.
 
@@ -157,7 +159,7 @@ Serial **`i`** repeats the startup/settings report. A representative header is:
 
 ```text
 [INFO] ============================================================
-[INFO] Red LED Panel 8x2 v1.1.0 | ESP32 DevKit / esp32dev
+[INFO] Red LED Panel 8x2 v1.2.0 | ESP32 DevKit / esp32dev
 [INFO] Panel=64x16, 1/16 scan, brightness=90/255, debug=3
 [INFO] GPIO LA=25 LB=26 LC=27 LD=13 EN=22 R1=23 LT=4 SK=18
 [INFO] Scan=500 us/row, signal=1 us, guard=50 us, nominal frame=125 Hz
@@ -171,7 +173,7 @@ C++ uses two spaces, attached braces and a 100-column limit in [.clang-format](.
 ```sh
 python3 -m venv .venv-docs
 .venv-docs/bin/python -m pip install -r tools/dev-requirements.txt
-.venv-docs/bin/clang-format --dry-run --Werror src/*.cpp src/*.h include/config.h include/debug.h include/ClockSettings.h
+.venv-docs/bin/clang-format --dry-run --Werror src/*.cpp src/*.h include/config.h include/debug.h include/ClockSettings.h include/secrets.example.h
 .venv-docs/bin/python tools/render_examples.py
 .venv-docs/bin/python tools/build_docs.py
 ```
@@ -194,6 +196,8 @@ python3 -m venv .venv-docs
 | Use `w` while connected | Setup hotspot opens; no credentials or panel settings are erased |
 | Send invalid settings through the API | HTTP 400; existing settings retained |
 | `1`–`9`, `g`, `p`, `n`, `r`, `f/o/b` | Demo and held-pattern controls retain their documented behaviour |
+| `o`, then `+` to 255 (v1.2.0) | Noticeably brighter than 135/255; no ghosting in unlit rows; `i` counters steady |
+| `+` then wait 5 s, reset | New brightness restored at boot |
 
 See [screen examples](SCREEN_EXAMPLES.md) for generated output from every scene, boot cards and clock states. The reference-panel results below confirm observed Wi-Fi association, NTP sync, scene progression and a visually steady display. Use the acceptance table to check the remaining scenarios on your own installation.
 
@@ -206,6 +210,7 @@ Build/upload the corrected firmware and reset. Successful startup includes:
 ```text
 [INFO] HUB08 panel 64x16 started, row period 500 us (125 Hz frame)
 [INFO] Refresh: hardware timers TG0/T0+T1, shared IRAM interrupts, scan task on core 1
+[INFO] Shift: VSPI 500000 Hz on SK=18 R1=23, overlapped with the lit row
 ```
 
 Send `t` to hold letters, then `i` twice a few seconds apart. The row count should be nonzero and increasing. A remaining setup error names the failed stage (for example, `row interrupt`); capture that line. Host tests model constrained allocation and startup cleanup. The reference-panel check below confirms that the corrected firmware started refresh and displayed successfully.
@@ -222,9 +227,11 @@ Refresh: rows=..., missed ticks=..., late rows=..., max wake=... us, max scan=..
 
 Counters are cumulative since reset. Compare the two readings: missed ticks and late rows should stay unchanged during steady operation and normal page polling. Increasing values indicate missed refresh deadlines; record both reports and which action triggers them. Max wake/scan values are lifetime peaks, including startup or earlier flash saves, so reset for a fresh comparison. Saving settings or Wi-Fi credentials writes flash and can cause a brief disturbance; check that steady output resumes afterwards.
 
-The new driver isolates refresh from the shared timer task and commits pictures between scans. Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons alternate every half-second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
+The driver isolates refresh from the shared timer task and commits pictures between scans. **The v1.2.0 overlapped SPI shift is not yet confirmed on the reference panel; repeat this check after upgrading.** Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons light for half of each second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
 
 ## Recorded reference-panel result — 25 October 2026
+
+These readings are from **v1.1.0**, which shifted columns while the output was dark. They do not cover the v1.2.0 refresh change.
 
 The user reported **“All appears ok, no flicker”** after uploading the corrected interrupt-allocation build (`1.1.0-dev`, subsequently finalised as `1.1.0`). The supplied serial log confirms Wi-Fi connection, NTP synchronisation at **01:46:53 AEDT on 25 October 2026**, then clock → letters → clock → checkerboard. Letters were then held with `t` for two `i` status readings, at brightness **90/255**, with the standard GPIO mapping and 500 µs row period.
 
