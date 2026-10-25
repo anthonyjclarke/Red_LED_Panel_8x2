@@ -67,6 +67,13 @@ static bool bootFinished = false;
 static uint8_t appliedStartClock = 0;
 static bool brightnessDirty = false;
 static uint32_t brightnessChangedAt = 0;
+// Output blanked by night mode or the web switch; the playlist keeps running.
+static bool displayOff = false;
+static uint32_t lastNightCheck = 0;
+// Web switch: -1 automatic, 0 off, 1 on. It holds until the night schedule next
+// changes state, then automatic control resumes.
+static int8_t manualDisplay = -1;
+static bool manualFromNight = false;
 
 static constexpr int16_t PONG_SCALE = 4; // Quarter-pixel ball positions.
 static constexpr int16_t PADDLE_HEIGHT = 5;
@@ -379,8 +386,38 @@ static void renderFrame() {
   case Scene::Count:
     break;
   }
-  panel.setBrightness(level);
+  panel.setBrightness(displayOff ? 0 : level);
   panel.show();
+}
+
+static void updateDisplayPower() {
+  const int8_t request = network.takeDisplayRequest();
+  if (request >= 0) {
+    manualDisplay = request;
+    manualFromNight = network.nightActive();
+    lastNightCheck = millis() - NIGHT_CHECK_MS; // Apply now.
+    DBG_INFO("[display] Switched %s from the web page", request ? "on" : "off");
+  }
+  if (millis() - lastNightCheck < NIGHT_CHECK_MS) return;
+  lastNightCheck = millis();
+  const bool night = network.nightActive();
+  if (manualDisplay >= 0 && night != manualFromNight) {
+    manualDisplay = -1;
+    DBG_INFO("[display] Night schedule changed; switch returns to automatic");
+  }
+  const bool off = manualDisplay >= 0 ? manualDisplay == 0 : night;
+  network.setDisplayState(!off, manualDisplay >= 0);
+  if (off == displayOff) return;
+  displayOff = off;
+  char end[6];
+  formatTimeOfDay(network.settings().nightEndMinutes, end);
+  if (manualDisplay >= 0)
+    DBG_INFO("[display] Display %s (manual)", off ? "off" : "on");
+  else if (off)
+    DBG_INFO("[night] Display off until %s", end);
+  else
+    DBG_INFO("[night] Display on");
+  renderFrame(); // Also covers held scenes, which do not redraw on their own.
 }
 
 static uint32_t clockHoldMs() {
@@ -703,6 +740,7 @@ void loop() {
       lastBootDraw = millis();
     }
   } else {
+    updateDisplayPower();
     updateDemo();
   }
 }

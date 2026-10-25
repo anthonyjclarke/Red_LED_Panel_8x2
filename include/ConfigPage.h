@@ -48,9 +48,15 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
     #time { font: 600 clamp(38px, 9vw, 62px) ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing: 3px; margin: 4px 0; }
     #date { color: #b8cbd6; font-size: 14px; }
     #clock-state { color: #fac2c7; font-size: 13px; margin: 8px 0 0; }
+    .power { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #ffffff22; }
+    .power button { background: #213846; color: #eaf1f3; border-color: #3a5262; }
+    .power button:hover { border-color: #e94d59; }
+    #display-message { color: #b8cbd6; font-size: 12px; }
     .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 22px; }
     .form { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; }
     .form .wide { grid-column: 1 / -1; }
+    .times { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .times small { grid-column: 1 / -1; }
     label { display: block; margin: 12px 0 6px; font-size: 14px; font-weight: 650; }
     input, select { width: 100%; padding: 10px 11px; background: #fff; border: 1px solid #b9c7cd; border-radius: 6px; font: inherit; }
     small { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -98,7 +104,7 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
     <a class="ext" href="/info">System info</a>
     <a class="ext" href="/exit" id="exit-link" hidden>Close setup hotspot</a>
   </nav>
-  <div class="note"><strong>Serial 115200</strong><br>i status · w setup · d debug<br>1–9 / g / c scenes · p pause<br>+ / − brightness</div>
+  <div class="note"><strong>Serial 115200</strong><br>i status · w setup · d debug<br>1–9 / c scenes · p pause<br>+ / − brightness</div>
 </aside>
 <main>
   <div class="page">
@@ -111,6 +117,12 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
       <div id="time">--:--:--</div>
       <div id="date">Waiting for device status</div>
       <p id="clock-state">Time is read from the panel, not this browser.</p>
+      <div class="power">
+        <span class="tag" id="display-tag">Display —</span>
+        <button id="display-on" type="button" disabled>Turn display on</button>
+        <button id="display-off" type="button" disabled>Turn display off</button>
+        <span id="display-message" role="status" aria-live="polite"></span>
+      </div>
     </section>
 
     <section id="settings">
@@ -141,6 +153,22 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
             <label for="clock-hold">Clock time between demos</label>
             <input id="clock-hold" name="clockHold" type="number" min="5" max="3600" step="1" required value="10">
             <small>Seconds the clock stays on screen before the next demo, 5–3600. Default 10.</small>
+          </div>
+          <div>
+            <label for="night-mode">Night mode</label>
+            <select id="night-mode" name="nightMode"><option value="on">On: display off overnight</option><option value="off">Off: always on</option></select>
+            <small>Turns the display off between the times below, using the panel's local time.</small>
+          </div>
+          <div class="times">
+            <div>
+              <label for="night-start">Display off at</label>
+              <input id="night-start" name="nightStart" type="time" required value="22:00">
+            </div>
+            <div>
+              <label for="night-end">Display on at</label>
+              <input id="night-end" name="nightEnd" type="time" required value="06:00">
+            </div>
+            <small>Can span midnight, for example 22:00 to 06:00. The settings page keeps working.</small>
           </div>
           <div class="wide">
             <label for="scroll-text">Scrolling message</label>
@@ -213,7 +241,9 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
       show('place', status.location + ' · ' + status.zone);
       show('time', status.time || '--:--:--');
       show('date', status.date || 'Waiting for network time');
-      show('clock-state', !status.timeValid ? 'Connect Wi-Fi to synchronise the clock.' : status.connected ? 'Network-synchronised time' : 'Offline · clock continues from its last sync');
+      show('clock-state', !status.timeValid ? 'Connect Wi-Fi to synchronise the clock.'
+        : status.nightActive ? 'Night mode · display off until ' + status.nightEnd
+        : status.connected ? 'Network-synchronised time' : 'Offline · clock continues from its last sync');
       show('ssid', status.ssid || 'Not connected');
       show('signal', status.connected ? status.rssi + ' dBm' : '—');
       show('address', status.url);
@@ -239,8 +269,16 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
         byId('view').value = status.startClock ? 'clock' : 'playlist';
         byId('clock-hold').value = status.clockHold;
         byId('scroll-text').value = status.scrollText;
+        byId('night-mode').value = status.nightMode ? 'on' : 'off';
+        byId('night-start').value = status.nightStart;
+        byId('night-end').value = status.nightEnd;
         initialised = true;
       }
+      const displayTag = byId('display-tag');
+      displayTag.textContent = (status.displayOn ? 'Display on' : 'Display off') + (status.displayManual ? ' · manual' : status.nightActive ? ' · night mode' : '');
+      displayTag.className = 'tag ' + (status.displayOn ? 'ok' : 'warn');
+      byId('display-on').disabled = status.displayOn;
+      byId('display-off').disabled = !status.displayOn;
       byId('save').disabled = false;
       byId('sync').disabled = !status.connected;
       byId('setup').disabled = false;
@@ -268,6 +306,12 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
     } catch (error) { show('message', error.message); }
     finally { byId('save').disabled = false; }
   });
+  for (const state of ['on', 'off']) {
+    byId('display-' + state).addEventListener('click', async () => {
+      try { show('display-message', (await post('/api/display', new URLSearchParams({ state }))).message); setTimeout(refresh, 1200); }
+      catch (error) { show('display-message', error.message); }
+    });
+  }
   for (const [id, path] of [['sync', '/api/sync'], ['setup', '/api/wifi']]) {
     byId(id).addEventListener('click', async () => {
       try { show('connection-message', (await post(path, new URLSearchParams())).message); }

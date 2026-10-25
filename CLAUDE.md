@@ -3,7 +3,7 @@
 ## Target
 
 - ESP32 DevKit (`esp32dev`), `espressif32@6.9.0` = Arduino core 2.0.17 / IDF 4.4. Keep pinned: the driver uses legacy `driver/timer.h` (no `gptimer` before IDF 5).
-- Red HUB08 64×16 (8×2 modules), 1/16 scan, Adafruit GFX, WiFiManager 2.0.17. Firmware v1.6.0.
+- Red HUB08 64×16 (8×2 modules), 1/16 scan, Adafruit GFX, WiFiManager 2.0.17. Firmware v1.7.0.
 - GPIO 25/26/27/13 → LA/LB/LC/LD, 22 → EN, 4 → LT direct register writes (all GPIO must be < 32). 23 → R1 and 18 → SK are VSPI (SPI HAL `spiWriteNL`, MSB first).
 - Active-low data and OE; reversed column stream (bit-reversed bytes in software), row bits `{0,1,2,3}`, row XOR `0x0F`.
 
@@ -20,10 +20,11 @@
 - Pong state changes only in `stepPong()`. Clock never invents an epoch; holdover ends 24 h after last sync. Clock visits end by elapsed time, not frames.
 - Unsigned `millis()` subtraction everywhere; render one frame, never replay missed frames. Log transitions, not frames.
 - Web settings save applies brightness live; the view restarts only if `startClock` changed. Serial brightness saves after a 5 s quiet period.
+- Night mode and the web display switch force on-time 0 in `renderFrame()` while the playlist keeps running. Night mode never applies without valid time. The switch (not persisted) holds until `nightActive()` next changes. OTA progress deliberately ignores both.
 
 ## Network and storage
 
-- NVS namespace `redpanel`, key `clock`: one `ClockSettings` record (schema 2, adds clock hold and scroll text). A schema-1 record (by size) is upgraded on load with `upgradeClockSettings()`; any layout change needs a new schema and upgrade path. Validate before use; a failed write must not change active settings. NVS writes can stall the scan task briefly.
+- NVS namespace `redpanel`, key `clock`: one `ClockSettings` record (schema 3: adds clock hold, scroll text, then night mode). Schema 1 and 2 records (recognised by size) are upgraded on load with `upgradeClockSettings()`; any layout change needs a new schema, a size that differs from all older ones, and an upgrade path. Validate before use; a failed write must not change active settings. NVS writes can stall the scan task briefly.
 - Register custom routes in WiFiManager's web-server callback so they survive portal/LAN switches; it runs before WiFiManager adds its own, so our `/` wins. WiFiManager pages get CSS and a nav bar through `setCustomHeadElement`. POSTs need the boot-local token.
 - `secrets.h` (gitignored) supplies `SECRET_AP_PASSWORD`, optional `SECRET_PANEL_PASSWORD` and `SECRET_OTA_PASSWORD` (empty = OTA off); `secrets.example.h` is the fallback. Never log credentials.
 - ArduinoOTA starts on first Wi-Fi connect with its own mDNS disabled; `loop()` owns mDNS and re-adds the `arduino` service on reconnect. `ArduinoOTA.handle()` blocks during an upload, so progress drawing runs from its callbacks. `default_envs = esp32dev` keeps plain uploads on USB.

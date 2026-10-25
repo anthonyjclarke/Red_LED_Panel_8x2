@@ -80,16 +80,23 @@ void PanelNetwork::begin() {
     } else {
       DBG_WARN("[settings] Invalid stored settings; using defaults");
     }
-  } else if (stored == sizeof(ClockSettingsV1)) {
-    // v1.5.0 and earlier: keep the saved values, add the new defaults. The next
-    // save writes the current layout.
-    ClockSettingsV1 old = {};
-    const ClockSettings upgraded = preferences_.getBytes("clock", &old, sizeof(old)) == sizeof(old)
-                                       ? upgradeClockSettings(old, DEFAULT_CLOCK_HOLD_S)
-                                       : ClockSettings{};
+  } else if (stored == sizeof(ClockSettingsV2) || stored == sizeof(ClockSettingsV1)) {
+    // Older firmware: keep the saved values, add defaults for newer fields. The
+    // next save writes the current layout.
+    ClockSettings upgraded = {};
+    if (stored == sizeof(ClockSettingsV2)) {
+      ClockSettingsV2 old = {};
+      if (preferences_.getBytes("clock", &old, sizeof(old)) == sizeof(old))
+        upgraded = upgradeClockSettings(old);
+    } else {
+      ClockSettingsV1 old = {};
+      if (preferences_.getBytes("clock", &old, sizeof(old)) == sizeof(old))
+        upgraded = upgradeClockSettings(old, DEFAULT_CLOCK_HOLD_S);
+    }
     if (validClockSettings(upgraded)) {
       settings_ = upgraded;
-      DBG_INFO("[settings] Upgraded saved settings from schema 1");
+      DBG_INFO("[settings] Upgraded saved settings to schema %lu",
+               static_cast<unsigned long>(CLOCK_SETTINGS_SCHEMA));
     } else {
       DBG_WARN("[settings] Invalid stored settings; using defaults");
     }
@@ -157,10 +164,28 @@ bool PanelNetwork::localTime(tm& result, uint16_t* milliseconds) const {
   return seconds >= 1704067200 && localtime_r(&seconds, &result) != nullptr;
 }
 
+bool PanelNetwork::nightActive() const {
+  tm local = {};
+  if (!settings_.nightEnabled || !localTime(local)) return false; // No valid time: stay on.
+  return inNightWindow(local.tm_hour * 60 + local.tm_min, settings_.nightStartMinutes,
+                       settings_.nightEndMinutes);
+}
+
 int32_t PanelNetwork::secondsSinceSync() const {
   if (!lastSync_) return -1;
   const time_t current = time(nullptr);
   return current >= lastSync_ ? static_cast<int32_t>(current - lastSync_) : 0;
+}
+
+int8_t PanelNetwork::takeDisplayRequest() {
+  const int8_t request = displayRequest_;
+  displayRequest_ = -1;
+  return request;
+}
+
+void PanelNetwork::setDisplayState(bool on, bool manual) {
+  displayOn_ = on;
+  displayManual_ = manual;
 }
 
 bool PanelNetwork::takeSettingsChanged() {
@@ -342,6 +367,21 @@ void PanelNetwork::registerRoutes() {
     configureTime();
     reply(*manager_.server, 200, "Network time requested.");
   });
+  server.on("/api/display", HTTP_POST, [this]() {
+    if (!authorised()) return;
+    auto& web = *manager_.server;
+    const String state = web.arg("state");
+    if (web.arg("token") != formToken_) {
+      reply(web, 403, "Reload the settings page and try again.");
+    } else if (state != "on" && state != "off") {
+      reply(web, 400, "Choose on or off.");
+    } else {
+      displayRequest_ = state == "on"; // Applied by the application loop.
+      reply(web, 200,
+            state == "on" ? "Display on until the next night-mode change."
+                          : "Display off until the next night-mode change, or until turned on.");
+    }
+  });
   server.on("/api/wifi", HTTP_POST, [this]() {
     if (!authorised()) return;
     if (manager_.server->arg("token") != formToken_) {
@@ -365,26 +405,35 @@ void PanelNetwork::saveSettings() {
   const String zone = server.arg("zone");
   const String view = server.arg("view");
   const String scrollText = server.arg("scrollText");
+  const String nightMode = server.arg("nightMode");
   uint8_t requestedBrightness = 0;
   uint16_t clockHold = 0;
+  uint16_t nightStart = 0;
+  uint16_t nightEnd = 0;
   if (!validLocation(location.c_str()) || !findTimeZone(zone.c_str()) ||
       !parseBrightness(server.arg("brightness").c_str(), requestedBrightness) ||
       (view != "clock" && view != "playlist") ||
       !parseClockHold(server.arg("clockHold").c_str(), clockHold) ||
-      !validScrollText(scrollText.c_str())) {
+      !validScrollText(scrollText.c_str()) || (nightMode != "on" && nightMode != "off") ||
+      !parseTimeOfDay(server.arg("nightStart").c_str(), nightStart) ||
+      !parseTimeOfDay(server.arg("nightEnd").c_str(), nightEnd)) {
     reply(server, 400,
           "Enter a location of 1-32 bytes, a listed time zone, brightness 0-255, a startup view, "
-          "a clock time of 5-3600 seconds, and a message of up to 64 plain characters.");
+          "a clock time of 5-3600 seconds, a message of up to 64 plain characters, and night "
+          "times as HH:MM.");
     return;
   }
   ClockSettings next = {};
-  next.schema = 2;
+  next.schema = CLOCK_SETTINGS_SCHEMA;
   strlcpy(next.location, location.c_str(), sizeof(next.location));
   strlcpy(next.zone, zone.c_str(), sizeof(next.zone));
   next.brightness = requestedBrightness;
   next.startClock = view == "clock";
   next.clockHoldSeconds = clockHold;
   strlcpy(next.scrollText, scrollText.c_str(), sizeof(next.scrollText));
+  next.nightEnabled = nightMode == "on";
+  next.nightStartMinutes = nightStart;
+  next.nightEndMinutes = nightEnd;
   if (!preferencesReady_ || preferences_.putBytes("clock", &next, sizeof(next)) != sizeof(next)) {
     DBG_ERROR("[settings] Could not save settings to NVS");
     reply(server, 500, "Settings could not be saved; existing settings are unchanged.");
@@ -398,6 +447,11 @@ void PanelNetwork::saveSettings() {
            settings_.location, settings_.zone, settings_.brightness,
            settings_.startClock ? "clock" : "playlist", settings_.clockHoldSeconds,
            *settings_.scrollText ? "custom" : "device details");
+  char start[6], end[6];
+  formatTimeOfDay(settings_.nightStartMinutes, start);
+  formatTimeOfDay(settings_.nightEndMinutes, end);
+  DBG_INFO("[settings] Night mode %s, display off %s-%s", settings_.nightEnabled ? "on" : "off",
+           start, end);
   reply(server, 200, "Saved and applied. These settings will also be used after restart.");
 }
 
@@ -412,6 +466,14 @@ void PanelNetwork::sendStatus() {
   json += ",\"startClock\":" + String(settings_.startClock ? "true" : "false");
   json += ",\"clockHold\":" + String(settings_.clockHoldSeconds);
   json += ",\"scrollText\":" + jsonString(settings_.scrollText);
+  char nightStart[6], nightEnd[6];
+  formatTimeOfDay(settings_.nightStartMinutes, nightStart);
+  formatTimeOfDay(settings_.nightEndMinutes, nightEnd);
+  json += ",\"nightMode\":" + String(settings_.nightEnabled ? "true" : "false");
+  json += ",\"nightStart\":" + jsonString(nightStart) + ",\"nightEnd\":" + jsonString(nightEnd);
+  json += ",\"nightActive\":" + String(nightActive() ? "true" : "false");
+  json += ",\"displayOn\":" + String(displayOn_ ? "true" : "false");
+  json += ",\"displayManual\":" + String(displayManual_ ? "true" : "false");
   json += ",\"connected\":" + String(connected() ? "true" : "false");
   json += ",\"timeValid\":" + String(timeValid_ ? "true" : "false");
   json += ",\"ssid\":" + jsonString(connected() ? WiFi.SSID().c_str() : "");
@@ -459,6 +521,11 @@ void PanelNetwork::printStatus() const {
            findTimeZone(settings_.zone)->rule);
   DBG_INFO("[settings] Startup brightness=%u view=%s", settings_.brightness,
            settings_.startClock ? "clock" : "playlist");
+  char start[6], end[6];
+  formatTimeOfDay(settings_.nightStartMinutes, start);
+  formatTimeOfDay(settings_.nightEndMinutes, end);
+  DBG_INFO("[settings] Night mode %s, display off %s-%s%s", settings_.nightEnabled ? "on" : "off",
+           start, end, nightActive() ? " (now)" : "");
   DBG_INFO("[wifi] State=%s SSID=%s host=%s", connected() ? "connected" : "offline / connecting",
            connected() ? WiFi.SSID().c_str() : "(not connected)", hostname_);
   if (connected()) {

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-constexpr const char* FIRMWARE_VERSION = "1.6.0";
+constexpr const char* FIRMWARE_VERSION = "1.7.0";
 
 // ---------------------------------------------------------------------------
 // Panel geometry — 8 x 2 modules of 8x8 LEDs = 64 x 16 pixels, 1/16 scan
@@ -86,6 +86,8 @@ constexpr uint32_t NTP_RETRY_MS = 60000;
 // Without a fresh NTP sync for this long, the clock stops claiming valid time
 // (ESP32 RTC drift can reach seconds per hour).
 constexpr uint32_t CLOCK_HOLDOVER_MAX_MS = 24UL * 60 * 60 * 1000;
+// How often night mode (display off between web-set hours) is re-checked.
+constexpr uint32_t NIGHT_CHECK_MS = 1000;
 // Serial +/- brightness is saved as the startup level after this quiet period.
 constexpr uint32_t BRIGHTNESS_SAVE_DELAY_MS = 5000;
 constexpr uint32_t BOOT_CARD_MS = 2000;

@@ -20,8 +20,14 @@ public:
   bool portalActive();
   bool timeValid() const { return timeValid_; }
   bool takeSettingsChanged();
+  // Manual display switch from the web page: -1 none, 0 off, 1 on (taken once).
+  int8_t takeDisplayRequest();
+  // The application reports the resulting display state for /api/status.
+  void setDisplayState(bool on, bool manual);
   // Seconds since the last NTP sync, or -1 before the first one.
   int32_t secondsSinceSync() const;
+  // True inside the configured night window; false without valid time.
+  bool nightActive() const;
   // Persist a new startup brightness without signalling a settings change.
   bool saveBrightness(uint8_t level);
   // Called with 0-100 during a network firmware upload, or -1 if it fails.
@@ -51,6 +57,9 @@ private:
   bool timeValid_ = false;
   bool portalRequested_ = false;
   bool settingsChanged_ = false;
+  int8_t displayRequest_ = -1;
+  bool displayOn_ = true;
+  bool displayManual_ = false;
   bool reconnectAttempt_ = false;
   bool otaStarted_ = false;
   int otaPercent_ = -1;

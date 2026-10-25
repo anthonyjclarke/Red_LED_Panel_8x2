@@ -7,7 +7,7 @@
     "intervalMs": 250,
     "width": 640,
     "height": 160,
-    "sha256": "796937902e567fa5c34f68105b367cdb71781defa1b839aa66fda30bf09dcd5a"
+    "sha256": "744f6b40b1645b9c7da952d911f2d93907dd8bfb2248930df3a8d30dd55cf135"
   },
   {
     "file": "02-boot-2.gif",
@@ -107,7 +107,7 @@
     "intervalMs": 680,
     "width": 640,
     "height": 160,
-    "sha256": "c95491fee6fce150b4012ee58bafcd19773386655aac599cbc54237b51fb661b"
+    "sha256": "f580d5bad6fef149bf9c708ed65ca0840e576d972b211ba6af708c0091bc80ed"
   },
   {
     "file": "12-pong.gif",

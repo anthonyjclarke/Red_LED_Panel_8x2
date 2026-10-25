@@ -50,7 +50,7 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 
 | Setting | Value / behaviour |
 |:--|:--|
-| Firmware | `1.6.0`: web-set clock time and scrolling message; letter test removed |
+| Firmware | `1.7.0`: night mode (display off between web-set times) |
 | LA/LB/LC/LD | GPIO 25/26/27/13; normal A/B/C/D bit order |
 | EN/R1/LT/SK | GPIO 22/23/4/18 |
 | Geometry and scan | 64×16, 1/16 scan; 500 µs per row, nominal 125 Hz complete refresh |
@@ -65,6 +65,7 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 | Boot cards | Three cards, 2 seconds each: header/version, geometry/brightness, network/time state |
 | Clock drawing interval / visit | 250 ms redraw; clock time between demos from the settings page (default 10 s), from elapsed milliseconds |
 | Scrolling message | Empty: device details (version, uptime, last sync, address, location); up to 64 plain characters |
+| Night mode | On, display off 22:00–06:00 local time; needs valid network time |
 | Refresh scheduling | Hardware TG0/T0 row cadence + TG0/T1 OE deadline; dedicated scan task on core 1 |
 | NTP servers | `pool.ntp.org`, `time.cloudflare.com` |
 | Unsynchronised NTP retry | Every 60 seconds while Wi-Fi is connected |
@@ -138,10 +139,11 @@ The page opens at **`/`** (or `/panel`). Its sidebar jumps between **Clock**, **
 4. **Startup view:** Clock + demos or Real-time clock. Clock + demos starts with the clock, runs one demo, returns to the clock, then runs the following demo.
 5. **Clock time between demos:** 5–3600 seconds; default 10. Applies from the next clock visit.
 6. **Scrolling message:** up to 64 plain characters (space to `~`). Empty scrolls device details. The message always scrolls fully before the clock returns.
+7. **Night mode:** On or Off, with **Display off at** and **Display on at** times (HH:MM, default 22:00 and 06:00). The window may span midnight.
 
 Choose **Save and apply**. The ESP32 validates the complete form, saves one record, and changes the local time zone and brightness at once. The display restarts only when the startup view changed. Settings survive reset. A failed flash write leaves the previous settings active. Serial `+`/`-` changes are saved as the startup brightness once, five seconds after the last key press.
 
-The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age, firmware version, Wi-Fi upload (OTA) state and hardware settings. Its clock is read from the **panel**, not from the browser. **Sync time** requests another NTP update. **Wi-Fi network** opens WiFiManager's network form. **Open setup hotspot**, or serial **`w`**, opens provisioning again without erasing saved settings.
+The clock card's **Turn display on / off** buttons switch the display by hand until the night schedule next changes (`POST /api/display`, `state=on|off`, with the page token). The page shows the ESP32's time, location, date/zone, network name, signal, address, uptime, last sync age, firmware version, Wi-Fi upload (OTA) state and hardware settings. Its clock is read from the **panel**, not from the browser. **Sync time** requests another NTP update. **Wi-Fi network** opens WiFiManager's network form. **Open setup hotspot**, or serial **`w`**, opens provisioning again without erasing saved settings.
 
 Status requests are read-only. Panel settings/sync/setup API mutations carry a boot-local token to prevent unrelated cross-origin pages from submitting changes. The page and APIs contain no Wi-Fi passwords; WiFiManager's internal debug output is disabled.
 
@@ -163,7 +165,7 @@ Serial **`i`** repeats the startup/settings report. A representative header is:
 
 ```text
 [INFO] ============================================================
-[INFO] Red LED Panel 8x2 v1.6.0 | ESP32 DevKit / esp32dev
+[INFO] Red LED Panel 8x2 v1.7.0 | ESP32 DevKit / esp32dev
 [INFO] Panel=64x16, 1/16 scan, brightness=90/255, debug=3
 [INFO] GPIO LA=25 LB=26 LC=27 LD=13 EN=22 R1=23 LT=4 SK=18
 [INFO] Scan=500 us/row, signal=1 us, guard=50 us, nominal frame=125 Hz
@@ -193,6 +195,11 @@ python3 -m venv .venv-docs
 | Set clock time to 30 s and save | The next clock visit lasts 30 seconds |
 | Save a scrolling message, send `8` | The message scrolls fully, then the clock returns; empty shows device details |
 | Upgrade from v1.5.0 or earlier | Location, zone, brightness and view are kept; clock time 10 s, message empty |
+| Upgrade from v1.6.0 | All settings kept, including clock time and message; night mode on, 22:00–06:00 |
+| Set night times around the current time | Within a second the display goes off; `[night]` logged; clock card says night mode |
+| Night mode Off, or no network time yet | Display stays on |
+| **Turn display on** during night mode | Display on, card shows "manual"; returns to automatic at the night end time |
+| **Turn display off** by day | Display off until the night start time, then night mode keeps it off |
 | Save valid router credentials | DHCP IP/settings URL printed, settings page available from the LAN |
 | Wait for NTP, send `c` | Correct local HH:MM:SS; no simulated starting time |
 | Change Sydney to Brisbane | Correct regional time; Sydney observes DST, Brisbane does not |

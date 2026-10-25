@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
   captures << "[";
   setenv("TZ", findTimeZone("Australia/Sydney")->rule, 1);
   tzset();
+  network.values.nightEnabled = 0; // Fixture times cross midnight; night mode is tested below.
   setup();
   for (int i = 0; i < 3; ++i) {
     renderBootCard(i);
@@ -391,8 +392,36 @@ int main(int argc, char** argv) {
   assert(validClockSettings(settings) && strcmp(settings.location, "Workshop") == 0);
   assert(settings.brightness == 70 && settings.startClock && settings.clockHoldSeconds == 10);
   assert(settings.scrollText[0] == 0);
+  assert(settings.nightEnabled && settings.nightStartMinutes == 22 * 60 &&
+         settings.nightEndMinutes == 6 * 60);
   legacy.schema = 7;
   assert(!validClockSettings(upgradeClockSettings(legacy, DEFAULT_CLOCK_HOLD_S)));
+  // A schema-2 (v1.6.0) record keeps its clock time and message too.
+  ClockSettingsV2 v2 = {};
+  v2.schema = 2;
+  strcpy(v2.location, "Lab");
+  strcpy(v2.zone, "Asia/Tokyo");
+  v2.clockHoldSeconds = 45;
+  strcpy(v2.scrollText, "KEEP ME");
+  settings = upgradeClockSettings(v2);
+  assert(validClockSettings(settings) && settings.clockHoldSeconds == 45 &&
+         strcmp(settings.scrollText, "KEEP ME") == 0 && settings.nightEnabled);
+  // Night window and HH:MM parsing.
+  assert(inNightWindow(22 * 60, 22 * 60, 6 * 60) && inNightWindow(0, 22 * 60, 6 * 60));
+  assert(inNightWindow(6 * 60 - 1, 22 * 60, 6 * 60) && !inNightWindow(6 * 60, 22 * 60, 6 * 60));
+  assert(!inNightWindow(21 * 60 + 59, 22 * 60, 6 * 60) && !inNightWindow(600, 600, 600));
+  assert(inNightWindow(13 * 60, 12 * 60, 14 * 60) && !inNightWindow(14 * 60, 12 * 60, 14 * 60));
+  uint16_t minutes = 0;
+  assert(parseTimeOfDay("22:00", minutes) && minutes == 1320);
+  assert(parseTimeOfDay("00:00", minutes) && minutes == 0 && parseTimeOfDay("23:59", minutes));
+  assert(!parseTimeOfDay("24:00", minutes) && !parseTimeOfDay("7:00", minutes) &&
+         !parseTimeOfDay("12:60", minutes) && !parseTimeOfDay("12:00:00", minutes));
+  char text[6];
+  formatTimeOfDay(365, text);
+  assert(strcmp(text, "06:05") == 0);
+  settings = defaultClockSettings(90, DEFAULT_CLOCK_HOLD_S);
+  settings.nightEndMinutes = 1440;
+  assert(!validClockSettings(settings));
   // OTA progress replaces the picture; a failed upload restores the scene.
   key("o");
   const auto allOn = pixels();
@@ -400,6 +429,61 @@ int main(int argc, char** argv) {
   assert(pixels() != allOn && panel.level == brightness);
   network.otaProgress(-1);
   assert(pixels() == allOn);
+  // Night mode blanks the output inside the window, including held scenes.
+  const auto at = [](int hour, int minute) { // Local AEDT time, reached on the next loop.
+    fixtureEpoch = utc(2026, 10, 25, 11, 0, 0) + ((hour + 2) % 24) * 3600 + minute * 60 - 1 -
+                   fakeMillis / 1000;
+    fakeMillis += NIGHT_CHECK_MS;
+    loop();
+  };
+  network.values.nightEnabled = 1;
+  at(23, 0);
+  assert(displayOff && panel.level == 0 && lit() == 1024 && scene == Scene::AllOn);
+  assert(!network.displayOn && !network.displayManual);
+  at(6, 0);
+  assert(!displayOff && panel.level == brightness && network.displayOn); // 06:00: back on.
+  // Web switch on during the night lasts until the schedule changes at 06:00.
+  at(23, 0);
+  assert(displayOff);
+  network.displayRequest = 1;
+  fakeMillis += 1;
+  loop();
+  assert(!displayOff && panel.level == brightness && network.displayManual);
+  at(5, 0);
+  assert(!displayOff && network.displayManual);
+  at(6, 0);
+  assert(!displayOff && !network.displayManual); // Schedule changed: automatic again.
+  // Web switch off by day lasts until 22:00, then night mode keeps it off until 06:00.
+  at(12, 0);
+  network.displayRequest = 0;
+  fakeMillis += 1;
+  loop();
+  assert(displayOff && panel.level == 0 && network.displayManual);
+  at(21, 59);
+  assert(displayOff && network.displayManual);
+  at(22, 0);
+  assert(displayOff && !network.displayManual);
+  at(6, 0);
+  assert(!displayOff);
+  // With night mode off, the switch holds until changed; no schedule ends it.
+  network.values.nightEnabled = 0;
+  at(23, 0);
+  assert(!displayOff); // Disabled: stays on at 23:00.
+  network.displayRequest = 0;
+  at(23, 1);
+  assert(displayOff && network.displayManual);
+  at(12, 0);
+  assert(displayOff);
+  network.displayRequest = 1;
+  at(12, 1);
+  assert(!displayOff && panel.level == brightness);
+  network.synced = false;
+  network.values.nightEnabled = 1;
+  manualDisplay = -1;
+  at(23, 0);
+  assert(!displayOff); // Without valid time the display stays on.
+  network.synced = true;
+  network.values.nightEnabled = 0;
   // The clock visit follows the web setting.
   network.values.clockHoldSeconds = 30;
   key("r");

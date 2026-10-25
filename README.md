@@ -1,6 +1,6 @@
 # Red LED Panel 8×2
 
-**Version 1.6.0** — Wi-Fi setup, live local time, a ten-scene showcase with your own scrolling message, a faster refresh driver, and firmware upload over Wi-Fi.
+**Version 1.7.0** — Wi-Fi setup, live local time, night mode, a ten-scene showcase with your own scrolling message, a faster refresh driver, and firmware upload over Wi-Fi.
 
 An animated showcase for an **ESP32 and a red 64×16 HUB08 panel**: bouncing balls, a starfield, pixel rain, animated bars, Conway's Life, beating hearts, scrolling text, Pong, and a network-synchronised clock. Two simple patterns make it easy to check placement and pixel detail.
 
@@ -46,7 +46,7 @@ Pong plays automatically; no controllers are required. **`c` holds the live cloc
 
 If a saved network is unavailable after 10 seconds, join **`RedPanel-XXXXXX`** using **`PanelSetup32`** (change it in a gitignored `include/secrets.h`, copied from `include/secrets.example.h`), then open **`http://192.168.4.1/`**. Choose your 2.4 GHz Wi-Fi network and enter its password. Credentials are stored on the ESP32, not in the source.
 
-After connection, open **`http://<panel-IP>/`** using the address printed by serial; a sidebar moves between the clock, settings, connection and device sections and the Wi-Fi pages. Set the location, time zone, startup brightness, startup view, clock time between demos and scrolling message. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, **Clock + demos**, **10 s** and device details. Daylight saving follows the selected zone automatically. An optional `SECRET_PANEL_PASSWORD` adds a login to the settings page.
+After connection, open **`http://<panel-IP>/`** using the address printed by serial; a sidebar moves between the clock, settings, connection and device sections and the Wi-Fi pages. Set the location, time zone, startup brightness, startup view, clock time between demos, scrolling message and night mode. Defaults are **Sydney**, **Australia/Sydney**, **90/255**, **Clock + demos**, **10 s**, device details, and the display off from **22:00 to 06:00**. Daylight saving follows the selected zone automatically. An optional `SECRET_PANEL_PASSWORD` adds a login to the settings page. **Turn display on / off** buttons on the clock card override night mode until its next change.
 
 The clock waits for an NTP response rather than displaying a sample time. After losing Wi-Fi it continues from its last sync for up to 24 hours, with the colons held solid instead of blinking. Send **`w`** to reopen setup, **`i`** for status, and **`d`** to cycle debug levels.
 

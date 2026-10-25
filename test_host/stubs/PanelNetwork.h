@@ -22,9 +22,26 @@ public:
   bool connected() const { return online; }
   String address() const { return "192.168.1.80"; }
   int32_t secondsSinceSync() const { return synced ? 42 : -1; }
+  bool nightActive() const {
+    tm local = {};
+    return values.nightEnabled && localTime(local) &&
+           inNightWindow(local.tm_hour * 60 + local.tm_min, values.nightStartMinutes,
+                         values.nightEndMinutes);
+  }
   bool timeValid() const { return synced; }
   bool portalActive() { return portal; }
   const ClockSettings& settings() const { return values; }
+  int8_t displayRequest = -1;
+  bool displayOn = true, displayManual = false;
+  int8_t takeDisplayRequest() {
+    const int8_t value = displayRequest;
+    displayRequest = -1;
+    return value;
+  }
+  void setDisplayState(bool on, bool manual) {
+    displayOn = on;
+    displayManual = manual;
+  }
   bool takeSettingsChanged() {
     const bool value = changed;
     changed = false;

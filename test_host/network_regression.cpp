@@ -42,9 +42,10 @@ int main(int argc, char** argv) {
   }
   const auto csrf = token();
   assert(csrf.size() == 16);
-  activeServer->args = {{"location", " Workshop "}, {"zone", "Etc/UTC"},
-                        {"brightness", "75"},       {"view", "clock"},
-                        {"clockHold", "30"},        {"scrollText", "Hi \"panel\" \\ 64x16"}};
+  activeServer->args = {
+      {"location", " Workshop "}, {"zone", "Etc/UTC"},     {"brightness", "75"},
+      {"view", "clock"},          {"clockHold", "30"},     {"scrollText", "Hi \"panel\" \\ 64x16"},
+      {"nightMode", "on"},        {"nightStart", "22:30"}, {"nightEnd", "06:15"}};
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 403);
   activeServer->args["token"] = csrf.c_str();
@@ -64,11 +65,24 @@ int main(int argc, char** argv) {
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 400 && nvs.empty());
   activeServer->args["scrollText"] = "Hi \"panel\" \\ 64x16";
+  activeServer->args["nightEnd"] = "24:00";
+  activeServer->dispatch("/api/settings", HTTP_POST);
+  assert(activeServer->code == 400 && nvs.empty());
+  activeServer->args["nightEnd"] = "06:15";
+  activeServer->args["nightMode"] = "maybe";
+  activeServer->dispatch("/api/settings", HTTP_POST);
+  assert(activeServer->code == 400 && nvs.empty());
+  activeServer->args["nightMode"] = "on";
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 200 && strcmp(network.settings().location, "Workshop") == 0);
+  assert(network.settings().nightEnabled && network.settings().nightStartMinutes == 22 * 60 + 30 &&
+         network.settings().nightEndMinutes == 6 * 60 + 15);
   assert(network.settings().clockHoldSeconds == 30 &&
          strcmp(network.settings().scrollText, "Hi \"panel\" \\ 64x16") == 0);
   activeServer->dispatch("/api/status");
+  assert(activeServer->body.find(
+             "\"nightMode\":true,\"nightStart\":\"22:30\",\"nightEnd\":\"06:15\"") !=
+         std::string::npos);
   assert(activeServer->body.find("\"clockHold\":30") != std::string::npos &&
          activeServer->body.find("\"scrollText\":\"Hi \\\"panel\\\" \\\\ 64x16\"") !=
              std::string::npos);
@@ -122,6 +136,25 @@ int main(int argc, char** argv) {
                                      : "\"ota\":\"disabled\"") != std::string::npos);
   assert(activeServer->body.find("Workshop") != std::string::npos &&
          activeServer->body.find("Panel-Test-2G") != std::string::npos);
+  // Manual display switch: token and state checked, request handed over once.
+  activeServer->args = {{"state", "off"}};
+  activeServer->dispatch("/api/display", HTTP_POST);
+  assert(activeServer->code == 403 && network.takeDisplayRequest() == -1);
+  activeServer->args = {{"token", csrf.c_str()}, {"state", "dim"}};
+  activeServer->dispatch("/api/display", HTTP_POST);
+  assert(activeServer->code == 400 && network.takeDisplayRequest() == -1);
+  activeServer->args["state"] = "off";
+  activeServer->dispatch("/api/display", HTTP_POST);
+  assert(activeServer->code == 200 && network.takeDisplayRequest() == 0);
+  assert(network.takeDisplayRequest() == -1);
+  activeServer->args["state"] = "on";
+  activeServer->dispatch("/api/display", HTTP_POST);
+  assert(network.takeDisplayRequest() == 1);
+  network.setDisplayState(false, true);
+  activeServer->dispatch("/api/status");
+  assert(activeServer->body.find("\"displayOn\":false,\"displayManual\":true") !=
+         std::string::npos);
+  network.setDisplayState(true, false);
   // Opening setup from the LAN recreates one server, keeping all custom routes.
   activeServer->args = {{"token", csrf.c_str()}};
   activeServer->dispatch("/api/wifi", HTTP_POST);
@@ -174,6 +207,22 @@ int main(int argc, char** argv) {
   assert(upgraded.settings().brightness == 66 &&
          upgraded.settings().clockHoldSeconds == DEFAULT_CLOCK_HOLD_S &&
          upgraded.settings().scrollText[0] == 0);
+  // A v1.6.0 (schema 2) record keeps everything and gains night mode defaults.
+  ClockSettingsV2 v2 = {};
+  v2.schema = 2;
+  strcpy(v2.location, "Lab");
+  strcpy(v2.zone, "Etc/UTC");
+  v2.brightness = 77;
+  v2.clockHoldSeconds = 45;
+  strcpy(v2.scrollText, "KEEP ME");
+  nvs.assign(reinterpret_cast<uint8_t*>(&v2), reinterpret_cast<uint8_t*>(&v2) + sizeof(v2));
+  PanelNetwork fromV2;
+  fromV2.begin();
+  assert(strcmp(fromV2.settings().location, "Lab") == 0 && fromV2.settings().brightness == 77 &&
+         fromV2.settings().clockHoldSeconds == 45 &&
+         strcmp(fromV2.settings().scrollText, "KEEP ME") == 0);
+  assert(fromV2.settings().nightEnabled && fromV2.settings().nightStartMinutes == 22 * 60 &&
+         fromV2.settings().nightEndMinutes == 6 * 60);
   nvs = savedNvs;
   nvs[0] = 99;
   PanelNetwork damaged;

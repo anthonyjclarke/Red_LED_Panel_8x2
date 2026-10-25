@@ -1,8 +1,24 @@
 # Changelog
 
+## [1.7.0] 26-10-2026
+
+Uploaded over Wi-Fi on 26 October 2026 at 04:01 local time, inside the default window: the panel reported v1.7.0 with `nightActive: true`, and kept brightness 105, clock time 10 s and the message `Well, Hello!` through the settings upgrade. Not yet seen turning back on at 06:00, or committed.
+
+### Added
+
+- **Night mode**: the display turns off between two local times, set on the settings page (**Night mode** On/Off, **Display off at**, **Display on at**; default On, 22:00 to 06:00). The window may span midnight. Output is blanked while the playlist, clock, Wi-Fi, settings page and OTA carry on. It is re-checked every second (`NIGHT_CHECK_MS`), also blanks held scenes, and never applies without valid network time.
+- `[night]` serial messages on each change, a night-mode line in the `i` report, and a "Night mode · display off until …" note on the web clock card.
+- `/api/status` reports `nightMode`, `nightStart`, `nightEnd` and `nightActive`; `/api/settings` validates `nightMode` and HH:MM times.
+- **Display on/off switch** on the web clock card (`POST /api/display`, `state=on|off`). A manual choice overrides night mode until the schedule next changes, then automatic control resumes. With night mode off, a manual off lasts until switched on. It is not saved across restarts. `/api/status` reports `displayOn` and `displayManual`, and serial logs `[display]` changes. Tested live: at 04:04 during night mode, on and then off both took effect within a second.
+- Host regressions for the night window (including across midnight), the switch's override and hand-back to the schedule, the `/api/display` token and validation, HH:MM parsing, blanking a held scene and restoring it, disabled mode, no valid time, and the schema-2 upgrade.
+
+### Changed
+
+- Settings record schema 3. Schema 2 (v1.6.0) and schema 1 (v1.5.0 and earlier) records are upgraded on load, keeping every saved value and adding night mode at its defaults.
+
 ## [1.6.0] 25-10-2026
 
-Uploaded over Wi-Fi from the MacBook on 25 October 2026. After the upload the panel reported v1.6.0 with its saved brightness (105) and other settings kept, confirming the settings upgrade on real hardware; clock time 10 s and an empty message were added. Not yet checked by eye or committed.
+Uploaded over Wi-Fi from the MacBook on 25 October 2026 and committed as `6865fd7`. After the upload the panel reported v1.6.0 with its saved brightness (105) and other settings kept, confirming the settings upgrade on real hardware.
 
 ### Changed
 

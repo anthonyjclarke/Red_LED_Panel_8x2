@@ -99,7 +99,7 @@ The panel shows **OTA** with a percentage and progress bar, then restarts on suc
 
 The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32** (the default from `include/secrets.example.h`; set your own in a gitignored `include/secrets.h`). Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
 
-Once connected, open **http://red-panel-xxxxxx.local/** or the serial-reported IP address (`/panel` also works). A sidebar, like this documentation's, moves between **Clock**, **Settings**, **Connection** and **Device**, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness, startup view, clock time between demos and scrolling message. Defaults are Sydney / Australia/Sydney, 90/255, Clock + demos, 10 s and an empty message (device details). The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
+Once connected, open **http://red-panel-xxxxxx.local/** or the serial-reported IP address (`/panel` also works). A sidebar, like this documentation's, moves between **Clock**, **Settings**, **Connection** and **Device**, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness, startup view, clock time between demos, scrolling message and night mode. Defaults are Sydney / Australia/Sydney, 90/255, Clock + demos, 10 s, an empty message (device details) and night mode on from 22:00 to 06:00. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
 
 Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.
 
@@ -125,6 +125,14 @@ Use the [complete ESP32 test configuration](ESP32_TEST_CONFIG.md) for exact buff
 **Scrolling text** shows the message saved on the settings page: up to 64 plain characters (space to `~`), so the panel font can draw every one. Left empty, it shows device details composed when the scene starts, for example `RED PANEL v1.6.0 - UP 2H 05M - SYNCED 3M 10S AGO - 192.168.1.163 - Sydney`. The scene length is worked out from the message width, so the whole message always crosses the panel before the clock returns. A directly selected demo returns to the clock, then advances to the following demo. `n` follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.
 
 Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.
+
+### Night mode
+
+Night mode turns the display off between two local times set on the settings page: **Display off at** and **Display on at**, default **22:00** and **06:00**. The window can span midnight; equal times mean it never applies. Inside it the output is blanked (zero on-time). The playlist, clock, Wi-Fi, settings page and Wi-Fi uploads carry on, so the picture is current the moment the display returns. The state is checked once a second (`NIGHT_CHECK_MS`) and also blanks held scenes such as `o`. Serial logs `[night] Display off until 06:00` and `[night] Display on`, and the web clock card shows "Night mode · display off until 06:00".
+
+Night mode needs valid network time: before the first NTP sync, or after the 24-hour holdover ends, the display stays on. Choose **Off: always on** to disable it.
+
+**Turn display on / off** buttons on the clock card switch the display by hand. A manual choice beats night mode until the schedule next changes, then automatic control resumes. For example, **Turn display on** at 04:00 keeps it on through 06:00 and onwards. **Turn display off** at 15:00 keeps it off until 22:00, after which night mode keeps it off until 06:00. With night mode off, a manual **off** lasts until you press **on**. The switch is not saved, so a restart returns to automatic. The clock card shows "Display on · manual", "Display off · night mode" and similar.
 
 ### Pong and live clock
 
@@ -176,6 +184,7 @@ The scrolling message and clock time between demos are set on the settings page;
 | `DEFAULT_CLOCK_HOLD_S` | 10 | Clock time between demos until one is saved on the settings page |
 | `CLOCK_HOLDOVER_MAX_MS` | 86400000 | Offline time before the clock stops claiming valid time |
 | `BRIGHTNESS_SAVE_DELAY_MS` | 5000 | Quiet period before serial brightness is saved |
+| `NIGHT_CHECK_MS` | 1000 | How often night mode is re-checked |
 | `WIFI_CONNECT_TIMEOUT_MS` | 10000 | Saved connection attempt before setup hotspot |
 | `WIFI_SAVE_CONNECT_TIMEOUT_MS` | 8000 | Association window after saving new credentials |
 | `SHIFT_CLOCK_HZ` | 500000 | SPI clock for column data; raise only after a hardware check |
