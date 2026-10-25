@@ -9,7 +9,6 @@ Hub08Panel panel;
 PanelNetwork network;
 
 enum class Scene : uint8_t {
-  Letters,
   Checkerboard,
   Bounce,
   Stars,
@@ -35,19 +34,17 @@ struct SceneInfo {
 };
 
 static const SceneInfo scenes[] = {
-    {'1', "LETTERS", "A-H above I-P, one letter per module", 1, LETTER_HOLD_MS},
-    {'2', "CHECKERBOARD", "Alternating pixels and their inverse", 6, CHECKER_STEP_MS},
-    {'3', "BOUNCING BALLS", "Three balls with different paths and speeds", 140, ANIMATION_STEP_MS},
-    {'4', "STARFIELD", "Stars travelling across the full display", 140, ANIMATION_STEP_MS},
-    {'5', "PIXEL RAIN", "Staggered falling trails", 120, RAIN_STEP_MS},
-    {'6', "ANIMATED BARS", "A simulated equalizer; no audio input needed", 160, ANIMATION_STEP_MS},
-    {'7', "CONWAY'S LIFE", "Gliders and oscillators on a wrapping grid", 72, LIFE_STEP_MS},
-    {'8', "BEATING HEARTS", "Three hearts with a gentle brightness pulse", 100, ANIMATION_STEP_MS},
-    {'9', "SCROLLING TEXT", SCROLL_TEXT, 0, SCROLL_STEP_MS},
-    {'g', "PONG", "Automatic paddles, rebounds, and scoring", 400, PONG_STEP_MS},
-    // Clock visits end by elapsed CLOCK_HOLD_MS; frames is the nominal sample count.
-    {'c', "CLOCK", "Network time in the configured local time zone", CLOCK_HOLD_MS / CLOCK_STEP_MS,
-     CLOCK_STEP_MS},
+    {'1', "CHECKERBOARD", "Alternating pixels and their inverse", 6, CHECKER_STEP_MS},
+    {'2', "BOUNCING BALLS", "Three balls with different paths and speeds", 140, ANIMATION_STEP_MS},
+    {'3', "STARFIELD", "Stars travelling across the full display", 140, ANIMATION_STEP_MS},
+    {'4', "PIXEL RAIN", "Staggered falling trails", 120, RAIN_STEP_MS},
+    {'5', "ANIMATED BARS", "A simulated equalizer; no audio input needed", 160, ANIMATION_STEP_MS},
+    {'6', "CONWAY'S LIFE", "Gliders and oscillators on a wrapping grid", 72, LIFE_STEP_MS},
+    {'7', "BEATING HEARTS", "Three hearts with a gentle brightness pulse", 100, ANIMATION_STEP_MS},
+    // Scroll and clock lengths come from the message width and the clock-time setting.
+    {'8', "SCROLLING TEXT", "Your message, or device details", 0, SCROLL_STEP_MS},
+    {'9', "PONG", "Automatic paddles, rebounds, and scoring", 400, PONG_STEP_MS},
+    {'c', "CLOCK", "Network time in the configured local time zone", 0, CLOCK_STEP_MS},
 };
 static constexpr uint8_t SCENE_COUNT = static_cast<uint8_t>(Scene::Count);
 static_assert(sizeof(scenes) / sizeof(scenes[0]) == SCENE_COUNT, "One description per scene");
@@ -61,6 +58,7 @@ static uint32_t pausedAt = 0;
 static bool paused = false;
 static uint8_t brightness = DEFAULT_BRIGHTNESS;
 static int16_t textWidth = 0;
+static char scrollMessage[112];
 static uint8_t life[PANEL_HEIGHT][PANEL_WIDTH / 8];
 static uint32_t lastClockDraw = 0;
 static uint32_t bootStarted = 0;
@@ -108,6 +106,28 @@ static void drawDigit(int16_t x, int16_t y, uint8_t digit, uint8_t scale) {
       if (digits[digit % 10][row] & (4 >> col)) {
         panel.fillRect(x + col * scale, y + row * scale, scale, scale, 1);
       }
+    }
+  }
+}
+
+// 3x5 capitals for the clock's date row; bit 4 is the left column. Letters not
+// used by day or month names are blank.
+static void drawSmallChar(int16_t x, int16_t y, char ch) {
+  static const uint8_t letters[26][5] = {
+      {2, 5, 7, 5, 5}, {6, 5, 6, 5, 6}, {7, 4, 4, 4, 7}, {6, 5, 5, 5, 6}, {7, 4, 6, 4, 7},
+      {7, 4, 6, 4, 4}, {7, 4, 5, 5, 7}, {5, 5, 7, 5, 5}, {7, 2, 2, 2, 7}, {1, 1, 1, 5, 7},
+      {0, 0, 0, 0, 0}, {4, 4, 4, 4, 7}, {5, 7, 7, 5, 5}, {6, 5, 5, 5, 5}, {7, 5, 5, 5, 7},
+      {7, 5, 7, 4, 4}, {0, 0, 0, 0, 0}, {6, 5, 6, 5, 5}, {7, 4, 7, 1, 7}, {7, 2, 2, 2, 2},
+      {5, 5, 5, 5, 7}, {5, 5, 5, 5, 2}, {5, 5, 7, 7, 5}, {0, 0, 0, 0, 0}, {5, 5, 2, 2, 2},
+      {0, 0, 0, 0, 0}};
+  if (ch >= '0' && ch <= '9') {
+    drawDigit(x, y, ch - '0', 1);
+    return;
+  }
+  if (ch < 'A' || ch > 'Z') return; // Space and anything else stay blank.
+  for (uint8_t row = 0; row < 5; ++row) {
+    for (uint8_t col = 0; col < 3; ++col) {
+      if (letters[ch - 'A'][row] & (4 >> col)) panel.drawPixel(x + col, y + row, 1);
     }
   }
 }
@@ -197,25 +217,23 @@ static void renderClock() {
   const uint8_t positions[] = {5, 13, 25, 33, 45, 53};
   for (uint8_t i = 0; i < 6; ++i)
     drawDigit(positions[i], 0, digits[i], 2);
-  if (milliseconds < 500) { // Colons lit for the first half of each real second.
+  // Colons blink with the real second while synced; solid colons mean offline holdover.
+  if (milliseconds < 500 || !network.connected()) {
     for (uint8_t x : {21, 41}) {
       panel.fillRect(x, 2, 2, 2, 1);
       panel.fillRect(x, 6, 2, 2, 1);
     }
   }
-  // NTP = network time; HLD = continuing from the last sync while offline.
-  const uint8_t online[3][5] = {{5, 7, 7, 7, 5}, {7, 2, 2, 2, 2}, {6, 5, 6, 4, 4}};
-  const uint8_t offline[3][5] = {{5, 5, 7, 5, 5}, {4, 4, 4, 4, 7}, {6, 5, 5, 5, 6}};
-  const auto& label = network.connected() ? online : offline;
-  for (uint8_t letter = 0; letter < 3; ++letter) {
-    for (uint8_t row = 0; row < 5; ++row) {
-      for (uint8_t col = 0; col < 3; ++col) {
-        if (label[letter][row] & (4 >> col)) panel.drawPixel(2 + letter * 5 + col, 11 + row, 1);
-      }
-    }
-  }
-  panel.drawRect(20, 12, 42, 4, 1);
-  panel.fillRect(21, 13, static_cast<uint16_t>(seconds) * 40 / 59, 2, 1);
+  // "SUN 25 OCT 2026" in the 3x5 font: 15 characters x 4 px = 59 px, centred.
+  static const char* const DAYS[] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
+  static const char* const MONTHS[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                                       "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+  char date[16];
+  snprintf(date, sizeof(date), "%s %02u %s %04u", DAYS[local.tm_wday % 7],
+           static_cast<unsigned>(local.tm_mday % 100), MONTHS[local.tm_mon % 12],
+           static_cast<unsigned>((local.tm_year + 1900) % 10000));
+  for (uint8_t i = 0; date[i]; ++i)
+    drawSmallChar(2 + i * 4, 11, date[i]);
 }
 
 static bool lifeAlive(int16_t x, int16_t y) {
@@ -264,13 +282,6 @@ static void renderFrame() {
   panel.fillScreen(0);
   uint8_t level = brightness;
   switch (scene) {
-  case Scene::Letters:
-    for (int16_t row = 0; row < PANEL_HEIGHT / 8; ++row) {
-      for (int16_t col = 0; col < PANEL_WIDTH / 8; ++col) {
-        panel.drawChar(col * 8 + 1, row * 8, 'A' + row * (PANEL_WIDTH / 8) + col, 1, 0, 1);
-      }
-    }
-    break;
   case Scene::Checkerboard:
     for (int16_t y = 0; y < PANEL_HEIGHT; ++y) {
       for (int16_t x = 0; x < PANEL_WIDTH; ++x) {
@@ -343,7 +354,7 @@ static void renderFrame() {
   case Scene::Scroll:
     panel.setTextSize(2);
     panel.setCursor(PANEL_WIDTH - frame, 1);
-    panel.print(SCROLL_TEXT);
+    panel.print(scrollMessage);
     break;
   case Scene::Pong:
     for (int16_t y = 0; y < PANEL_HEIGHT; y += 3)
@@ -372,9 +383,58 @@ static void renderFrame() {
   panel.show();
 }
 
+static uint32_t clockHoldMs() {
+  return network.settings().clockHoldSeconds * 1000UL;
+}
+
+// Scrolling runs until the last character has left the panel; the clock's count
+// is its nominal number of redraws.
 static uint16_t frameCount() {
-  return scene == Scene::Scroll ? PANEL_WIDTH + textWidth + 1
-                                : scenes[static_cast<uint8_t>(scene)].frames;
+  if (scene == Scene::Scroll) return PANEL_WIDTH + textWidth + 1;
+  if (scene == Scene::Clock) return clockHoldMs() / CLOCK_STEP_MS;
+  return scenes[static_cast<uint8_t>(scene)].frames;
+}
+
+static void formatDuration(uint32_t seconds, char* text, size_t size) {
+  if (seconds >= 86400)
+    snprintf(text, size, "%luD %luH", static_cast<unsigned long>(seconds / 86400),
+             static_cast<unsigned long>(seconds / 3600 % 24));
+  else if (seconds >= 3600)
+    snprintf(text, size, "%luH %02luM", static_cast<unsigned long>(seconds / 3600),
+             static_cast<unsigned long>(seconds / 60 % 60));
+  else if (seconds >= 60)
+    snprintf(text, size, "%luM %02luS", static_cast<unsigned long>(seconds / 60),
+             static_cast<unsigned long>(seconds % 60));
+  else
+    snprintf(text, size, "%luS", static_cast<unsigned long>(seconds));
+}
+
+// The saved message, or device details composed fresh each time the scene starts.
+static void prepareScrollMessage() {
+  const ClockSettings& settings = network.settings();
+  if (*settings.scrollText) {
+    snprintf(scrollMessage, sizeof(scrollMessage), "%s", settings.scrollText);
+  } else {
+    char uptime[16];
+    char age[16];
+    char sync[28];
+    formatDuration(millis() / 1000, uptime, sizeof(uptime));
+    const int32_t sinceSync = network.secondsSinceSync();
+    if (sinceSync < 0) {
+      snprintf(sync, sizeof(sync), "NOT SYNCED");
+    } else {
+      formatDuration(sinceSync, age, sizeof(age));
+      snprintf(sync, sizeof(sync), "SYNCED %s AGO", age);
+    }
+    snprintf(scrollMessage, sizeof(scrollMessage), "RED PANEL v%s - UP %s - %s - %s - %s",
+             FIRMWARE_VERSION, uptime, sync,
+             network.connected() ? network.address().c_str() : "OFFLINE", settings.location);
+  }
+  int16_t x1, y1;
+  uint16_t width, height;
+  panel.setTextSize(2);
+  panel.getTextBounds(scrollMessage, 0, 0, &x1, &y1, &width, &height);
+  textWidth = width;
 }
 
 static void enterScene(Scene next, bool hold = false) {
@@ -382,6 +442,7 @@ static void enterScene(Scene next, bool hold = false) {
   frame = 0;
   paused = hold;
   if (scene == Scene::Life) seedLife();
+  if (scene == Scene::Scroll) prepareScrollMessage();
   if (scene == Scene::Pong) {
     pong = {};
     pong.leftY = pong.rightY = (PANEL_HEIGHT - PADDLE_HEIGHT) / 2;
@@ -410,13 +471,13 @@ static void nextScene() {
 }
 
 static void printHelp() {
-  DBG_INFO(
-      "Commands: 1-9/g = select demo, c = live clock, n = next, p = pause/resume, r = restart");
-  DBG_INFO("t = hold letters, s = scroll, f = all off, o = all on, b = blank display");
+  DBG_INFO("Commands: 1-9 = select demo, c = live clock, n = next, p = pause/resume, r = restart");
+  DBG_INFO("s = scroll message, f = all off, o = all on, b = blank display");
   DBG_INFO("w = Wi-Fi setup, i = status, d = debug level, +/- = brightness, ?/h = help");
   DBG_INFO("Firmware upload over Wi-Fi: pio run -e esp32dev_ota -t upload (needs OTA password)");
   DBG_INFO("Clock keeps real time while the playlist is paused. No Enter is needed.");
-  DBG_INFO("Playlist: clock 10s, one demo, clock 10s, next demo; r starts from the clock.");
+  DBG_INFO("Playlist: clock %us, one demo, clock, next demo; r starts from the clock.",
+           network.settings().clockHoldSeconds);
   for (uint8_t i = 0; i < SCENE_COUNT; ++i)
     DBG_INFO("  %c: %s", scenes[i].key, scenes[i].name);
   DBG_INFO("Brightness: %u/255 (hearts pulse up to this level)", brightness);
@@ -528,9 +589,6 @@ static void handleSerial() {
     case 'n':
       nextScene();
       break;
-    case 't':
-      enterScene(Scene::Letters, true);
-      break;
     case 's':
       enterScene(Scene::Scroll);
       break;
@@ -586,7 +644,7 @@ static void updateDemo() {
   if (paused || !inPlaylist()) return;
   // Use elapsed time so a busy network loop cannot extend a clock visit by
   // losing animation ticks. Unsigned subtraction also handles millis wrap.
-  if (scene == Scene::Clock && now - sceneStarted >= CLOCK_HOLD_MS) {
+  if (scene == Scene::Clock && now - sceneStarted >= clockHoldMs()) {
     nextScene();
     return;
   }
@@ -606,11 +664,6 @@ void setup() {
   panel.begin();
   panel.setTextWrap(false);
   panel.setTextColor(1);
-  panel.setTextSize(2);
-  int16_t x1, y1;
-  uint16_t w, h;
-  panel.getTextBounds(SCROLL_TEXT, 0, 0, &x1, &y1, &w, &h);
-  textWidth = w;
   network.begin();
   network.onOtaProgress(showOtaProgress);
   brightness = network.settings().brightness;

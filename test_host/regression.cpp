@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
   // then the next demo; the cursor wraps after Pong without skipping letters.
   for (unsigned demo = 0; demo < static_cast<unsigned>(Scene::Clock) * 2; ++demo) {
     assert(scene == Scene::Clock);
-    fakeMillis = sceneStarted + CLOCK_HOLD_MS - 1;
+    fakeMillis = sceneStarted + clockHoldMs() - 1;
     updateDemo();
     assert(scene == Scene::Clock);
     ++fakeMillis;
@@ -93,12 +93,12 @@ int main(int argc, char** argv) {
   assert(scene == Scene::Clock);
   ++fakeMillis;
   updateDemo();
-  assert(scene == Scene::Letters);
+  assert(scene == Scene::Checkerboard);
   fakeMillis = UINT32_MAX - 5000;
   key("r");
-  fakeMillis += CLOCK_HOLD_MS + 800; // Delayed main loop and millis rollover.
+  fakeMillis += clockHoldMs() + 800; // Delayed main loop and millis rollover.
   updateDemo();
-  assert(scene == Scene::Letters);
+  assert(scene == Scene::Checkerboard);
   for (int index = 0; index < SCENE_COUNT; ++index) {
     char command[2] = {scenes[index].key, 0};
     key(command);
@@ -123,13 +123,13 @@ int main(int argc, char** argv) {
     }
     captures << "]}";
     assert(hasPixels);
-    if (index > 0 && index != 7) assert(patterns.size() > 1);
-    assert(scene == (index == static_cast<int>(Scene::Clock) ? Scene::Letters : Scene::Clock));
+    if (index != static_cast<int>(Scene::Hearts)) assert(patterns.size() > 1);
+    assert(scene == (index == static_cast<int>(Scene::Clock) ? Scene::Checkerboard : Scene::Clock));
     std::cout << scenes[index].name << ": " << frames << " frames, " << patterns.size()
               << " pixel patterns\n";
   }
   // Checkerboard phases are complements, not merely changed images.
-  key("2");
+  key("1");
   const auto first = pixels();
   fakeMillis += CHECKER_STEP_MS;
   updateDemo();
@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
   assert(lifeAlive(0, 15) && lifeAlive(0, 0) && lifeAlive(0, 1));
   assert(!lifeAlive(63, 0) && !lifeAlive(1, 0));
   // Pausing holds the frame and preserves the remaining interval, including rollover.
-  key("3");
+  key("2");
   fakeMillis += 10;
   key("p");
   auto shown = panel.shows;
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
   updateDemo();
   assert(panel.shows == shown + 1);
   fakeMillis = UINT32_MAX - 20;
-  key("4");
+  key("3");
   fakeMillis += ANIMATION_STEP_MS;
   updateDemo();
   assert(frame == 1);
@@ -190,17 +190,15 @@ int main(int argc, char** argv) {
   assert(panel.level == 0 && brightness == 30);
   key("p");
   assert(scene == Scene::Clock && panel.level == 30 && !paused);
-  key("t");
-  assert(paused && scene == Scene::Letters);
-  key("p");
-  assert(!paused);
+  key("t"); // Retired letter test: ignored.
+  assert(scene == Scene::Clock && !paused);
   key("s");
   assert(scene == Scene::Scroll && !paused);
   key("n");
   assert(scene == Scene::Clock);
   key("n");
   assert(scene == Scene::Pong);
-  key("8");
+  key("7");
   bool low = false, high = false;
   for (unsigned i = 0; i < 40; ++i) {
     low |= panel.level == brightness / 5;
@@ -210,7 +208,7 @@ int main(int argc, char** argv) {
   }
   assert(low && high);
   // Pong: both paddle collisions, wall reflection, goals, serves and pause.
-  key("G");
+  key("9");
   assert(scene == Scene::Pong && pong.leftScore == 0 && pong.rightScore == 0);
   pong.serveFrames = 0;
   pong.x = 3 * PONG_SCALE;
@@ -241,7 +239,7 @@ int main(int argc, char** argv) {
   pong.vx = 5;
   stepPong();
   assert(pong.leftScore == 1 && pong.serveFrames == 15);
-  key("g");
+  key("9");
   for (int i = 0; i < 399; ++i) {
     fakeMillis += PONG_STEP_MS;
     updateDemo();
@@ -269,6 +267,14 @@ int main(int argc, char** argv) {
   updateDemo();
   assert(network.localTime(local) && local.tm_hour == 0 && local.tm_min == 0 && local.tm_sec == 0);
   assert(pixels() != beforeMidnight && paused && frame == 0);
+  // Date row "SUN 25 OCT 2026" from x=2, 4 px per character, rows 11-15.
+  assert(panel.getPixel(2, 11) && panel.getPixel(4, 11) && !panel.getPixel(4, 12)); // S
+  for (int y = 11; y < 16; ++y)
+    assert(!panel.getPixel(14, y) && !panel.getPixel(15, y) && !panel.getPixel(16, y)); // Space
+  assert(panel.getPixel(30, 13) && !panel.getPixel(31, 13) && panel.getPixel(32, 13));  // O
+  assert(panel.getPixel(58, 11) && panel.getPixel(60, 15) &&
+         !panel.getPixel(61, 11));                          // 6 ends x=60
+  assert(!panel.getPixel(0, 11) && !panel.getPixel(1, 13)); // No NTP/HLD label.
   key("c");
   assert(network.localTime(local) && local.tm_hour == 0); // Selecting c must not reset time.
   fakeMillis += 500;
@@ -281,6 +287,15 @@ int main(int argc, char** argv) {
   fakeMillis += 1000;
   updateDemo();
   assert(network.localTime(local));
+  // Synced colons blink with the second; offline holdover keeps them solid.
+  fakeMillis = fakeMillis / 1000 * 1000 + 700;
+  renderFrame();
+  assert(panel.getPixel(21, 2) && panel.getPixel(41, 6));
+  network.online = true;
+  renderFrame();
+  assert(!panel.getPixel(21, 2) && !panel.getPixel(41, 6));
+  network.online = false;
+  renderFrame();
   capture("Clock offline holdover", 'c', 250, true);
   captures << "]}";
   network.synced = false;
@@ -301,7 +316,7 @@ int main(int argc, char** argv) {
   loop();
   assert(scene == Scene::Clock && paused && brightness == 45);
   // A brightness-only save applies live and keeps the current scene.
-  key("3");
+  key("2");
   network.values.brightness = 60;
   network.changed = true;
   loop();
@@ -342,11 +357,11 @@ int main(int argc, char** argv) {
   ++t;
   localtime_r(&t, &local);
   assert(local.tm_hour == 2 && local.tm_min == 0 && local.tm_isdst == 0);
-  auto settings = defaultClockSettings(90);
+  auto settings = defaultClockSettings(90, DEFAULT_CLOCK_HOLD_S);
   assert(validClockSettings(settings));
   memset(settings.location, 'X', sizeof(settings.location));
   assert(!validClockSettings(settings));
-  settings = defaultClockSettings(90);
+  settings = defaultClockSettings(90, DEFAULT_CLOCK_HOLD_S);
   strcpy(settings.zone, "Unknown/Place");
   assert(!validClockSettings(settings));
   assert(!validLocation(" ") && !validLocation("bad\nlocation") && validLocation("Workshop"));
@@ -355,15 +370,66 @@ int main(int argc, char** argv) {
   assert(parseBrightness("0", level) && level == 0);
   assert(!parseBrightness("-1", level) && !parseBrightness("256", level) &&
          !parseBrightness("99999999999999999999", level));
+  uint16_t hold = 0;
+  assert(parseClockHold("5", hold) && hold == 5 && parseClockHold("3600", hold) && hold == 3600);
+  assert(!parseClockHold("4", hold) && !parseClockHold("3601", hold) && !parseClockHold("", hold));
+  assert(validScrollText("") && validScrollText("Hello, panel! 123"));
+  assert(!validScrollText("tab\there") && !validScrollText("caf\xc3\xa9"));
+  assert(!validScrollText(std::string(65, 'x').c_str()) &&
+         validScrollText(std::string(64, 'x').c_str()));
+  settings = defaultClockSettings(90, DEFAULT_CLOCK_HOLD_S);
+  settings.clockHoldSeconds = 4;
+  assert(!validClockSettings(settings));
+  // A schema-1 record keeps its values and gains the new defaults.
+  ClockSettingsV1 legacy = {};
+  legacy.schema = 1;
+  strcpy(legacy.location, "Workshop");
+  strcpy(legacy.zone, "Etc/UTC");
+  legacy.brightness = 70;
+  legacy.startClock = 1;
+  settings = upgradeClockSettings(legacy, DEFAULT_CLOCK_HOLD_S);
+  assert(validClockSettings(settings) && strcmp(settings.location, "Workshop") == 0);
+  assert(settings.brightness == 70 && settings.startClock && settings.clockHoldSeconds == 10);
+  assert(settings.scrollText[0] == 0);
+  legacy.schema = 7;
+  assert(!validClockSettings(upgradeClockSettings(legacy, DEFAULT_CLOCK_HOLD_S)));
   // OTA progress replaces the picture; a failed upload restores the scene.
-  key("t");
-  const auto letters = pixels();
+  key("o");
+  const auto allOn = pixels();
   network.otaProgress(40);
-  assert(pixels() != letters && panel.level == brightness);
+  assert(pixels() != allOn && panel.level == brightness);
   network.otaProgress(-1);
-  assert(pixels() == letters);
+  assert(pixels() == allOn);
+  // The clock visit follows the web setting.
+  network.values.clockHoldSeconds = 30;
+  key("r");
+  fakeMillis += 29999;
+  updateDemo();
+  assert(scene == Scene::Clock && frameCount() == 30000 / CLOCK_STEP_MS);
+  ++fakeMillis;
+  updateDemo();
+  assert(scene == Scene::Checkerboard);
+  network.values.clockHoldSeconds = DEFAULT_CLOCK_HOLD_S;
+  // Empty message: device details. Custom message: shown as typed, scrolled fully.
+  key("8");
+  assert(strncmp(scrollMessage, "RED PANEL v", 11) == 0 && strstr(scrollMessage, FIRMWARE_VERSION));
+  assert(strstr(scrollMessage, "UP ") && strstr(scrollMessage, "SYNCED 42S AGO"));
+  assert(strstr(scrollMessage, "192.168.1.80") && strstr(scrollMessage, "Sydney"));
+  strcpy(network.values.scrollText, "HELLO WORKSHOP");
+  key("8");
+  assert(strcmp(scrollMessage, "HELLO WORKSHOP") == 0);
+  assert(frameCount() == PANEL_WIDTH + 14 * 12 + 1); // Size-2 font: 12 px per character.
+  for (unsigned i = 1; i < frameCount(); ++i) {
+    fakeMillis += SCROLL_STEP_MS;
+    updateDemo();
+    assert(scene == Scene::Scroll); // Never cut short.
+  }
+  fakeMillis += SCROLL_STEP_MS;
+  updateDemo();
+  assert(scene == Scene::Clock);
+  network.values.scrollText[0] = 0;
   // Return to a normal frame before testing unchanged help/unknown commands.
-  key("3");
+  key("2");
   // Help and retired/unknown keys must not alter a paused picture.
   key("p");
   const auto before = pixels();

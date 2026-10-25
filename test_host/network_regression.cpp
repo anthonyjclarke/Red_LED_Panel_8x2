@@ -42,8 +42,9 @@ int main(int argc, char** argv) {
   }
   const auto csrf = token();
   assert(csrf.size() == 16);
-  activeServer->args = {
-      {"location", " Workshop "}, {"zone", "Etc/UTC"}, {"brightness", "75"}, {"view", "clock"}};
+  activeServer->args = {{"location", " Workshop "}, {"zone", "Etc/UTC"},
+                        {"brightness", "75"},       {"view", "clock"},
+                        {"clockHold", "30"},        {"scrollText", "Hi \"panel\" \\ 64x16"}};
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 403);
   activeServer->args["token"] = csrf.c_str();
@@ -55,8 +56,22 @@ int main(int argc, char** argv) {
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 400);
   activeServer->args["brightness"] = "75";
+  activeServer->args["clockHold"] = "4";
+  activeServer->dispatch("/api/settings", HTTP_POST);
+  assert(activeServer->code == 400);
+  activeServer->args["clockHold"] = "30";
+  activeServer->args["scrollText"] = "caf\xc3\xa9"; // Outside the panel font.
+  activeServer->dispatch("/api/settings", HTTP_POST);
+  assert(activeServer->code == 400 && nvs.empty());
+  activeServer->args["scrollText"] = "Hi \"panel\" \\ 64x16";
   activeServer->dispatch("/api/settings", HTTP_POST);
   assert(activeServer->code == 200 && strcmp(network.settings().location, "Workshop") == 0);
+  assert(network.settings().clockHoldSeconds == 30 &&
+         strcmp(network.settings().scrollText, "Hi \"panel\" \\ 64x16") == 0);
+  activeServer->dispatch("/api/status");
+  assert(activeServer->body.find("\"clockHold\":30") != std::string::npos &&
+         activeServer->body.find("\"scrollText\":\"Hi \\\"panel\\\" \\\\ 64x16\"") !=
+             std::string::npos);
   assert(network.settings().brightness == 75 && network.settings().startClock &&
          network.takeSettingsChanged());
   assert(!network.takeSettingsChanged() && nvs.size() == sizeof(ClockSettings));
@@ -142,6 +157,24 @@ int main(int argc, char** argv) {
   PanelNetwork reloaded;
   reloaded.begin();
   assert(reloaded.settings().brightness == 120 && reloaded.settings().startClock);
+  assert(reloaded.settings().clockHoldSeconds == 30);
+  // A v1.5.0 (schema 1) record is upgraded, keeping location, zone and display values.
+  ClockSettingsV1 legacy = {};
+  legacy.schema = 1;
+  strcpy(legacy.location, "Old bench");
+  strcpy(legacy.zone, "Australia/Perth");
+  legacy.brightness = 66;
+  const auto savedNvs = nvs;
+  nvs.assign(reinterpret_cast<uint8_t*>(&legacy),
+             reinterpret_cast<uint8_t*>(&legacy) + sizeof(legacy));
+  PanelNetwork upgraded;
+  upgraded.begin();
+  assert(strcmp(upgraded.settings().location, "Old bench") == 0 &&
+         strcmp(upgraded.settings().zone, "Australia/Perth") == 0);
+  assert(upgraded.settings().brightness == 66 &&
+         upgraded.settings().clockHoldSeconds == DEFAULT_CLOCK_HOLD_S &&
+         upgraded.settings().scrollText[0] == 0);
+  nvs = savedNvs;
   nvs[0] = 99;
   PanelNetwork damaged;
   damaged.begin();

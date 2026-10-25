@@ -20,6 +20,8 @@ public:
   bool portalActive();
   bool timeValid() const { return timeValid_; }
   bool takeSettingsChanged();
+  // Seconds since the last NTP sync, or -1 before the first one.
+  int32_t secondsSinceSync() const;
   // Persist a new startup brightness without signalling a settings change.
   bool saveBrightness(uint8_t level);
   // Called with 0-100 during a network firmware upload, or -1 if it fails.

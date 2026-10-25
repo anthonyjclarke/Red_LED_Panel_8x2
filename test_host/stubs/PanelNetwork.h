@@ -14,12 +14,14 @@ public:
   bool portal = false;
   bool changed = false;
   unsigned brightnessSaves = 0;
-  ClockSettings values = defaultClockSettings(DEFAULT_BRIGHTNESS);
+  ClockSettings values = defaultClockSettings(DEFAULT_BRIGHTNESS, DEFAULT_CLOCK_HOLD_S);
   void begin() {}
   void loop() {}
   void requestPortal() { portal = true; }
   void printStatus() const {}
   bool connected() const { return online; }
+  String address() const { return "192.168.1.80"; }
+  int32_t secondsSinceSync() const { return synced ? 42 : -1; }
   bool timeValid() const { return synced; }
   bool portalActive() { return portal; }
   const ClockSettings& settings() const { return values; }

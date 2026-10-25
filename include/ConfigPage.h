@@ -135,7 +135,17 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
           <div>
             <label for="view">Startup view</label>
             <select id="view" name="view"><option value="playlist">Clock + demos</option><option value="clock">Real-time clock</option></select>
-            <small>Clock + demos shows the clock for 10 s between demos. The display restarts only when this changes.</small>
+            <small>Clock + demos alternates the clock with each demo. The display restarts only when this changes.</small>
+          </div>
+          <div>
+            <label for="clock-hold">Clock time between demos</label>
+            <input id="clock-hold" name="clockHold" type="number" min="5" max="3600" step="1" required value="10">
+            <small>Seconds the clock stays on screen before the next demo, 5–3600. Default 10.</small>
+          </div>
+          <div class="wide">
+            <label for="scroll-text">Scrolling message</label>
+            <input id="scroll-text" name="scrollText" maxlength="64" pattern="[ -~]*" autocomplete="off" placeholder="Leave empty to show device details">
+            <small>Up to 64 plain characters (letters, numbers, punctuation). Empty shows firmware version, uptime, last sync, address and location. The message always scrolls fully before the clock returns.</small>
           </div>
         </div>
         <div class="actions"><button class="primary" id="save" disabled>Save and apply</button></div>
@@ -227,6 +237,8 @@ static const char CONFIG_PAGE[] PROGMEM = R"panelhtml(<!doctype html>
         byId('zone').value = status.zone;
         byId('brightness').value = status.brightness;
         byId('view').value = status.startClock ? 'clock' : 'playlist';
+        byId('clock-hold').value = status.clockHold;
+        byId('scroll-text').value = status.scrollText;
         initialised = true;
       }
       byId('save').disabled = false;

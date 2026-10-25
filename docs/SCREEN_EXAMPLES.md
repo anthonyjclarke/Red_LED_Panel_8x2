@@ -24,107 +24,101 @@ Network/time status. This fixture is connected and synchronised; a fresh offline
 
 ![Rendered Boot 3 output](../images/demos/03-boot-3.gif)
 
-## 04 — Letters
+## 04 — Checkerboard
 
-Key 1, or t to hold: A-H above I-P, one letter per 8x8 module.
+Key 1: alternating single-pixel phases.
 
-![Rendered LETTERS output](../images/demos/04-letters.gif)
+![Rendered CHECKERBOARD output](../images/demos/04-checkerboard.gif)
 
-## 05 — Checkerboard
+## 05 — Bouncing balls
 
-Key 2: alternating single-pixel phases.
+Key 2: independent moving circles, filled and outlined.
 
-![Rendered CHECKERBOARD output](../images/demos/05-checkerboard.gif)
+![Rendered BOUNCING BALLS output](../images/demos/05-bouncing-balls.gif)
 
-## 06 — Bouncing balls
+## 06 — Starfield
 
-Key 3: independent moving circles, filled and outlined.
+Key 3: several speeds and short horizontal star trails.
 
-![Rendered BOUNCING BALLS output](../images/demos/06-bouncing-balls.gif)
+![Rendered STARFIELD output](../images/demos/06-starfield.gif)
 
-## 07 — Starfield
+## 07 — Pixel rain
 
-Key 4: several speeds and short horizontal star trails.
+Key 4: staggered falling trails.
 
-![Rendered STARFIELD output](../images/demos/07-starfield.gif)
+![Rendered PIXEL RAIN output](../images/demos/07-pixel-rain.gif)
 
-## 08 — Pixel rain
+## 08 — Animated bars
 
-Key 5: staggered falling trails.
+Key 5: simulated equalizer bars; no audio input.
 
-![Rendered PIXEL RAIN output](../images/demos/08-pixel-rain.gif)
+![Rendered ANIMATED BARS output](../images/demos/08-animated-bars.gif)
 
-## 09 — Animated bars
+## 09 — Conway's life
 
-Key 6: simulated equalizer bars; no audio input.
+Key 6: actual glider/blinker updates on wrapping edges.
 
-![Rendered ANIMATED BARS output](../images/demos/09-animated-bars.gif)
+![Rendered CONWAY'S LIFE output](../images/demos/09-conway-s-life.gif)
 
-## 10 — Conway's life
+## 10 — Beating hearts
 
-Key 7: actual glider/blinker updates on wrapping edges.
+Key 7: enlarged pixel art with whole-display brightness modulation.
 
-![Rendered CONWAY'S LIFE output](../images/demos/10-conway-s-life.gif)
+![Rendered BEATING HEARTS output](../images/demos/10-beating-hearts.gif)
 
-## 11 — Beating hearts
+## 11 — Scrolling text
 
-Key 8: enlarged pixel art with whole-display brightness modulation.
+Key 8 or s: the message from the settings page, or device details when it is empty (shown here with fixture values). It always scrolls fully before the clock returns.
 
-![Rendered BEATING HEARTS output](../images/demos/11-beating-hearts.gif)
+![Rendered SCROLLING TEXT output](../images/demos/11-scrolling-text.gif)
 
-## 12 — Scrolling text
+## 12 — Pong
 
-Key 9 or s: full-height text crossing the screen.
+Key 9: automatic paddles, collisions, goals and fresh serves.
 
-![Rendered SCROLLING TEXT output](../images/demos/12-scrolling-text.gif)
+![Rendered PONG output](../images/demos/12-pong.gif)
 
-## 13 — Pong
+## 13 — Clock
 
-Key g: automatic paddles, collisions, goals and fresh serves.
+Starts the cycle and returns between demos for the clock time set on the web page (default 10 seconds). Key c holds it indefinitely: local HH:MM:SS with colons blinking each second, and the day and date below, for example SUN 25 OCT 2026. Captured with a fixed network-time fixture.
 
-![Rendered PONG output](../images/demos/13-pong.gif)
+![Rendered CLOCK output](../images/demos/13-clock.gif)
 
-## 14 — Clock
-
-Starts the cycle and returns for 10 seconds between demos. Key c holds it indefinitely: local HH:MM:SS, blinking colons, seconds bar and NTP source label. Captured with a fixed network-time fixture.
-
-![Rendered CLOCK output](../images/demos/14-clock.gif)
-
-## 15 — All pixels off
+## 14 — All pixels off
 
 Key f: an empty pixel buffer at the selected brightness.
 
-![Rendered All pixels off output](../images/demos/15-all-pixels-off.gif)
+![Rendered All pixels off output](../images/demos/14-all-pixels-off.gif)
 
-## 16 — All pixels on
+## 15 — All pixels on
 
 Key o: every pixel on at the selected brightness.
 
-![Rendered All pixels on output](../images/demos/16-all-pixels-on.gif)
+![Rendered All pixels on output](../images/demos/15-all-pixels-on.gif)
 
-## 17 — Output blanked
+## 16 — Output blanked
 
 Key b: output disabled. Visually dark like f; it uses zero output on-time.
 
-![Rendered Output blanked output](../images/demos/17-output-blanked.gif)
+![Rendered Output blanked output](../images/demos/16-output-blanked.gif)
 
-## 18 — Clock offline holdover
+## 17 — Clock offline holdover
 
-Time continues from its last sync; HLD replaces the NTP label.
+Time continues from its last sync; the colons stay solid instead of blinking.
 
-![Rendered Clock offline holdover output](../images/demos/18-clock-offline-holdover.gif)
+![Rendered Clock offline holdover output](../images/demos/17-clock-offline-holdover.gif)
 
-## 19 — Clock waiting for Wi-Fi
+## 18 — Clock waiting for Wi-Fi
 
 No valid time yet: NO WIFI / JOIN AP. No sample epoch is displayed.
 
-![Rendered Clock waiting for Wi-Fi output](../images/demos/19-clock-waiting-for-wi-fi.gif)
+![Rendered Clock waiting for Wi-Fi output](../images/demos/18-clock-waiting-for-wi-fi.gif)
 
-## 20 — Clock waiting for NTP
+## 19 — Clock waiting for NTP
 
 Wi-Fi is connected, but time has not arrived: SYNC TIME / WAIT NTP.
 
-![Rendered Clock waiting for NTP output](../images/demos/20-clock-waiting-for-ntp.gif)
+![Rendered Clock waiting for NTP output](../images/demos/19-clock-waiting-for-ntp.gif)
 
 ## Regenerate and verify
 

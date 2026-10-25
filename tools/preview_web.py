@@ -10,8 +10,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 ZONES = re.findall(r'\{"([A-Za-z_/]+)",', (ROOT / 'include/ClockSettings.h').read_text())
 STATE = {
-    'version': '1.3.0', 'ota': 'ready', 'token': 'preview-only-token', 'location': 'Sydney',
+    'version': '1.6.0', 'ota': 'ready', 'token': 'preview-only-token', 'location': 'Sydney',
     'zone': 'Australia/Sydney', 'brightness': 90, 'startClock': False,
+    'clockHold': 10, 'scrollText': '',
     'connected': True, 'timeValid': True, 'ssid': 'Panel-Test-2G', 'rssi': -52,
     'url': 'http://192.168.1.80/panel', 'uptime': 120, 'time': '23:59:58',
     'date': 'Sat 24 Oct 2026 AEDT', 'lastSyncAge': 12,
@@ -49,11 +50,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/api/settings':
             location = values.get('location', '').strip()
             brightness = values.get('brightness', '')
+            hold = values.get('clockHold', '')
+            text = values.get('scrollText', '')
             if not (1 <= len(location.encode()) <= 32 and all(ord(c) >= 32 for c in location)
                     and values.get('zone') in ZONES and brightness.isascii() and brightness.isdigit()
-                    and 0 <= int(brightness) <= 255 and values.get('view') in ('playlist', 'clock')):
+                    and 0 <= int(brightness) <= 255 and values.get('view') in ('playlist', 'clock')
+                    and hold.isascii() and hold.isdigit() and 5 <= int(hold) <= 3600
+                    and len(text) <= 64 and all(' ' <= c <= '~' for c in text)):
                 return self.reply(400, {'message': 'Invalid settings.'})
-            STATE.update(location=location, zone=values['zone'], brightness=int(brightness), startClock=values['view'] == 'clock')
+            STATE.update(location=location, zone=values['zone'], brightness=int(brightness),
+                         startClock=values['view'] == 'clock', clockHold=int(hold), scrollText=text)
             self.reply(200, {'message': 'Saved and applied. Preview state only.'})
         elif self.path == '/api/sync':
             self.reply(200, {'message': 'Network time requested. Preview only.'})

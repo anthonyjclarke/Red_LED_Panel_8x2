@@ -1,6 +1,6 @@
 # Panel hardware and usage guide
 
-Build a compact animated display with an **ESP32, a 5 V HUB08 panel, and Adafruit GFX**. This guide covers the working setup and the eleven-scene showcase.
+Build a compact animated display with an **ESP32, a 5 V HUB08 panel, and Adafruit GFX**. This guide covers the working setup and the ten-scene showcase.
 
 ## What the panel can do
 
@@ -86,8 +86,10 @@ After one USB upload of v1.3.0 or later, new firmware can be sent over the local
 3. On any computer on the same network, use the same `include/secrets.h` (it is not in git) and run:
 
 ```sh
-PANEL_OTA_PASSWORD='your-ota-password' pio run -e esp32dev_ota --target upload
+pio run -e esp32dev_ota --target upload
 ```
+
+The upload reads the password from `include/secrets.h`. When changing the OTA password, put the new one in `secrets.h` and give the panel's *current* one for that single upload: `PANEL_OTA_PASSWORD='old-password' pio run -e esp32dev_ota --target upload`.
 
 The `esp32dev_ota` environment refuses to build without `SECRET_OTA_PASSWORD`, because that firmware would switch OTA off and need USB again. It targets this panel's mDNS name, `red-panel-a4ae30.local`. For another panel, change `upload_port` or add `--upload-port <IP>`. The default `esp32dev` partition table already has two 1.25 MB app slots, so no custom table is needed; firmware uses about 0.94 MB.
 
@@ -97,7 +99,7 @@ The panel shows **OTA** with a percentage and progress bar, then restarts on suc
 
 The firmware includes **WiFiManager 2.0.17**, persistent panel settings, and NTP time. If it cannot connect using saved credentials within 10 seconds, it opens **RedPanel-XXXXXX** with setup password **PanelSetup32** (the default from `include/secrets.example.h`; set your own in a gitignored `include/secrets.h`). Join it and open **http://192.168.4.1/** to select a 2.4 GHz network.
 
-Once connected, open **http://red-panel-xxxxxx.local/** or the serial-reported IP address (`/panel` also works). A sidebar, like this documentation's, moves between **Clock**, **Settings**, **Connection** and **Device**, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness and startup view. Defaults are Sydney / Australia/Sydney, 90/255 and Clock + demos. The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
+Once connected, open **http://red-panel-xxxxxx.local/** or the serial-reported IP address (`/panel` also works). A sidebar, like this documentation's, moves between **Clock**, **Settings**, **Connection** and **Device**, and links to the Wi-Fi network and system-info pages; those pages carry a bar back to the settings. The Device section shows firmware version and whether Wi-Fi upload (OTA) is ready. Set your location label, time zone, startup brightness, startup view, clock time between demos and scrolling message. Defaults are Sydney / Australia/Sydney, 90/255, Clock + demos, 10 s and an empty message (device details). The page also shows the device's time, network and hardware settings. Saving applies brightness at once and only restarts the display when the startup view changes. Set `SECRET_PANEL_PASSWORD` in `include/secrets.h` to require a login (user `admin`) for `/panel` and its API. **`w`** reopens setup and **`i`** prints status.
 
 Boot prints the firmware header, GPIO map, timing, orientation, location/time zone and connection details. Three 2-second panel cards show version, geometry/brightness, then network/time state. Saved settings are loaded before displaying content at the configured brightness.
 
@@ -107,27 +109,28 @@ Use the [complete ESP32 test configuration](ESP32_TEST_CONFIG.md) for exact buff
 
 | Key | Scene | Default time | What it demonstrates |
 |:--|:--|:--|:--|
-| `1` | Letters | 2.5 s | A–H above I–P, one small letter in each module |
-| `2` | Checkerboard | 1.2 s | Six alternating pixel patterns |
-| `3` | Bouncing balls | 5.6 s | Three independent paths, filled and outlined circles |
-| `4` | Starfield | 5.6 s | Twenty-four stars, three speeds, short trails |
-| `5` | Pixel rain | 6 s | Staggered falling trails of different lengths |
-| `6` | Animated bars | 6.4 s | Eight smoothly interpolated bars and peak marks |
-| `7` | Conway's Life | 7.2 s | Gliders and blinkers with wrapping edges |
-| `8` | Beating hearts | 4 s | Three enlarged pixel-art hearts with pulsing brightness |
-| `9` | Scrolling text | About 12.2 s | Size-2 text crossing the full screen |
-| `g` | Pong | 16 s | Automatic paddles, ball physics, goals, and a small scoreboard |
-| `c` | Live clock | 10 s between demos; held by `c` | NTP local time, large HH:MM:SS digits, blinking colons, seconds bar |
+| `1` | Checkerboard | 1.2 s | Six alternating pixel patterns |
+| `2` | Bouncing balls | 5.6 s | Three independent paths, filled and outlined circles |
+| `3` | Starfield | 5.6 s | Twenty-four stars, three speeds, short trails |
+| `4` | Pixel rain | 6 s | Staggered falling trails of different lengths |
+| `5` | Animated bars | 6.4 s | Eight smoothly interpolated bars and peak marks |
+| `6` | Conway's Life | 7.2 s | Gliders and blinkers with wrapping edges |
+| `7` | Beating hearts | 4 s | Three enlarged pixel-art hearts with pulsing brightness |
+| `8` | Scrolling text | Length of message | Size-2 text; always scrolls fully before the clock returns |
+| `9` | Pong | 16 s | Automatic paddles, ball physics, goals, and a small scoreboard |
+| `c` | Live clock | Web setting, default 10 s; held by `c` | NTP local time, large HH:MM:SS digits, blinking colons, day and date |
 
-**Clock (10 s) → letters → clock (10 s) → checkerboard → clock → balls**, and so on through Pong, then repeat. A complete rotation is approximately **2 minutes 47 seconds** with the default text. A directly selected demo returns to the clock, then advances to the following demo. `n` follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.
+**Clock → checkerboard → clock → balls → clock → stars**, and so on through Pong, then repeat. The clock time between demos is set on the settings page (5–3600 s, default 10). A complete rotation is about **three minutes** with the defaults; the device-details message takes roughly 40 seconds to scroll, at 12 pixels per character and 25 steps per second.
+
+**Scrolling text** shows the message saved on the settings page: up to 64 plain characters (space to `~`), so the panel font can draw every one. Left empty, it shows device details composed when the scene starts, for example `RED PANEL v1.6.0 - UP 2H 05M - SYNCED 3M 10S AGO - 192.168.1.163 - Sydney`. The scene length is worked out from the message width, so the whole message always crosses the panel before the clock returns. A directly selected demo returns to the clock, then advances to the following demo. `n` follows the same clock/demo alternation. The bars are a simulated equalizer, not an audio measurement. Life is a real cellular-automaton update: a cell survives with two or three neighbours and is born with three. It starts from the same gliders and blinkers each time that scene is entered.
 
 Hearts vary the whole-panel requested brightness from about one fifth of your selected level up to that level. The display is monochrome, so the star and rain trails use shapes and spacing rather than per-pixel grey levels.
 
 ### Pong and live clock
 
-**Pong** is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting `g` starts a fresh match. Use `p` to freeze or resume play.
+**Pong** is a fully automatic match. Two paddles follow a two-pixel ball, which rebounds off the top, bottom, and paddles. Paddles sometimes miss after a rally so goals and new serves occur. Each score is a single digit that wraps after 9; selecting `9` starts a fresh match. Use `p` to freeze or resume play.
 
-**Clock** displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows **NO WIFI / JOIN AP** or **SYNC TIME / WAIT NTP**. The lower label is **NTP** when connected, **HLD** while holding time offline. Colons light for the first half of each real second. Without a fresh sync for 24 hours (`CLOCK_HOLDOVER_MAX_MS`) the clock returns to its waiting display rather than showing drifted time. Selecting `c` holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.
+**Clock** displays real local time after synchronising with NTP. It uses the saved time zone for daylight saving. Before the first sync it shows **NO WIFI / JOIN AP** or **SYNC TIME / WAIT NTP**. The lower row shows the day and date in small capitals, for example **SUN 25 OCT 2026**. Colons light for the first half of each real second while Wi-Fi is connected; **solid colons** mean the clock is holding time offline from its last sync. Without a fresh sync for 24 hours (`CLOCK_HOLDOVER_MAX_MS`) the clock returns to its waiting display rather than showing drifted time. Selecting `c` holds the clock without resetting it; pausing the playlist leaves time running. No RTC module is required, but a fresh boot waits for network time.
 
 ## Serial controls
 
@@ -135,45 +138,34 @@ Click inside the PlatformIO **Serial Monitor terminal** and type a key. **No Ent
 
 | Key | Action |
 |:--|:--|
-| `1`–`9` | Start the chosen scene, then continue the playlist |
-| `g` | Start a fresh Pong simulation |
+| `1`–`9` | Start the chosen scene, then continue the playlist (`9` starts a fresh Pong match) |
 | `c` | Hold the live clock; does not reset the time |
 | `w` | Open the Wi-Fi setup hotspot without erasing settings |
 | `i` | Print the startup/settings status report |
 | `d` | Cycle runtime debug level 0–4 |
 | `n` | Start the next scene; resumes if paused |
 | `p` | Pause/resume the playlist; refresh and live clock continue |
-| `r` | Restart at the clock, with letters next |
-| `t` | Hold the static letters indefinitely; `p` resumes their timer |
-| `s` | Jump directly to scrolling text, then continue the playlist |
+| `r` | Restart at the clock, with the checkerboard next |
+| `s` | Jump directly to the scrolling message, then continue the playlist |
 | `f` | Hold all pixels OFF |
 | `o` | Hold all pixels ON at the selected brightness |
 | `b` | Blank the output at brightness zero |
 | `+` / `-` | Change requested brightness by 15, bounded to 0–255; `=` also increases it |
 | `?` / `h` | Print help, scene list, and selected brightness |
 
-From held `f/o/b`, **`p`, `r`, or `n` returns to the clock** (`r` also resets the next demo to letters). Scene keys (`1`–`9`, `g`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes. Five seconds after the last `+`/`-` (`BRIGHTNESS_SAVE_DELAY_MS`) it is saved as the startup brightness, so a burst of key presses writes flash once. Brightness zero remains dark until increased again.
+From held `f/o/b`, **`p`, `r`, or `n` returns to the clock** (`r` also resets the next demo to the checkerboard). Scene keys (`1`–`9`, `c`) also leave any held pattern. Changing brightness preserves the current frame and pause state; `b` remains blank even if you increase the selected level. The selected brightness persists between scenes. Five seconds after the last `+`/`-` (`BRIGHTNESS_SAVE_DELAY_MS`) it is saved as the startup brightness, so a burst of key presses writes flash once. Brightness zero remains dark until increased again.
 
 Requested brightness is an on-time setting (`level × 500 µs / 255`), not a calibrated light percentage. The next row is shifted while the current row is lit, so only the latch and a 50 µs guard are dark; the on-time caps at about 445 µs, so roughly 228–255 look the same.
 
-For a clear placement reference, send `t`:
-
-```text
-A B C D E F G H
-I J K L M N O P
-```
-
-The rightmost three module columns should show F/G/H above N/O/P. Use `p` to continue from this held scene, or select another scene directly.
+For a quick orientation check, send `c` and `p`: the clock digits and the day/date row should read left to right, top to bottom. `o` lights every pixel to find dead or stuck modules. (The letter test used during bring-up was removed in v1.6.0.)
 
 ## Customise the showcase
 
-Edit [include/config.h](../include/config.h), rebuild, and upload:
+The scrolling message and clock time between demos are set on the settings page; no rebuild is needed. For everything else, edit [include/config.h](../include/config.h), rebuild, and upload:
 
 | Setting | Default | Purpose |
 |:--|:--|:--|
 | `DEFAULT_BRIGHTNESS` | 90 | Fallback brightness before any web setting is saved |
-| `SCROLL_TEXT` | `ESP32 + HUB08 = FUN!` | Message in scene 9 |
-| `LETTER_HOLD_MS` | 2500 | Time on the letter pattern |
 | `CHECKER_STEP_MS` | 200 | Time per checkerboard phase |
 | `ANIMATION_STEP_MS` | 40 | Frame interval for balls, stars, bars, and hearts |
 | `RAIN_STEP_MS` | 50 | Rain frame interval |
@@ -181,7 +173,7 @@ Edit [include/config.h](../include/config.h), rebuild, and upload:
 | `SCROLL_STEP_MS` | 40 | Time per one-pixel scroll step |
 | `PONG_STEP_MS` | 40 | Pong physics and drawing interval |
 | `CLOCK_STEP_MS` | 250 | Live-clock redraw interval; time comes from NTP/system clock |
-| `CLOCK_HOLD_MS` | 10000 | Clock display time between demos |
+| `DEFAULT_CLOCK_HOLD_S` | 10 | Clock time between demos until one is saved on the settings page |
 | `CLOCK_HOLDOVER_MAX_MS` | 86400000 | Offline time before the clock stops claiming valid time |
 | `BRIGHTNESS_SAVE_DELAY_MS` | 5000 | Quiet period before serial brightness is saved |
 | `WIFI_CONNECT_TIMEOUT_MS` | 10000 | Saved connection attempt before setup hotspot |
@@ -268,7 +260,7 @@ This addresses possible timing jitter and frame tearing. On 25 October 2026 the 
 
 ## Photographing the display
 
-Send `t`, or pause an animation with `p`. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at **1/25 second and low ISO**, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. [Sony guidance on LED banding](https://www.sony.com.au/electronics/support/articles/00122281)
+Hold the clock with `c`, or pause an animation with `p`. A camera can record bands because its exposure interacts with row scanning. Try a supported camera at **1/25 second and low ISO**, then adjust exposure as needed. At the nominal refresh rate this spans five complete scans. [Sony guidance on LED banding](https://www.sony.com.au/electronics/support/articles/00122281)
 
 ## Debug and formatting
 

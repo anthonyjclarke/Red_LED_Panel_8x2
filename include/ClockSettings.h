@@ -38,7 +38,19 @@ inline const TimeZoneOption* findTimeZone(const char* id) {
   return nullptr;
 }
 
+// Saved as one NVS record. Schema 1 (v1.5.0 and earlier) lacked the last two
+// fields and is upgraded on load; see upgradeClockSettings().
 struct ClockSettings {
+  uint32_t schema;
+  char location[33];
+  char zone[40];
+  uint8_t brightness;
+  uint8_t startClock;
+  uint16_t clockHoldSeconds; // Clock visit between demos.
+  char scrollText[65];       // Empty = scroll device details.
+};
+
+struct ClockSettingsV1 {
   uint32_t schema;
   char location[33];
   char zone[40];
@@ -46,12 +58,28 @@ struct ClockSettings {
   uint8_t startClock;
 };
 
-inline ClockSettings defaultClockSettings(uint8_t brightness) {
+constexpr uint16_t CLOCK_HOLD_MIN_S = 5;
+constexpr uint16_t CLOCK_HOLD_MAX_S = 3600;
+constexpr size_t SCROLL_TEXT_MAX = 64;
+
+inline ClockSettings defaultClockSettings(uint8_t brightness, uint16_t clockHoldSeconds) {
   ClockSettings result = {};
-  result.schema = 1;
+  result.schema = 2;
   strcpy(result.location, "Sydney");
   strcpy(result.zone, "Australia/Sydney");
   result.brightness = brightness;
+  result.clockHoldSeconds = clockHoldSeconds;
+  return result;
+}
+
+inline ClockSettings upgradeClockSettings(const ClockSettingsV1& old, uint16_t clockHoldSeconds) {
+  ClockSettings result = {};
+  result.schema = old.schema == 1 ? 2 : 0; // Anything else stays invalid.
+  memcpy(result.location, old.location, sizeof(result.location));
+  memcpy(result.zone, old.zone, sizeof(result.zone));
+  result.brightness = old.brightness;
+  result.startClock = old.startClock;
+  result.clockHoldSeconds = clockHoldSeconds;
   return result;
 }
 
@@ -68,20 +96,48 @@ inline bool validLocation(const char* location) {
   return visible;
 }
 
-inline bool validClockSettings(const ClockSettings& settings) {
-  return settings.schema == 1 && validLocation(settings.location) &&
-         memchr(settings.zone, '\0', sizeof(settings.zone)) && findTimeZone(settings.zone) &&
-         settings.startClock <= 1;
+// The panel font covers printable ASCII; empty selects the device-details message.
+inline bool validScrollText(const char* text) {
+  if (!text) return false;
+  const size_t length = strnlen(text, SCROLL_TEXT_MAX + 1);
+  if (length > SCROLL_TEXT_MAX) return false;
+  for (size_t i = 0; i < length; ++i) {
+    if (text[i] < 0x20 || text[i] > 0x7e) return false;
+  }
+  return true;
 }
 
-inline bool parseBrightness(const char* value, uint8_t& result) {
+inline bool validClockSettings(const ClockSettings& settings) {
+  return settings.schema == 2 && validLocation(settings.location) &&
+         memchr(settings.zone, '\0', sizeof(settings.zone)) && findTimeZone(settings.zone) &&
+         settings.startClock <= 1 && settings.clockHoldSeconds >= CLOCK_HOLD_MIN_S &&
+         settings.clockHoldSeconds <= CLOCK_HOLD_MAX_S &&
+         memchr(settings.scrollText, '\0', sizeof(settings.scrollText)) &&
+         validScrollText(settings.scrollText);
+}
+
+inline bool parseNumber(const char* value, unsigned maximum, unsigned& result) {
   if (!value || !*value) return false;
   unsigned number = 0;
   for (const char* p = value; *p; ++p) {
     if (*p < '0' || *p > '9') return false;
     number = number * 10 + (*p - '0');
-    if (number > 255) return false;
+    if (number > maximum) return false;
   }
+  result = number;
+  return true;
+}
+
+inline bool parseBrightness(const char* value, uint8_t& result) {
+  unsigned number = 0;
+  if (!parseNumber(value, 255, number)) return false;
+  result = number;
+  return true;
+}
+
+inline bool parseClockHold(const char* value, uint16_t& result) {
+  unsigned number = 0;
+  if (!parseNumber(value, CLOCK_HOLD_MAX_S, number) || number < CLOCK_HOLD_MIN_S) return false;
   result = number;
   return true;
 }

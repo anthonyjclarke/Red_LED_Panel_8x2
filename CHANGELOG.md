@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.6.0] 25-10-2026
+
+Uploaded over Wi-Fi from the MacBook on 25 October 2026. After the upload the panel reported v1.6.0 with its saved brightness (105) and other settings kept, confirming the settings upgrade on real hardware; clock time 10 s and an empty message were added. Not yet checked by eye or committed.
+
+### Changed
+
+- Removed the letter test (A–H above I–P) and its `t` key. Scene keys are now `1` checkerboard, `2` balls, `3` stars, `4` rain, `5` bars, `6` Life, `7` hearts, `8` scrolling text, `9` Pong (was `g`) and `c` clock. The playlist starts with the checkerboard.
+- The clock time between demos is a web setting (**Clock time between demos**, 5–3600 s, default 10), replacing the fixed `CLOCK_HOLD_MS`. It applies from the next clock visit.
+- The scrolling message is a web setting (**Scrolling message**, up to 64 plain characters). Empty, the default, scrolls device details composed when the scene starts: firmware version, uptime, time since the last sync, address and location. The scene length comes from the message width, so the whole message always crosses the panel before the clock returns. Replaces the fixed `SCROLL_TEXT`.
+- Settings record schema 2 adds the two fields. A schema-1 record from v1.5.0 or earlier is upgraded on load, keeping location, zone, brightness and view.
+- `/api/status` reports `clockHold` and `scrollText`; `/api/settings` validates both.
+- OTA uploads read the password from `include/secrets.h` (`tools/ota_auth.py`), with `PANEL_OTA_PASSWORD` as an override for password changes. This avoids the empty password sent when the variable is set in another terminal. espota's `--debug` flag, which printed the password, is no longer passed.
+
+### Added
+
+- Host regressions: clock time from the setting, device-details and custom messages, scroll never cut short, input validation for both fields, and the schema-1 upgrade in both the app and network tests.
+
+## [1.5.0] 25-10-2026
+
+Uploaded over Wi-Fi from the MacBook on 25 October 2026; the panel reported v1.5.0 and the date `Sun 25 Oct 2026`.
+
+### Changed
+
+- The clock's lower row shows the day of the week and the date, for example **SUN 25 OCT 2026** (15 characters, x 2–60), using a new set of 3×5 capitals for the day and month names.
+- Removed the NTP/HLD label. Offline holdover is now shown by **solid colons**; they blink with the real second while Wi-Fi is connected.
+
+### Added
+
+- Host regressions for the day/date row layout, the missing label, and blinking versus solid colons; regenerated the clock example GIFs.
+
+## [1.4.0] 25-10-2026
+
+**First Wi-Fi (OTA) upload**: sent from the MacBook to the reference panel on 25 October 2026 and confirmed working. Not committed or tagged on its own; its changes are included with 1.5.0.
+
+### Changed
+
+- The clock's lower row now shows the local date as **DD-MM-YYYY** in the 3×5 digit font (x 22–60), beside the NTP/HLD label. It replaces the seconds bar, since the seconds are already shown as digits.
+
+### Added
+
+- Host regression for the date row's position and dash rows; regenerated the clock example GIFs.
+
 ## [1.3.0] 25-10-2026
 
 Flashed over USB on the reference panel on 25 October 2026 and tagged `v1.3.0-flashed`. The panel reports v1.3.0 with OTA **ready**; the new settings UI and the optional page login (user `admin`) were confirmed working. A first Wi-Fi (OTA) upload had not yet been run when this was recorded.

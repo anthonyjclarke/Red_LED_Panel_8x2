@@ -50,7 +50,7 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 
 | Setting | Value / behaviour |
 |:--|:--|
-| Firmware | `1.3.0`: Wi-Fi firmware upload (OTA) after the v1.2.0 refresh driver |
+| Firmware | `1.6.0`: web-set clock time and scrolling message; letter test removed |
 | LA/LB/LC/LD | GPIO 25/26/27/13; normal A/B/C/D bit order |
 | EN/R1/LT/SK | GPIO 22/23/4/18 |
 | Geometry and scan | 64×16, 1/16 scan; 500 µs per row, nominal 125 Hz complete refresh |
@@ -63,7 +63,8 @@ For an **EzSBC LS1**, use VLo = ESP32 3.3 V, VHi = panel 5 V, shared GND, and ei
 | POSIX rule | `AEST-10AEDT,M10.1.0,M4.1.0/3` |
 | Startup brightness / view | **90/255**, **Clock + demos** |
 | Boot cards | Three cards, 2 seconds each: header/version, geometry/brightness, network/time state |
-| Clock drawing interval / visit | 250 ms redraw; 10 seconds between demos, from elapsed milliseconds |
+| Clock drawing interval / visit | 250 ms redraw; clock time between demos from the settings page (default 10 s), from elapsed milliseconds |
+| Scrolling message | Empty: device details (version, uptime, last sync, address, location); up to 64 plain characters |
 | Refresh scheduling | Hardware TG0/T0 row cadence + TG0/T1 OE deadline; dedicated scan task on core 1 |
 | NTP servers | `pool.ntp.org`, `time.cloudflare.com` |
 | Unsynchronised NTP retry | Every 60 seconds while Wi-Fi is connected |
@@ -134,7 +135,9 @@ The page opens at **`/`** (or `/panel`). Its sidebar jumps between **Clock**, **
 1. **Location name:** 1–32 UTF-8 bytes; defaults to Sydney.
 2. **Time zone:** choose a listed region. Australian zones, Auckland, UTC and several international zones are included.
 3. **Startup brightness:** 0–255; default 90. This is the requested on-time; roughly 228–255 look the same.
-4. **Startup view:** Clock + demos or Real-time clock. Clock + demos starts with 10 seconds of clock, runs one demo, returns to the clock for 10 seconds, then runs the following demo.
+4. **Startup view:** Clock + demos or Real-time clock. Clock + demos starts with the clock, runs one demo, returns to the clock, then runs the following demo.
+5. **Clock time between demos:** 5–3600 seconds; default 10. Applies from the next clock visit.
+6. **Scrolling message:** up to 64 plain characters (space to `~`). Empty scrolls device details. The message always scrolls fully before the clock returns.
 
 Choose **Save and apply**. The ESP32 validates the complete form, saves one record, and changes the local time zone and brightness at once. The display restarts only when the startup view changed. Settings survive reset. A failed flash write leaves the previous settings active. Serial `+`/`-` changes are saved as the startup brightness once, five seconds after the last key press.
 
@@ -144,11 +147,11 @@ Status requests are read-only. Panel settings/sync/setup API mutations carry a b
 
 ## Live clock behaviour
 
-Send **`c`** to keep the live clock on screen. **`p`** resumes the playlist's clock-scene timer; **`n`** moves to the next demo (letters immediately after a fresh boot/restart). With clock selected as the startup view, it remains visible after boot.
+Send **`c`** to keep the live clock on screen. **`p`** resumes the playlist's clock-scene timer; **`n`** moves to the next demo (the checkerboard immediately after a fresh boot/restart). With clock selected as the startup view, it remains visible after boot.
 
 - Before the first valid NTP response: **NO WIFI / JOIN AP**, or **SYNC TIME / WAIT NTP**.
-- After sync: local **HH:MM:SS**, colons lit for the first half of each second, seconds bar and **NTP** label.
-- After losing Wi-Fi: time continues from the ESP32's last sync, with **HLD** (holdover). Accuracy can drift until reconnection; after 24 hours without a sync the clock returns to the waiting display.
+- After sync: local **HH:MM:SS** with colons lit for the first half of each second, and the day and date on the lower row, for example **SUN 25 OCT 2026**.
+- After losing Wi-Fi: time continues from the ESP32's last sync (holdover), with the colons held **solid** instead of blinking. Accuracy can drift until reconnection; after 24 hours without a sync the clock returns to the waiting display.
 - After reset or power loss: this firmware waits for a new network sync; it does not invent a sample time.
 - Pausing the playlist **does not freeze the clock**. Resuming or reselecting `c` does not reset the actual time.
 
@@ -160,7 +163,7 @@ Serial **`i`** repeats the startup/settings report. A representative header is:
 
 ```text
 [INFO] ============================================================
-[INFO] Red LED Panel 8x2 v1.3.0 | ESP32 DevKit / esp32dev
+[INFO] Red LED Panel 8x2 v1.6.0 | ESP32 DevKit / esp32dev
 [INFO] Panel=64x16, 1/16 scan, brightness=90/255, debug=3
 [INFO] GPIO LA=25 LB=26 LC=27 LD=13 EN=22 R1=23 LT=4 SK=18
 [INFO] Scan=500 us/row, signal=1 us, guard=50 us, nominal frame=125 Hz
@@ -185,18 +188,21 @@ python3 -m venv .venv-docs
 
 | Action | Expected result |
 |:--|:--|
-| First boot without saved Wi-Fi | Three boot cards, useful serial settings, clock waiting state for 10 seconds, then letters; setup hotspot appears after the connection window |
-| Send `r`, let the cycle run | Clock 10 s → letters → clock 10 s → checkerboard → clock, continuing through Pong and repeating |
+| First boot without saved Wi-Fi | Three boot cards, useful serial settings, clock waiting state for 10 seconds, then the checkerboard; setup hotspot appears after the connection window |
+| Send `r`, let the cycle run | Clock → checkerboard → clock → bouncing balls → clock, continuing through Pong and repeating |
+| Set clock time to 30 s and save | The next clock visit lasts 30 seconds |
+| Save a scrolling message, send `8` | The message scrolls fully, then the clock returns; empty shows device details |
+| Upgrade from v1.5.0 or earlier | Location, zone, brightness and view are kept; clock time 10 s, message empty |
 | Save valid router credentials | DHCP IP/settings URL printed, settings page available from the LAN |
 | Wait for NTP, send `c` | Correct local HH:MM:SS; no simulated starting time |
 | Change Sydney to Brisbane | Correct regional time; Sydney observes DST, Brisbane does not |
 | Save location/brightness/Clock and reset | Saved values restored; clock waits for sync, then stays on screen |
 | Pause or reselect clock | Time continues; selection does not reset it |
-| Disconnect router after sync | Clock continues with HLD, reconnect/setup fallback is available |
+| Disconnect router after sync | Clock continues with solid colons; reconnect/setup fallback is available |
 | Enter a wrong router password | Portal remains usable; display refresh continues |
 | Use `w` while connected | Setup hotspot opens; no credentials or panel settings are erased |
 | Send invalid settings through the API | HTTP 400; existing settings retained |
-| `1`–`9`, `g`, `p`, `n`, `r`, `f/o/b` | Demo and held-pattern controls retain their documented behaviour |
+| `1`–`9`, `c`, `p`, `n`, `r`, `f/o/b` | Demo and held-pattern controls retain their documented behaviour |
 | `o`, then `+` to 255 (v1.2.0) | Noticeably brighter than 135/255; no ghosting in unlit rows; `i` counters steady |
 | `+` then wait 5 s, reset | New brightness restored at boot |
 | OTA upload with the right password (v1.3.0) | Panel shows OTA progress, restarts, serial reports the new version |
@@ -217,13 +223,13 @@ Build/upload the corrected firmware and reset. Successful startup includes:
 [INFO] Shift: VSPI 500000 Hz on SK=18 R1=23, overlapped with the lit row
 ```
 
-Send `t` to hold letters, then `i` twice a few seconds apart. The row count should be nonzero and increasing. A remaining setup error names the failed stage (for example, `row interrupt`); capture that line. Host tests model constrained allocation and startup cleanup. The reference-panel check below confirms that the corrected firmware started refresh and displayed successfully.
+Send `o` (all on), then `i` twice a few seconds apart. The row count should be nonzero and increasing. A remaining setup error names the failed stage (for example, `row interrupt`); capture that line. Host tests model constrained allocation and startup cleanup. The reference-panel check below confirms that the corrected firmware started refresh and displayed successfully.
 
 ## Check display flicker
 
-Upload the new firmware, reset, and keep Serial Monitor at **115200 baud**. Use **`r`** to verify clock (10 s) → letters → clock (10 s) → checkerboard, then further demos. A saved **Real-time clock** startup view stays on the clock; choose **Clock + demos** on the settings page to make the alternating cycle the boot default.
+Upload the new firmware, reset, and keep Serial Monitor at **115200 baud**. Use **`r`** to verify clock → checkerboard → clock → bouncing balls, then further demos. A saved **Real-time clock** startup view stays on the clock; choose **Clock + demos** on the settings page to make the alternating cycle the boot default.
 
-For a steady reference send **`t`** (letters), then **`i`**. Observe the whole display by eye for 30 seconds; reload `/panel` several times, then send **`i`** again. Repeat with **`o`** (all on) at the normal 90/255 brightness. The status line includes:
+For a steady reference send **`c`** then **`p`** (held clock), then **`i`**. Observe the whole display by eye for 30 seconds; reload `/panel` several times, then send **`i`** again. Repeat with **`o`** (all on) at the normal 90/255 brightness. The status line includes:
 
 ```text
 Refresh: rows=..., missed ticks=..., late rows=..., max wake=... us, max scan=... us
@@ -232,6 +238,10 @@ Refresh: rows=..., missed ticks=..., late rows=..., max wake=... us, max scan=..
 Counters are cumulative since reset. Compare the two readings: missed ticks and late rows should stay unchanged during steady operation and normal page polling. Increasing values indicate missed refresh deadlines; record both reports and which action triggers them. Max wake/scan values are lifetime peaks, including startup or earlier flash saves, so reset for a fresh comparison. Saving settings or Wi-Fi credentials writes flash and can cause a brief disturbance; check that steady output resumes afterwards.
 
 The driver isolates refresh from the shared timer task and commits pictures between scans. The v1.2.0 overlapped SPI shift passed this check on the reference panel (below). Host tests verify these decisions, but do not measure real interrupt latency or prove the LEDs are flicker-free. **Clock colons light for half of each second and hearts change brightness intentionally.** Camera bands can persist at 125 Hz even with a steady appearance by eye; see the [photography guidance](PANEL_GUIDE.md#photographing-the-display).
+
+## First Wi-Fi (OTA) upload — 25 October 2026
+
+v1.4.0 was uploaded from the MacBook with `pio run -e esp32dev_ota --target upload` and the panel restarted into it; the user confirmed it worked. The first attempt failed with `Authentication Failed` because the options line showed `'auth': ''`: the password had been entered in one terminal and the upload run in another, so `PANEL_OTA_PASSWORD` was empty. Since v1.6.0 the upload reads the password from `include/secrets.h`, so no variable is needed.
 
 ## Recorded reference-panel result (v1.3.0) — 25 October 2026
 

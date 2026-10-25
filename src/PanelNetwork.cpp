@@ -68,14 +68,28 @@ void reply(WebServer& server, int code, const char* message) {
 } // namespace
 
 void PanelNetwork::begin() {
-  settings_ = defaultClockSettings(DEFAULT_BRIGHTNESS);
+  settings_ = defaultClockSettings(DEFAULT_BRIGHTNESS, DEFAULT_CLOCK_HOLD_S);
   preferencesReady_ = preferences_.begin("redpanel", false);
-  if (preferencesReady_ && preferences_.getBytesLength("clock") == sizeof(ClockSettings)) {
+  const size_t stored = preferencesReady_ ? preferences_.getBytesLength("clock") : 0;
+  if (stored == sizeof(ClockSettings)) {
     ClockSettings saved = {};
     if (preferences_.getBytes("clock", &saved, sizeof(saved)) == sizeof(saved) &&
         validClockSettings(saved)) {
       settings_ = saved;
       DBG_INFO("[settings] Loaded location, time zone and display defaults from NVS");
+    } else {
+      DBG_WARN("[settings] Invalid stored settings; using defaults");
+    }
+  } else if (stored == sizeof(ClockSettingsV1)) {
+    // v1.5.0 and earlier: keep the saved values, add the new defaults. The next
+    // save writes the current layout.
+    ClockSettingsV1 old = {};
+    const ClockSettings upgraded = preferences_.getBytes("clock", &old, sizeof(old)) == sizeof(old)
+                                       ? upgradeClockSettings(old, DEFAULT_CLOCK_HOLD_S)
+                                       : ClockSettings{};
+    if (validClockSettings(upgraded)) {
+      settings_ = upgraded;
+      DBG_INFO("[settings] Upgraded saved settings from schema 1");
     } else {
       DBG_WARN("[settings] Invalid stored settings; using defaults");
     }
@@ -141,6 +155,12 @@ bool PanelNetwork::localTime(tm& result, uint16_t* milliseconds) const {
   if (milliseconds) *milliseconds = now.tv_usec / 1000;
   const time_t seconds = now.tv_sec;
   return seconds >= 1704067200 && localtime_r(&seconds, &result) != nullptr;
+}
+
+int32_t PanelNetwork::secondsSinceSync() const {
+  if (!lastSync_) return -1;
+  const time_t current = time(nullptr);
+  return current >= lastSync_ ? static_cast<int32_t>(current - lastSync_) : 0;
 }
 
 bool PanelNetwork::takeSettingsChanged() {
@@ -344,21 +364,27 @@ void PanelNetwork::saveSettings() {
   location.trim();
   const String zone = server.arg("zone");
   const String view = server.arg("view");
+  const String scrollText = server.arg("scrollText");
   uint8_t requestedBrightness = 0;
+  uint16_t clockHold = 0;
   if (!validLocation(location.c_str()) || !findTimeZone(zone.c_str()) ||
       !parseBrightness(server.arg("brightness").c_str(), requestedBrightness) ||
-      (view != "clock" && view != "playlist")) {
+      (view != "clock" && view != "playlist") ||
+      !parseClockHold(server.arg("clockHold").c_str(), clockHold) ||
+      !validScrollText(scrollText.c_str())) {
     reply(server, 400,
-          "Enter a location of 1-32 bytes, a listed time zone, brightness 0-255, and a startup "
-          "view.");
+          "Enter a location of 1-32 bytes, a listed time zone, brightness 0-255, a startup view, "
+          "a clock time of 5-3600 seconds, and a message of up to 64 plain characters.");
     return;
   }
   ClockSettings next = {};
-  next.schema = 1;
+  next.schema = 2;
   strlcpy(next.location, location.c_str(), sizeof(next.location));
   strlcpy(next.zone, zone.c_str(), sizeof(next.zone));
   next.brightness = requestedBrightness;
   next.startClock = view == "clock";
+  next.clockHoldSeconds = clockHold;
+  strlcpy(next.scrollText, scrollText.c_str(), sizeof(next.scrollText));
   if (!preferencesReady_ || preferences_.putBytes("clock", &next, sizeof(next)) != sizeof(next)) {
     DBG_ERROR("[settings] Could not save settings to NVS");
     reply(server, 500, "Settings could not be saved; existing settings are unchanged.");
@@ -368,8 +394,10 @@ void PanelNetwork::saveSettings() {
   setenv("TZ", findTimeZone(settings_.zone)->rule, 1);
   tzset();
   settingsChanged_ = true;
-  DBG_INFO("[settings] Saved: location=%s zone=%s brightness=%u view=%s", settings_.location,
-           settings_.zone, settings_.brightness, settings_.startClock ? "clock" : "playlist");
+  DBG_INFO("[settings] Saved: location=%s zone=%s brightness=%u view=%s clock=%us message=%s",
+           settings_.location, settings_.zone, settings_.brightness,
+           settings_.startClock ? "clock" : "playlist", settings_.clockHoldSeconds,
+           *settings_.scrollText ? "custom" : "device details");
   reply(server, 200, "Saved and applied. These settings will also be used after restart.");
 }
 
@@ -382,6 +410,8 @@ void PanelNetwork::sendStatus() {
   json += ",\"zone\":" + jsonString(settings_.zone);
   json += ",\"brightness\":" + String(settings_.brightness);
   json += ",\"startClock\":" + String(settings_.startClock ? "true" : "false");
+  json += ",\"clockHold\":" + String(settings_.clockHoldSeconds);
+  json += ",\"scrollText\":" + jsonString(settings_.scrollText);
   json += ",\"connected\":" + String(connected() ? "true" : "false");
   json += ",\"timeValid\":" + String(timeValid_ ? "true" : "false");
   json += ",\"ssid\":" + jsonString(connected() ? WiFi.SSID().c_str() : "");
@@ -401,11 +431,8 @@ void PanelNetwork::sendStatus() {
   }
   json += ",\"time\":" + jsonString(clock) + ",\"date\":" + jsonString(date);
   json += ",\"lastSyncAge\":";
-  if (lastSync_) {
-    const time_t current = time(nullptr);
-    json += String(static_cast<unsigned long>(current >= lastSync_ ? current - lastSync_ : 0));
-  } else
-    json += "null";
+  const int32_t syncAge = secondsSinceSync();
+  json += syncAge < 0 ? String("null") : String(syncAge);
   json += ",\"zones\":[";
   for (size_t i = 0; i < TIME_ZONE_COUNT; ++i) {
     if (i) json += ',';

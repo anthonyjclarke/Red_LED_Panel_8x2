@@ -6,5 +6,5 @@
 // Optional login (user "admin") for /panel and /api/*. Empty = no login.
 #define SECRET_PANEL_PASSWORD ""
 // Password for network firmware uploads (ArduinoOTA). Empty = OTA disabled.
-// Upload with: PANEL_OTA_PASSWORD=<same value> pio run -e esp32dev_ota -t upload
+// Upload with: pio run -e esp32dev_ota -t upload (reads this value)
 #define SECRET_OTA_PASSWORD ""

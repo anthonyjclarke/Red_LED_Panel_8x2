@@ -231,7 +231,7 @@ def render_page() -> str:
 <a class="brand" href="#top"><div class="led-mark" aria-hidden="true">{led_dots}</div><strong>RED / 8×2</strong><span>ESP32 · HUB08 · 64×16</span></a>
 <div class="nav-label">Documentation</div>
 <div class="nav-links">{''.join(nav)}</div>
-<div class="sidebar-note"><strong>64×16 pixels · eleven scenes</strong><br>1–9 / g / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
+<div class="sidebar-note"><strong>64×16 pixels · ten scenes</strong><br>1–9 / c select · p pauses<br>+ / − adjusts brightness<br>Offline edition · no remote assets.</div>
 </aside>
 <main class="page" id="main">
 <div class="toolbar"><span class="eyebrow">Workshop reference · single-page edition</span><div class="tools"><button type="button" onclick="window.print()">Print</button></div></div>
